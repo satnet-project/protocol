@@ -1,0 +1,10 @@
+djorm-pgarray==1.1
+oauthlib==0.6.3
+psycopg2==2.5.3
+pyOpenSSL==0.14
+pyserial==2.7
+python-dateutil==2.2
+pytz==2014.4
+rpc4django==0.3.0
+service-identity==14.0.0
+twisted==14.0.2
