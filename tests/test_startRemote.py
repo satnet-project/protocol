@@ -120,7 +120,7 @@ class TestMultipleClients(unittest.TestCase):
         pf.protocol = CredReceiver
         pf.onConnectionLost = d
         cert = ssl.PrivateCertificate.loadPEM(
-            open('../key/private.pem').read())
+            open('../key/server.pem').read())
         return reactor.listenSSL(1234, pf, cert.options())
 
     def _connectClients(self, factory, d1, d2):
@@ -128,7 +128,7 @@ class TestMultipleClients(unittest.TestCase):
         factory.onConnectionLost = d2
 
         cert = ssl.Certificate.loadPEM(open('../key/public.pem').read())
-        options = ssl.optionsForClientTLS(u'humsat.org', cert)
+        options = ssl.optionsForClientTLS(u'example.humsat.org', cert)
 
         return reactor.connectSSL("localhost", 1234, factory, options)
 

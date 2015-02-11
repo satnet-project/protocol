@@ -1,10 +1,8 @@
-import os
-import sys
-import logging
-import datetime
+import os, sys, logging, datetime, django
 print sys.path
-sys.path.append(os.path.dirname(os.getcwd()) + "/WebServices")
+sys.path.append(os.path.dirname(os.getcwd()) + "/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
+django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
 from services.common import misc, simulation
 from services.common.testing import helpers
@@ -57,6 +55,7 @@ def _initDjangoDB():
     __gs_1_ch_1_cfg = {
         jrpc_keys.BAND_K:
         'UHF / U / 435000000.000000 / 438000000.000000',
+        jrpc_keys.AUTOMATED_K: False,
         jrpc_keys.MODULATIONS_K: ['FM'],
         jrpc_keys.POLARIZATIONS_K: ['LHCP'],
         jrpc_keys.BITRATES_K: [300, 600, 900],
@@ -66,16 +65,17 @@ def _initDjangoDB():
     __gs_1_ch_2_cfg = {
         jrpc_keys.BAND_K:
         'UHF / U / 435000000.000000 / 438000000.000000',
+        jrpc_keys.AUTOMATED_K: False,
         jrpc_keys.MODULATIONS_K: ['FM'],
         jrpc_keys.POLARIZATIONS_K: ['LHCP'],
         jrpc_keys.BITRATES_K: [300, 600, 900],
         jrpc_keys.BANDWIDTHS_K: [12.500000000, 25.000000000]
     }
 
-    signals.connect_availability_2_operational()
-    signals.connect_channels_2_compatibility()
-    signals.connect_compatibility_2_operational()
-    signals.connect_rules_2_availability()
+    signals.models.connect_availability_2_operational()
+    signals.models.connect_channels_2_compatibility()
+    signals.models.connect_compatibility_2_operational()
+    signals.models.connect_rules_2_availability()
     #signals.connect_segments_2_booking_tle()
 
     helpers.init_available()

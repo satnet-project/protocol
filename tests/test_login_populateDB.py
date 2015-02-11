@@ -1,9 +1,10 @@
-import os, sys, logging
+import os, sys, logging, django
 print sys.path
-sys.path.append(os.path.dirname(os.getcwd())+"/WebServices")
+sys.path.append(os.path.dirname(os.getcwd())+"/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
+django.setup()
 
-from services.common import testing as db_tools
+from services.common.testing import helpers as db_tools
 
 
 def _initDjangoDB():

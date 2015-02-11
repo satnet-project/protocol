@@ -126,13 +126,14 @@ class Client():
             SERIALPORT = raw_input()
 
         cert = ssl.Certificate.loadPEM(open('key/public.pem').read())
-        options = ssl.optionsForClientTLS(u'humsat.org', cert)
+        options = ssl.optionsForClientTLS(u'example.humsat.org', cert)
 
         factory = protocol.Factory.forProtocol(ClientProtocol)
         endpoint = endpoints.SSL4ClientEndpoint(reactor, 'localhost', 1234,
                                                 options)
         d = endpoint.connect(factory)
         def connectionSuccessful(clientAMP, USERNAME, PASSWORD, SERIALPORT):
+            log.msg('Successfuly connected to server')
             self.proto = clientAMP
             clientAMP.USERNAME = USERNAME
             clientAMP.PASSWORD = PASSWORD
@@ -147,11 +148,11 @@ class Client():
 
     def usage(self):
         print "USAGE of client_amp.py"
-        print "Usage: python [-h] client_amp.py #Shows script help"
-        print "Usage: python [-u <username>] client_amp.py #Set SATNET username to login"
-        print "Usage: python [-p <password>] client_amp.py #Set SATNET user password to login"
-        print "Usage: python [-s <serialport>] client_amp.py #Set serial port to read data from"        
-        print "Example: python -u crespo -p cre.spo -s /dev/ttyS1"        
+        print "Usage: python client_amp.py [-h] client_amp.py #Shows script help"
+        print "Usage: python client_amp.py [-u <username>] client_amp.py #Set SATNET username to login"
+        print "Usage: python client_amp.py [-p <password>] client_amp.py #Set SATNET user password to login"
+        print "Usage: python client_amp.py [-s <serialport>] client_amp.py #Set serial port to read data from"        
+        print "Example: python client_amp.py -u crespo -p cre.spo -s /dev/ttyS1"        
 
 if __name__ == '__main__':
     c = Client(sys.argv[1:])

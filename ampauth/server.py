@@ -122,8 +122,8 @@ class CredReceiver(AMP, TimeoutMixin):
             avatar.sUsername = sUsername
             self.factory.active_protocols[sUsername] = avatar
             log.msg('Connection made')
-            log.msg(
-                'Active clients: ' + str(len(self.factory.active_protocols)))
+            log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
+            log.msg('Active connections: ' + str(len(self.factory.active_connections)))
 
             return {'bAuthenticated': True}
         d.addCallback(cbLoggedIn)
@@ -155,7 +155,7 @@ class CredAMPServerFactory(ServerFactory):
 
     :ivar active_connections:
         A dictionary containing a reference to all active protocols (clients).
-        The dictionary is doubly linked so the keys are the whether the GS clients 
+        The dictionary is doubly linked so the keys are whether the GS clients 
         or the SC clients and the values are the remote client usernames
     :type active_connections:
         L{Dictionary}        
@@ -167,6 +167,8 @@ class CredAMPServerFactory(ServerFactory):
 
     def __init__(self, portal):
         self.portal = portal
+        self.active_protocols = {}
+        self.active_connections = {}
 
     def buildProtocol(self, addr):
         proto = ServerFactory.buildProtocol(self, addr)

@@ -24,7 +24,7 @@ __author__ = 'xabicrespog@gmail.com'
 # to import Django modules
 import os
 import sys
-sys.path.append(os.path.dirname(os.getcwd()) + "/WebServices")
+sys.path.append(os.path.dirname(os.getcwd()) + "/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 
 # Import your models for use in your script

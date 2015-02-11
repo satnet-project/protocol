@@ -22,12 +22,11 @@ __author__ = 'xabicrespog@gmail.com'
 
 # First of all we need to add satnet-release-1/WebServices to the path
 # to import Django modules
-import os
-import sys
-import logging
+import os, sys, logging, django
 from datetime import datetime
-sys.path.append(os.path.dirname(os.getcwd()) + "/WebServices")
+sys.path.append(os.path.dirname(os.getcwd()) + "/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
+django.setup()
 
 from twisted.python import log
 from twisted.protocols.amp import AMP
@@ -89,13 +88,13 @@ class SATNETServer(AMP):
         self.resetTimeout()
         super(SATNETServer, self).dataReceived(data)
 
-    def vCreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
+    def iCreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
         slot_remaining_time = int(
             (iSlotEnd - misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
         self.credProto.iSlotEndCallId = reactor.callLater(
             slot_remaining_time, self.vSlotEnd, iSlotId)
-        if str(remoteUsr) not in self.factory.active_protocols:
+        if remoteUsr not in self.factory.active_protocols:
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
             return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
         else:
@@ -105,8 +104,7 @@ class SATNETServer(AMP):
             self.factory.active_protocols[remoteUsr].callRemote(
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(remoteUsr))
             # divided by 2 because the dictionary is doubly linked
-            log.msg(
-                'Active connections: ' + str(len(self.factory.active_connections) / 2))
+            log.msg('Active connections: ' + str(len(self.factory.active_connections) / 2))
             return {'iResult': StartRemote.REMOTE_READY}
 
     def iStartRemote(self, iSlotId):
@@ -143,11 +141,11 @@ class SATNETServer(AMP):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = False
-                return self.vCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
+                return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
                 #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = True
-                return self.vCreateConnection(self.slot[0].end, iSlotId, gs_user, sc_user)
+                return self.iCreateConnection(self.slot[0].end, iSlotId, gs_user, sc_user)
 
     StartRemote.responder(iStartRemote)
 
@@ -178,9 +176,9 @@ class SATNETServer(AMP):
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
         # TODO. Never enters because the clients are in active_protocols as soon as they log in
-        if self.sUsername not in self.factory.active_protocols:
+        if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
-            raise SlotErrorNotification(
+            return SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
@@ -199,7 +197,7 @@ class SATNETServer(AMP):
         else:
             # send message to remote client
             self.factory.active_protocols[self.factory.active_connections[
-                self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)            
+                self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
             # store messages in the DB (as already forwarded)
             gs_channel = self.slot[0].groundstation_channel
             sc_channel = self.slot[0].spacecraft_channel
@@ -230,7 +228,7 @@ def main():
     portal = Portal(realm, [checker])
 
     pf = CredAMPServerFactory(portal)
-    cert = ssl.PrivateCertificate.loadPEM(open('key/test.pem').read())
+    cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
     reactor.listenSSL(1234, pf, cert.options())
     log.msg('Server running...')
