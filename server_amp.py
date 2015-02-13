@@ -142,7 +142,7 @@ class SATNETServer(AMP):
             elif gs_user == self.sUsername:
                 self.bGSuser = False
                 return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
-                #... if the remote client is the GS user...
+            #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = True
                 return self.iCreateConnection(self.slot[0].end, iSlotId, gs_user, sc_user)
@@ -178,7 +178,7 @@ class SATNETServer(AMP):
         # TODO. Never enters because the clients are in active_protocols as soon as they log in
         if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
-            return SlotErrorNotification(
+            raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
@@ -205,7 +205,7 @@ class SATNETServer(AMP):
                                                     sc_channel=sc_channel, upwards=self.bGSuser, forwarded=True,
                                                     tx_timestamp=iTimestamp, message=sMsg)
 
-        return {}
+        return {'bResult': True}
     SendMsg.responder(vSendMsg)
 
     def vSlotEnd(self, iSlotId):

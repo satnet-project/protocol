@@ -75,7 +75,10 @@ class EndRemote(amp.Command):
 class SendMsg(amp.Command):
     arguments = [('sMsg', amp.String()),
                  ('iTimestamp', amp.Integer())]
-    requiresAnswer = False
+    response = [('bResult', amp.Boolean())]
+    errors = {
+        SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'}
+
     """
     Invoked when a client wants to send a message to a remote entity. To use it, the 
     command StartRemote shall be invoked first.
@@ -89,9 +92,15 @@ class SendMsg(amp.Command):
     :type iDopplerShift:
         L{int}
     :param iTimestamp:
-        Integer indicating the UTC timestamp at reception
+        Integer indicating the UTC timestamp at reception.
+        If the command is called before StartRemote raises SlotNotAvailable.
     :type iTimestamp:
-        L{Integer}    
+        L{Integer} or L{SlotNotAvailable}
+
+    :returns bResult:
+        True if the command is successfully run
+    :rtype:
+        Boolean
     """
 
 """
@@ -117,13 +126,11 @@ class NotifyEvent(amp.Command):
         (-4) REMOTE_CONNECTED: notifies a client when the remote has just connected
     :type iEvent:
         int
-
     :param sDetails:
         Details of the event. If it is REMOTE_CONNECTED this parameter is equal to 
         the username of the remote client. Otherwise the parameter is None
-
     :type sDetails:
-        L{String} or None        
+        L{String} or None
     """
     # Remote user not connected
     REMOTE_DISCONNECTED = -1
