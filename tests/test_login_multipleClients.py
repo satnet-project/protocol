@@ -1,3 +1,26 @@
+# coding=utf-8
+"""
+   Copyright 2014 Xabier Crespo Álvarez
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+:Author:
+    Xabier Crespo Álvarez (xabicrespog@gmail.com)
+"""
+__author__ = 'xabicrespog@gmail.com'
+
+from django.core import management
+
 from twisted.internet import defer, protocol
 from twisted.trial import unittest
 from twisted.cred.portal import Portal
@@ -8,6 +31,8 @@ from ampauth.server import *
 from ampauth.client import login
 from ampauth.server import CredReceiver
 from client_amp import ClientProtocol
+
+from services.common.testing import helpers as db_tools
 
 """
 To perform correct end to end tests:
@@ -40,9 +65,36 @@ class TestMultipleClients(unittest.TestCase):
     Testing multiple client connections
     TDOD. Test multiple valid connections
     """
+    def _setUp_databases(self):
+        """
+        This method populates the database with some information to be used
+        only for this test suite.
+        """
+        #self.__verbose_testing = False
+        username_1 = 'xabi'
+        password_1 = 'pwdxabi'
+        email_1 = 'xabi@aguarda.es'
+
+        username_2 = 'marti'
+        password_2 = 'pwdmarti'
+        email_2 = 'marti@montederramo.es'
+
+        db_tools.create_user_profile(
+            username=username_1, password=password_1, email=email_1)
+        db_tools.create_user_profile(
+            username=username_2, password=password_2, email=email_2)
 
     def setUp(self):
-        # log.startLogging(sys.stdout)
+        log.startLogging(sys.stdout)
+
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
+        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
+        management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        self._setUp_databases()
+        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
 
@@ -68,7 +120,7 @@ class TestMultipleClients(unittest.TestCase):
         pf.protocol = CredReceiver
         pf.onConnectionLost = d
         cert = ssl.PrivateCertificate.loadPEM(
-            open('../key/private.pem').read())
+            open('../key/server.pem').read())
         return reactor.listenSSL(1234, pf, cert.options())
 
     def _connectClients(self, factory, d1, d2):
@@ -76,7 +128,7 @@ class TestMultipleClients(unittest.TestCase):
         factory.onConnectionLost = d2
 
         cert = ssl.Certificate.loadPEM(open('../key/public.pem').read())
-        options = ssl.optionsForClientTLS(u'humsat.org', cert)
+        options = ssl.optionsForClientTLS(u'example.humsat.org', cert)
 
         return reactor.connectSSL("localhost", 1234, factory, options)
 
@@ -93,7 +145,6 @@ class TestMultipleClients(unittest.TestCase):
     Log in two different clients with the same credentials. The server should 
     raise UnauthorizedLogin with 'Client already logged in' message
     """
-
     def test_duplicatedUser(self):
 
         d1 = login(self.factory1.protoInstance, UsernamePassword(
@@ -105,8 +156,8 @@ class TestMultipleClients(unittest.TestCase):
 
         def checkError(result):
             self.assertEqual(result.message, 'Client already logged in')
-        d = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
-        return defer.gatherResults([d1, d2, d])
+        d2 = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
+        return defer.gatherResults([d1, d2])
 
 
     def test_simultaneousUsers(self):

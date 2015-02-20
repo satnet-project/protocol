@@ -1,5 +1,7 @@
 import sys 
-print sys.path
+
+from django.core import management
+
 from twisted.internet import defer, protocol
 from twisted.trial import unittest
 from twisted.cred.portal import Portal
@@ -10,6 +12,8 @@ from ampauth.server import CredReceiver
 from ampauth.credentials import *
 from ampauth.server import *
 from ampauth.client import login
+
+from services.common.testing import helpers as db_tools
 
 """
 To perform correct end to end tests:
@@ -46,8 +50,37 @@ class TestSingleClient(unittest.TestCase):
     TODO. Test timeout
     """
 
+    def _setUp_databases(self):
+        """
+        This method populates the database with some information to be used
+        only for this test suite.
+        """
+        #self.__verbose_testing = False
+        username_1 = 'xabi'
+        password_1 = 'pwdxabi'
+        email_1 = 'xabi@aguarda.es'
+
+        username_2 = 'marti'
+        password_2 = 'pwdmarti'
+        email_2 = 'marti@montederramo.es'
+
+        db_tools.create_user_profile(
+            username=username_1, password=password_1, email=email_1)
+        db_tools.create_user_profile(
+            username=username_2, password=password_2, email=email_2)
+
     def setUp(self):
-        # log.startLogging(sys.stdout)
+        log.startLogging(sys.stdout)
+
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
+        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
+        management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        self._setUp_databases()
+        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
+
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
         self.connected = defer.Deferred()

@@ -101,10 +101,11 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         Generate a new challenge for the given username.
         """
-
-        if self.factory.active_protocols.get(sUsername):
+        if sUsername in self.factory.active_protocols:
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
+        else:
+            self.factory.active_protocols[sUsername] = None
 
         d = self.portal.login(
             UsernamePassword(sUsername, sPassword), None, IBoxReceiver)
