@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-   Copyright 2014 Xabier Crespo Álvarez
+   Copyright 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,6 +18,10 @@
     Xabier Crespo Álvarez (xabicrespog@gmail.com)
 """
 __author__ = 'xabicrespog@gmail.com'
+
+import sys, os
+sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 
 from django.core import management
 

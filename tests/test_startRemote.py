@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-   Copyright 2014 Xabier Crespo Álvarez
+   Copyright 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ class ClientProtocolTest(ClientProtocol):
     NotifyEvent.responder(vNotifyEvent)
 
 
-class TestMultipleClients(unittest.TestCase):
+class TestStartRemote(unittest.TestCase):
 
     """
     Testing multiple client connections
