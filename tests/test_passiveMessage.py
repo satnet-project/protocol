@@ -99,8 +99,7 @@ class ClientProtocolTest(ClientProtocol):
         elif iEvent == NotifyEvent.REMOTE_CONNECTED:
             log.msg("The remote client (" + sDetails + ") has just connected")
 
-        self.factory.onEventReceived = self.factory.onEventReceived.callback(
-            iEvent)
+        self.factory.onEventReceived.callback(iEvent)
         return {}
     NotifyEvent.responder(vNotifyEvent)
 
@@ -229,12 +228,12 @@ class TestPassiveMessage(unittest.TestCase):
         log.startLogging(sys.stdout)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        #management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        #management.execute_from_command_line(['manage.py', 'createsuperuser',
-        #    '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
-        #self._setUp_databases()
+        management.execute_from_command_line(['manage.py', 'createsuperuser',
+            '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
@@ -279,15 +278,7 @@ class TestPassiveMessage(unittest.TestCase):
     the server and marked "forwarded=false". The procedure goes:
         1. Client A -> login
         2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
-        6. Client A -> sendMsg(__sMessageA2B)
-
-
-        7. Client A -> notifyMsg (should receive __sMessageA2B)
-        8. Client A -> sendMsg(__sMessageB2A)
-        9. Client B -> notifyMsg (should receive __sMessageB2A)
-        10. Client B -> endRemote()
-        11. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE). This last step
-        is not being checked due to dificulties with Twisted trial methods
+        3. Client A -> sendMsg(__sMessageA2B) (should return True)
     """
 
     def test_simultaneousUsers(self):

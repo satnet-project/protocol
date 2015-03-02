@@ -99,8 +99,7 @@ class ClientProtocolTest(ClientProtocol):
         elif iEvent == NotifyEvent.REMOTE_CONNECTED:
             log.msg("The remote client (" + sDetails + ") has just connected")
 
-        self.factory.onEventReceived = self.factory.onEventReceived.callback(
-            iEvent)
+        self.factory.onEventReceived.callback(iEvent)
         return {}
     NotifyEvent.responder(vNotifyEvent)
 
@@ -260,7 +259,8 @@ class TestStartRemote(unittest.TestCase):
         management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        management.execute_from_command_line(['manage.py', 'createsuperuser',
+            '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
@@ -334,6 +334,7 @@ class TestStartRemote(unittest.TestCase):
         self.factory1.onMessageReceived = defer.Deferred()
         self.factory2.onMessageReceived = defer.Deferred()
         self.factory1.onEventReceived = defer.Deferred()
+        self.factory2.onEventReceived = defer.Deferred()
 
         d1 = login(self.factory1.protoInstance, UsernamePassword(
             'crespo', 'cre.spo'))
@@ -374,7 +375,7 @@ class TestStartRemote(unittest.TestCase):
         d.addCallback(
             lambda l: self.factory2.protoInstance.callRemote(EndRemote))
         
-        return defer.gatherResults([d1, self.factory1.onMessageReceived, d, self.factory1.onEventReceived])
+        return defer.gatherResults([d1, self.factory1.onMessageReceived, d])
 
     """
     Call StartRemote method with a non existing slot id
@@ -420,9 +421,6 @@ class TestStartRemote(unittest.TestCase):
     def test_wrongMessageProcedure(self):
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
-        # To notify when a new message is received by the client
-        self.factory1.onMessageReceived = defer.Deferred()
-        self.factory1.onEventReceived = defer.Deferred()
 
         d1 = login(self.factory1.protoInstance, UsernamePassword(
             'crespo', 'cre.spo'))

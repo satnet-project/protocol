@@ -96,12 +96,15 @@ class SATNETServer(AMP):
             slot_remaining_time, self.vSlotEnd, iSlotId)
         if remoteUsr not in self.factory.active_protocols:
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
+            self.factory.active_connections[localUsr] = None            
             return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
         else:
             log.msg('Remote user is ' + remoteUsr)
             self.factory.active_connections[remoteUsr] = localUsr
             self.factory.active_connections[localUsr] = remoteUsr
             self.factory.active_protocols[remoteUsr].callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(localUsr))
+            self.callRemote(
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(remoteUsr))
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' + str(len(self.factory.active_connections) / 2))
@@ -140,11 +143,11 @@ class SATNETServer(AMP):
                 return {'iResult': StartRemote.CLIENTS_COINCIDE}
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
-                self.bGSuser = False
+                self.bGSuser = True
                 return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
             #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
-                self.bGSuser = True
+                self.bGSuser = False
                 return self.iCreateConnection(self.slot[0].end, iSlotId, gs_user, sc_user)
 
     StartRemote.responder(iStartRemote)
@@ -182,15 +185,17 @@ class SATNETServer(AMP):
                 'Connection not available. Call StartRemote command first.')
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
-        # elif self.sUsername not in self.factory.active_connections and bGSuser == True:
-        #    gs_channel_id = self.slot[0].groundstation_channel_id
-        #    vStoreMessage(gs_channel_id, sTimestamp, iDopplerShift, sMsg)
-        #    self.callRemote(
-        # NotifyEvent, iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
+        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
+            gs_channel = self.slot[0].groundstation_channel
+            sc_channel = self.slot[0].spacecraft_channel            
+            messages_models.Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
+                                                    sc_channel=sc_channel, upwards=self.bGSuser, forwarded=False,
+                                                    tx_timestamp=iTimestamp, message=sMsg)
+            log.msg('Message saved on server')
 
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
-        elif self.sUsername not in self.factory.active_connections and self.bGSuser == False:
+        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
             self.callRemote(
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
         # ... else, send the message to the remote and store it in the DB
