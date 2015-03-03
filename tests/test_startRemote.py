@@ -99,7 +99,7 @@ class ClientProtocolTest(ClientProtocol):
         elif iEvent == NotifyEvent.REMOTE_CONNECTED:
             log.msg("The remote client (" + sDetails + ") has just connected")
 
-        self.factory.onEventReceived.callback(iEvent)
+        self.factory.onEventReceived.callback(str(iEvent) + sDetails)
         return {}
     NotifyEvent.responder(vNotifyEvent)
 
@@ -316,13 +316,14 @@ class TestStartRemote(unittest.TestCase):
         2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
         3. Client B -> login
         4. Client B -> StartRemote (should return StartRemote.REMOTE_READY)
-        5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED)
-        6. Client B -> sendMsg(__sMessageA2B)
-        7. Client A -> notifyMsg (should receive __sMessageA2B)
-        8. Client A -> sendMsg(__sMessageB2A)
-        9. Client B -> notifyMsg (should receive __sMessageB2A)
-        10. Client B -> endRemote()
-        11. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE). This last step
+        5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED + client B username)
+        6. Client B -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED+ client A username)        
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
+        9. Client A -> sendMsg(__sMessageB2A)
+        10. Client B -> notifyMsg (should receive __sMessageB2A)
+        11. Client B -> endRemote()
+        12. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE). This last step
         is not being checked due to dificulties with Twisted trial methods
     """
 
@@ -330,6 +331,11 @@ class TestStartRemote(unittest.TestCase):
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
         __sMessageB2A = "adios, vista dos meus ollos: non sei cando nos veremos."
+        __user1_name = 'crespo'
+        __user1_pass = 'cre.spo'
+        __user2_name = 'tubio'
+        __user2_pass = 'tu.bio'
+
         # To notify when a new message is received by the client
         self.factory1.onMessageReceived = defer.Deferred()
         self.factory2.onMessageReceived = defer.Deferred()
@@ -337,7 +343,7 @@ class TestStartRemote(unittest.TestCase):
         self.factory2.onEventReceived = defer.Deferred()
 
         d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'crespo', 'cre.spo'))
+            __user1_name, __user1_pass))
         d1.addCallback(lambda res: self.assertTrue(res['bAuthenticated']))
 
         d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
@@ -346,15 +352,19 @@ class TestStartRemote(unittest.TestCase):
             res['iResult'], StartRemote.REMOTE_NOT_CONNECTED))
 
         d2 = d1.addCallback(lambda _ignored: login(self.factory2.protoInstance, UsernamePassword(
-            'tubio', 'tu.bio')))
+            __user2_name, __user2_pass)))
         d2.addCallback(lambda res: self.assertTrue(res['bAuthenticated']))
 
         d2.addCallback(lambda l: self.factory2.protoInstance.callRemote(
             StartRemote, iSlotId=__iSlotId))
         d2.addCallback(
             lambda res: self.assertEqual(res['iResult'], StartRemote.REMOTE_READY))
-        self.factory1.onEventReceived.addCallback(
-            lambda iEvent: self.assertEqual(iEvent, NotifyEvent.REMOTE_CONNECTED))
+        
+        d2.addCallback(lambda l : self.factory1.onEventReceived.addCallback(
+            lambda result: self.assertEqual(result, str(NotifyEvent.REMOTE_CONNECTED)+__user2_name)))
+
+        d2.addCallback(lambda l : self.factory2.onEventReceived.addCallback(
+            lambda result: self.assertEqual(result, str(NotifyEvent.REMOTE_CONNECTED)+__user1_name)))
 
         d2.addCallback(lambda l: self.factory2.protoInstance.callRemote(
             SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
