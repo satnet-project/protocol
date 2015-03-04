@@ -26,7 +26,7 @@ import os, sys, logging, django
 from datetime import datetime
 sys.path.append(os.path.dirname(os.getcwd()) + "/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-django.setup()
+#django.setup()
 
 from twisted.python import log
 from twisted.protocols.amp import AMP
@@ -42,8 +42,7 @@ from errors import *
 from services.common import misc
 from services.scheduling.models import operational
 from services.configuration.models.channels import SpacecraftChannel
-
-from services.communications import models as messages_models
+from services.communications.models import Message
 
 
 class SATNETServer(AMP):
@@ -188,7 +187,7 @@ class SATNETServer(AMP):
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
             gs_channel = self.slot[0].groundstation_channel
             sc_channel = self.slot[0].spacecraft_channel            
-            messages_models.Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
+            Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
                                                     sc_channel=sc_channel, upwards=self.bGSuser, forwarded=False,
                                                     tx_timestamp=iTimestamp, message=sMsg)
             log.msg('Message saved on server')
@@ -206,7 +205,7 @@ class SATNETServer(AMP):
             # store messages in the DB (as already forwarded)
             gs_channel = self.slot[0].groundstation_channel
             sc_channel = self.slot[0].spacecraft_channel
-            messages_models.Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
+            Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
                                                     sc_channel=sc_channel, upwards=self.bGSuser, forwarded=True,
                                                     tx_timestamp=iTimestamp, message=sMsg)
 
