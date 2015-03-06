@@ -98,8 +98,7 @@ class ClientProtocolTest(ClientProtocol):
                 "Disconnection because the remote client has been disconnected")
         elif iEvent == NotifyEvent.REMOTE_CONNECTED:
             log.msg("The remote client (" + sDetails + ") has just connected")
-
-        self.factory.onEventReceived.callback(str(iEvent) + sDetails)
+        self.factory.onEventReceived.callback(iEvent)
         return {}
     NotifyEvent.responder(vNotifyEvent)
 
@@ -108,7 +107,7 @@ class TestStartRemote(unittest.TestCase):
 
     """
     Testing multiple client connections
-    TDOD. Test multiple valid connections
+    TODO. Test multiple valid connections
     """
 
     def _setUp_databases(self):
@@ -323,10 +322,10 @@ class TestStartRemote(unittest.TestCase):
         9. Client A -> sendMsg(__sMessageB2A)
         10. Client B -> notifyMsg (should receive __sMessageB2A)
         11. Client B -> endRemote()
-        12. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE). This last step
-        is not being checked due to dificulties with Twisted trial methods
+        12. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE)
     """
 
+    @defer.inlineCallbacks
     def test_simultaneousUsers(self):
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
@@ -336,56 +335,58 @@ class TestStartRemote(unittest.TestCase):
         __user2_name = 'tubio'
         __user2_pass = 'tu.bio'
 
-        # To notify when a new message is received by the client
         self.factory1.onMessageReceived = defer.Deferred()
         self.factory2.onMessageReceived = defer.Deferred()
         self.factory1.onEventReceived = defer.Deferred()
         self.factory2.onEventReceived = defer.Deferred()
 
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
+        # User 1 (login + start remote)
+        res = yield login(self.factory1.protoInstance, UsernamePassword(
             __user1_name, __user1_pass))
-        d1.addCallback(lambda res: self.assertTrue(res['bAuthenticated']))
+        self.assertTrue(res['bAuthenticated'])
 
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
-        d1.addCallback(lambda res: self.assertEqual(
-            res['iResult'], StartRemote.REMOTE_NOT_CONNECTED))
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-        d2 = d1.addCallback(lambda _ignored: login(self.factory2.protoInstance, UsernamePassword(
-            __user2_name, __user2_pass)))
-        d2.addCallback(lambda res: self.assertTrue(res['bAuthenticated']))
+        # User 2 (login + start remote)
+        res = yield login(self.factory2.protoInstance, UsernamePassword(
+            __user2_name, __user2_pass))
+        self.assertTrue(res['bAuthenticated'])
 
-        d2.addCallback(lambda l: self.factory2.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
-        d2.addCallback(
-            lambda res: self.assertEqual(res['iResult'], StartRemote.REMOTE_READY))
-        
-        d2.addCallback(lambda l : self.factory1.onEventReceived.addCallback(
-            lambda result: self.assertEqual(result, str(NotifyEvent.REMOTE_CONNECTED)+__user2_name)))
+        res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
 
-        d2.addCallback(lambda l : self.factory2.onEventReceived.addCallback(
-            lambda result: self.assertEqual(result, str(NotifyEvent.REMOTE_CONNECTED)+__user1_name)))
+        # Events notifying REMOTE_CONNECTED to both clients
+        ev = yield self.factory1.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory1.onEventReceived = defer.Deferred()
+        ev = yield self.factory2.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory2.onEventReceived = defer.Deferred()
 
-        d2.addCallback(lambda l: self.factory2.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
-        d2.addCallback(lambda res: self.assertTrue(res['bResult']))
+        # User 1 sends a message to user 2
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
 
-        self.factory1.onMessageReceived.addCallback(
-            lambda sMsg: self.assertEqual(sMsg, __sMessageA2B))
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessageA2B)
 
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageB2A, iTimestamp=misc.get_utc_timestamp()))
-        d1.addCallback(lambda res: self.assertTrue(res['bResult']))
+        # User 2 sends a message to user 1
+        res = yield self.factory1.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageB2A, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
 
-        self.factory2.onMessageReceived.addCallback(
-            lambda sMsg: self.assertEqual(sMsg, __sMessageB2A))
+        msg = yield self.factory2.onMessageReceived
+        self.assertEqual(msg, __sMessageB2A)
 
-        d = defer.gatherResults(
-            [d2, self.factory2.onMessageReceived, self.factory1.onEventReceived])
-        d.addCallback(
-            lambda l: self.factory2.protoInstance.callRemote(EndRemote))
-        
-        return defer.gatherResults([d1, self.factory1.onMessageReceived, d])
+        # User 2 finishes the connection
+        res = yield self.factory2.protoInstance.callRemote(EndRemote)
+        ev = yield self.factory1.onEventReceived
+
+        # User 1 is notified about the disconnection
+        self.assertEqual(ev, NotifyEvent.END_REMOTE)
+
 
     """
     Call StartRemote method with a non existing slot id
