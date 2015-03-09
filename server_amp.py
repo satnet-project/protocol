@@ -114,9 +114,9 @@ class SATNETServer(AMP):
         self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
         # If slot NOT operational yet...
         if not self.slot:
-            log.err('Slot ' + str(iSlotId) + ' not operational yet')
+            log.err('Slot ' + str(iSlotId) + ' is not yet operational')
             raise SlotErrorNotification(
-                'Slot ' + str(iSlotId) + ' not operational yet')
+                'Slot ' + str(iSlotId) + ' is not yet operational')
         # ... if multiple slots have the same ID (never should happen)...
         elif len(self.slot) > 1:
             log.err('Multiple slots with the same id: ' + str(iSlotId))
@@ -125,8 +125,8 @@ class SATNETServer(AMP):
         else:
             # If it is too soon to connect to this slot...
             if self.slot[0].state != operational.STATE_RESERVED:
-                log.err('Slot has not been reserved yet')
-                raise SlotErrorNotification('Slot has not been reserved yet')
+                log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
+                raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
             gs_user = self.slot[
                 0].groundstation_channel.groundstation_set.all()[0].user.username
             sc_user = self.slot[

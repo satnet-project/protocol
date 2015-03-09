@@ -281,22 +281,18 @@ class TestPassiveMessage(unittest.TestCase):
         3. Client A -> sendMsg(__sMessageA2B) (should return True)
     """
 
+    @defer.inlineCallbacks
     def test_simultaneousUsers(self):
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
         # To notify when a new message is received by the client
 
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'tubio', 'tu.bio'))
-        d1.addCallback(lambda res: self.assertTrue(res['bAuthenticated']))
+        res = yield login(self.factory1.protoInstance, UsernamePassword('tubio', 'tu.bio'))
+        self.assertTrue(res['bAuthenticated'])
 
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
-        d1.addCallback(lambda res: self.assertEqual(
-            res['iResult'], StartRemote.REMOTE_NOT_CONNECTED))
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
-        d1.addCallback(lambda res: self.assertTrue(res['bResult']))
-
-        return d1
+        res = yield self.factory1.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])

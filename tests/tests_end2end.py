@@ -246,7 +246,7 @@ class TestStartRemote(unittest.TestCase):
         gs_1_o_slots = jrpc_gs_scheduling.get_operational_slots(__gs_1_id)
 
         gs_c_slots = jrpc_gs_scheduling.confirm_selections(
-            __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots[2:4]])
+            __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
 
     def setUp(self):
         log.startLogging(sys.stdout)
@@ -307,51 +307,102 @@ class TestStartRemote(unittest.TestCase):
                                     ])
 
     """
-    Call StartRemote method with a non existing slot id
+    Basic remote connection between two clients. The procedure goes:
+        1. Client A -> login
+        2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
+        3. Client B -> login
+        4. Client B -> StartRemote (should return StartRemote.REMOTE_READY)
+        5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED + client B username)
+        6. Client B -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED+ client A username)        
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
+        9. Client A -> sendMsg(__sMessageB2A)
+        10. Client B -> notifyMsg (should receive __sMessageB2A)
+        11. Client B -> endRemote()
+        12. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE)
     """
 
-    def test_wrongSlot(self):
-        __iSlotId = 100
+    @defer.inlineCallbacks
+    def test_simultaneousUsers(self):
+        __iSlotId = 1
+        __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+        __sMessageB2A = "adios, vista dos meus ollos: non sei cando nos veremos."
+        __user1_name = 'crespo'
+        __user1_pass = 'cre.spo'
+        __user2_name = 'tubio'
+        __user2_pass = 'tu.bio'
+
+        self.factory1.onMessageReceived = defer.Deferred()
+        self.factory2.onMessageReceived = defer.Deferred()
+        self.factory1.onEventReceived = defer.Deferred()
+        self.factory2.onEventReceived = defer.Deferred()
+
+        # User 1 (login + start remote)
+        res = yield login(self.factory1.protoInstance, UsernamePassword(
+            __user1_name, __user1_pass))
+        self.assertTrue(res['bAuthenticated'])
+
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+
+        # User 2 (login + start remote)
+        res = yield login(self.factory2.protoInstance, UsernamePassword(
+            __user2_name, __user2_pass))
+        self.assertTrue(res['bAuthenticated'])
+
+        res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
+
+        # Events notifying REMOTE_CONNECTED to both clients
+        ev = yield self.factory1.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory1.onEventReceived = defer.Deferred()
+        ev = yield self.factory2.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory2.onEventReceived = defer.Deferred()
+
+        # User 1 sends a message to user 2
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessageA2B)
+
+        # User 2 sends a message to user 1
+        res = yield self.factory1.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageB2A, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory2.onMessageReceived
+        self.assertEqual(msg, __sMessageB2A)
+
+        # User 2 finishes the connection
+        res = yield self.factory2.protoInstance.callRemote(EndRemote)
+        ev = yield self.factory1.onEventReceived
+
+        # User 1 is notified about the disconnection
+        self.assertEqual(ev, NotifyEvent.END_REMOTE)
+
+
+    """
+    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
+    The procedure goes:
+        1. Client A -> login
+        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
+                'Connection not available. Call StartRemote command first.'))
+    """
+
+    def test_wrongMessageProcedure(self):
+        __iSlotId = 1
+        __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
 
         d1 = login(self.factory1.protoInstance, UsernamePassword(
             'crespo', 'cre.spo'))
         d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
 
         def checkError(result):
             self.assertEqual(
-                result.message, 'Slot ' + str(__iSlotId) + ' is not yet operational')
-        return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
-
-    """
-    Basic remote connection when GSS and MCC clients correspond to the same user
-    """
-
-    def test_localClient(self):
-        __iSlotId = 4
-
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'tubio', 'tu.bio'))
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
-        d1.addCallback(lambda res: self.assertEqual(
-            res['iResult'], StartRemote.CLIENTS_COINCIDE))
-
-        return d1
-
-    """
-    Call StartRemote method with a non existing slot id
-    """
-
-    def test_slotNotReserved(self):
-        __iSlotId = 2
-
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'crespo', 'cre.spo'))
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            StartRemote, iSlotId=__iSlotId))
-
-        def checkError(result):
-            self.assertEqual(
-                result.message, 'Slot ' + str(__iSlotId) + ' has not yet been reserved')
+                result.message, 'Connection not available. Call StartRemote command first.')
         return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
