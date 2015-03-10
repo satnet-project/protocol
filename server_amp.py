@@ -186,7 +186,7 @@ class SATNETServer(AMP):
         # as passive messages...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
             gs_channel = self.slot[0].groundstation_channel
-            sc_channel = self.slot[0].spacecraft_channel            
+            sc_channel = self.slot[0].spacecraft_channel
             Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
                                                     sc_channel=sc_channel, upwards=self.bGSuser, forwarded=False,
                                                     tx_timestamp=iTimestamp, message=sMsg)

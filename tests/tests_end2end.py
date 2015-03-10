@@ -303,8 +303,7 @@ class TestStartRemote(unittest.TestCase):
         self.clientConnection2.disconnect()
 
         return defer.gatherResults([d,
-                                    self.clientDisconnected1, self.clientDisconnected2
-                                    ])
+                                    self.clientDisconnected1, self.clientDisconnected2])
 
     """
     Basic remote connection between two clients. The procedure goes:
@@ -383,26 +382,3 @@ class TestStartRemote(unittest.TestCase):
 
         # User 1 is notified about the disconnection
         self.assertEqual(ev, NotifyEvent.END_REMOTE)
-
-
-    """
-    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
-    The procedure goes:
-        1. Client A -> login
-        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
-                'Connection not available. Call StartRemote command first.'))
-    """
-
-    def test_wrongMessageProcedure(self):
-        __iSlotId = 1
-        __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
-
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'crespo', 'cre.spo'))
-        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
-
-        def checkError(result):
-            self.assertEqual(
-                result.message, 'Connection not available. Call StartRemote command first.')
-        return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)

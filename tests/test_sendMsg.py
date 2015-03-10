@@ -129,6 +129,17 @@ class TestPassiveMessage(unittest.TestCase):
             jrpc_keys.BANDWIDTH_K: '12.500000000'
         }
 
+        __sc_2_id = 'beesat-sc'
+        __sc_2_tle_id = 'BEESAT-2'
+        __sc_2_ch_1_id = 'beesat-fm'
+        __sc_2_ch_1_cfg = {
+            jrpc_keys.FREQUENCY_K: '437000000',
+            jrpc_keys.MODULATION_K: 'FM',
+            jrpc_keys.POLARIZATION_K: 'LHCP',
+            jrpc_keys.BITRATE_K: '300',
+            jrpc_keys.BANDWIDTH_K: '12.500000000'
+        }
+
         __gs_1_id = 'gs-la'
         __gs_1_ch_1_id = 'gs-la-fm'
         __gs_1_ch_1_cfg = {
@@ -182,6 +193,11 @@ class TestPassiveMessage(unittest.TestCase):
             tle_id=__sc_1_tle_id,
         )
 
+        __sc_2 = helpers.create_sc(
+            user_profile=__usr_2,
+            identifier=__sc_2_id,
+            tle_id=__sc_2_tle_id,
+        )
         __gs_1 = helpers.create_gs(
             user_profile=__usr_2, identifier=__gs_1_id,
         )
@@ -213,11 +229,20 @@ class TestPassiveMessage(unittest.TestCase):
             configuration=__sc_1_ch_1_cfg
         )
 
+        jrpc_channels_if.sc_channel_create(
+            spacecraft_id=__sc_2_id,
+            channel_id=__sc_2_ch_1_id,
+            configuration=__sc_2_ch_1_cfg
+        )
+
         sc_1_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_1_id)
+        sc_2_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_2_id)
 
         sc_1_s_slots = jrpc_sc_scheduling.select_slots(
-            __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots]
-            )
+            __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots])
+
+        sc_2_s_slots = jrpc_sc_scheduling.select_slots(
+            __sc_2_id, [int(slot['identifier']) for slot in sc_2_o_slots])
 
         gs_1_o_slots = jrpc_gs_scheduling.get_operational_slots(__gs_1_id)
 
@@ -228,12 +253,12 @@ class TestPassiveMessage(unittest.TestCase):
         log.startLogging(sys.stdout)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        #management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        management.execute_from_command_line(['manage.py', 'createsuperuser',
-            '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
-        self._setUp_databases()
+        #management.execute_from_command_line(['manage.py', 'createsuperuser',
+        #    '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        #self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
@@ -242,10 +267,16 @@ class TestPassiveMessage(unittest.TestCase):
         self.connected1 = defer.Deferred()
         self.clientDisconnected1 = defer.Deferred()
         self.factory1 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
-        self.clientConnection1 = self._connectClient(self.factory1, self.connected1,
+        self.clientConnection1 = self._connectClients(self.factory1, self.connected1,
                                                       self.clientDisconnected1)
 
-        return self.connected1
+        self.connected2 = defer.Deferred()
+        self.clientDisconnected2 = defer.Deferred()
+        self.factory2 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
+        self.clientConnection2 = self._connectClients(self.factory2, self.connected2,
+                                                      self.clientDisconnected2)
+
+        return defer.gatherResults([self.connected1, self.connected2])
 
     def _listenServer(self, d):
         checker = DjangoAuthChecker()
@@ -258,7 +289,7 @@ class TestPassiveMessage(unittest.TestCase):
             open('../key/server.pem').read())
         return reactor.listenSSL(1234, pf, cert.options())
 
-    def _connectClient(self, factory, d1, d2):
+    def _connectClients(self, factory, d1, d2):
         factory.onConnectionMade = d1
         factory.onConnectionLost = d2
 
@@ -270,8 +301,11 @@ class TestPassiveMessage(unittest.TestCase):
     def tearDown(self):
         d = defer.maybeDeferred(self.serverPort.stopListening)
         self.clientConnection1.disconnect()
+        self.clientConnection2.disconnect()
 
-        return defer.gatherResults([d, self.clientDisconnected1])
+        return defer.gatherResults([d,
+                                    self.clientDisconnected1, self.clientDisconnected2])
+
 
     """
     A message is sent by A to B, but the last one is not connected yet. The message is stored in 
@@ -282,11 +316,11 @@ class TestPassiveMessage(unittest.TestCase):
     """
 
     @defer.inlineCallbacks
-    def test_simultaneousUsers(self):
+    def test_passiveMessage(self):
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+        
         # To notify when a new message is received by the client
-
         res = yield login(self.factory1.protoInstance, UsernamePassword('tubio', 'tu.bio'))
         self.assertTrue(res['bAuthenticated'])
 
@@ -296,3 +330,124 @@ class TestPassiveMessage(unittest.TestCase):
         res = yield self.factory1.protoInstance.callRemote(
             SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
         self.assertTrue(res['bResult'])
+
+    """
+    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
+    The procedure goes:
+        1. Client A -> login
+        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
+                'Connection not available. Call StartRemote command first.'))
+    """
+
+    def test_wrongMessageProcedure(self):
+        __iSlotId = 1
+        __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+
+        d1 = login(self.factory1.protoInstance, UsernamePassword(
+            'crespo', 'cre.spo'))
+        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp()))
+
+        def checkError(result):
+            self.assertEqual(
+                result.message, 'Connection not available. Call StartRemote command first.')
+        return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+
+    """
+    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
+    The procedure goes:
+        1. Client A -> login
+        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
+                'Connection not available. Call StartRemote command first.'))
+    """
+
+    @defer.inlineCallbacks
+    def test_SCDisconnecteds(self):
+        __iSlotId = 1
+        __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+        
+        self.factory1.onEventReceived = defer.Deferred()
+
+        # To notify when a new message is received by the client
+        res = yield login(self.factory1.protoInstance, UsernamePassword('crespo', 'cre.spo'))
+        self.assertTrue(res['bAuthenticated'])
+
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+
+        res = yield self.factory1.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        # Events notifying REMOTE_CONNECTED to both clients
+        ev = yield self.factory1.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_DISCONNECTED)
+
+    """
+    Basic remote connection between two clients. The procedure goes:
+        1. Client A -> login
+        2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
+        3. Client B -> login
+        4. Client B -> StartRemote (should return StartRemote.REMOTE_READY)
+        5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED + client B username)
+        6. Client B -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED+ client A username)        
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
+
+    """
+
+    @defer.inlineCallbacks
+    def test_sendMsg(self):
+        __iSlotId = 1
+        __sMessage1_A2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+        __sMessage2_A2B = "adios, vista dos meus ollos: non sei cando nos veremos."
+        __user1_name = 'crespo'
+        __user1_pass = 'cre.spo'
+        __user2_name = 'tubio'
+        __user2_pass = 'tu.bio'
+
+        self.factory1.onMessageReceived = defer.Deferred()
+        self.factory1.onEventReceived = defer.Deferred()
+        self.factory2.onEventReceived = defer.Deferred()
+
+        # User 1 (login + start remote)
+        res = yield login(self.factory1.protoInstance, UsernamePassword(
+            __user1_name, __user1_pass))
+        self.assertTrue(res['bAuthenticated'])
+
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+
+        # User 2 (login + start remote)
+        res = yield login(self.factory2.protoInstance, UsernamePassword(
+            __user2_name, __user2_pass))
+        self.assertTrue(res['bAuthenticated'])
+
+        res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
+
+        # Events notifying REMOTE_CONNECTED to both clients
+        ev = yield self.factory1.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory1.onEventReceived = defer.Deferred()
+        ev = yield self.factory2.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory2.onEventReceived = defer.Deferred()
+
+        # User 1 sends a message to user 2
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessage1_A2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessage1_A2B)
+        self.factory1.onMessageReceived = defer.Deferred()
+
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessage2_A2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessage2_A2B)
