@@ -179,12 +179,18 @@ class TestStartRemote(unittest.TestCase):
         __usr_2_pass = 'tu.bio'
         __usr_2_mail = 'tubio@tubio.gal'
 
+        __usr_3_name = 'user3'
+        __usr_3_pass = 'us.er3'
+        __usr_3_mail = 'user3@user3.gal'
+
         # Default values: username=testuser, password=testuser.
         __user_def = helpers.create_user_profile()
         __usr_1 = helpers.create_user_profile(
             username=__usr_1_name, password=__usr_1_pass, email=__usr_1_mail)
         __usr_2 = helpers.create_user_profile(
             username=__usr_2_name, password=__usr_2_pass, email=__usr_2_mail)
+        __usr_3 = helpers.create_user_profile(
+            username=__usr_3_name, password=__usr_3_pass, email=__usr_3_mail)
 
         __sc_1 = helpers.create_sc(
             user_profile=__usr_1,
@@ -340,7 +346,7 @@ class TestStartRemote(unittest.TestCase):
         return d1
 
     """
-    Call StartRemote method with a non existing slot id
+    Call StartRemote method without having reserved previously the slot
     """
 
     def test_slotNotReserved(self):
@@ -355,3 +361,21 @@ class TestStartRemote(unittest.TestCase):
             self.assertEqual(
                 result.message, 'Slot ' + str(__iSlotId) + ' has not yet been reserved')
         return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+
+    """
+    Call StartRemote method without having selected the slot for this user
+    """
+
+    def test_slotNotAssigned(self):
+        __iSlotId = 4
+
+        d1 = login(self.factory1.protoInstance, UsernamePassword(
+            'user3', 'us.er3'))
+        d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
+            StartRemote, iSlotId=__iSlotId))
+
+        def checkError(result):
+            self.assertEqual(
+                result.message, 'This user is not assigned to this slot')
+        return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+

@@ -135,7 +135,7 @@ class SATNETServer(AMP):
             if gs_user != self.sUsername and sc_user != self.sUsername:
                 log.err('This slot has not been assigned to this user')
                 raise SlotErrorNotification(
-                    'This user has not been asigned to this slot')
+                    'This user is not assigned to this slot')
             #... if the GS user and the SC user belong to the same client...
             elif gs_user == self.sUsername and sc_user == self.sUsername:
                 log.msg('Both MCC and GSS belong to the same client')
