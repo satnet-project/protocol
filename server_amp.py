@@ -26,7 +26,7 @@ import os, sys, logging, django
 from datetime import datetime
 sys.path.append(os.path.dirname(os.getcwd()) + "/server")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-#django.setup()
+django.setup()
 
 from twisted.python import log
 from twisted.protocols.amp import AMP
@@ -91,6 +91,9 @@ class SATNETServer(AMP):
         slot_remaining_time = int(
             (iSlotEnd - misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
+        if (slot_remaining_time <= 0):
+            log.err('This slot (' + str(iSlotId) + ') has expired')
+            raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
         self.credProto.iSlotEndCallId = reactor.callLater(
             slot_remaining_time, self.vSlotEnd, iSlotId)
         if remoteUsr not in self.factory.active_protocols:

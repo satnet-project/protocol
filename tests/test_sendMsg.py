@@ -253,12 +253,12 @@ class TestPassiveMessage(unittest.TestCase):
         log.startLogging(sys.stdout)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        #management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        #management.execute_from_command_line(['manage.py', 'createsuperuser',
-        #    '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
-        #self._setUp_databases()
+        management.execute_from_command_line(['manage.py', 'createsuperuser',
+            '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
