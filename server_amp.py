@@ -162,7 +162,7 @@ class SATNETServer(AMP):
         # If the client is still in active_connections (only true when he
         # was in a remote connection and he was disconnected in the first
         # place)
-        if self.sUsername in self.factory.active_connections:
+        if self.factory.active_connections[self.sUsername]:
             # Notify the remote client about this disconnection. The notification is
             # sent through the SATNETServer instance
             self.factory.active_protocols[self.factory.active_connections[
