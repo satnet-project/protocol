@@ -63,7 +63,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
     portal = None
     logout = None
-    sUsername = 'NOT_AUTHENTICATED'
+    sUsername = ''
     iTimeOut = 300  # seconds
     iSlotEndCallId = None
 
@@ -81,18 +81,15 @@ class CredReceiver(AMP, TimeoutMixin):
         self.transport.abortConnection()
 
     def connectionLost(self, reason):
-        # If the client has been added to active_protocols and/or to
-        # active_connections
-        if self.sUsername != 'NOT_AUTHENTICATED':
-            # Remove from active protocols
+        # Remove the client from active_protocols and/or active_connections
+        if self.sUsername != '':
             self.factory.active_protocols.pop(self.sUsername)
             if self.iSlotEndCallId is not None:
                 self.iSlotEndCallId.cancel()
         log.err(reason.getErrorMessage())
         log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
         # divided by 2 because the dictionary is doubly linked
-        log.msg(
-            'Active connections: ' + str(len(self.factory.active_connections) / 2))
+        log.msg('Active connections: ' + str(len(self.factory.active_connections)/2))
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
         super(CredReceiver, self).connectionLost(reason)
@@ -105,13 +102,13 @@ class CredReceiver(AMP, TimeoutMixin):
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
+            self.sUsername = sUsername
             self.factory.active_protocols[sUsername] = None
 
         d = self.portal.login(
             UsernamePassword(sUsername, sPassword), None, IBoxReceiver)
 
         def cbLoggedIn((interface, avatar, logout)):
-            self.sUsername = sUsername
             self.logout = logout
             self.boxReceiver = avatar
             self.boxReceiver.startReceivingBoxes(self.boxSender)
