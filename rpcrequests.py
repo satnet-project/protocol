@@ -1,7 +1,29 @@
+# coding=utf-8
+"""
+     Copyright 2015 Xabier Crespo Álvarez
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+
+:Author:
+    Xabier Crespo Álvarez (xabicrespog@gmail.com)
+"""
+__author__ = 'xabicrespog@gmail.com'
+
+
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
-import requests, json
+import requests, json, threading
 
 class HttpSessionTransport(HttpPostClientTransport):
     """
@@ -79,7 +101,8 @@ class SATNET_RPC():
 
 
     def _keepAlive(self):
-        pass
+        threading.Timer(300, _keepAlive).start()
+        self.call('network.keepAlive')
 
     def call(self, call, *args):
         """
