@@ -24,6 +24,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
 import requests, json, threading
+from errors import BadCredentials
 
 class HttpSessionTransport(HttpPostClientTransport):
     """
@@ -71,12 +72,12 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
 
         return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
 
-class SATNET_RPC():
+class Satnet_RPC():
     """
     Start RPC connection and keep session open.
 
     Example:
-    rpc = SATNET_RPC('crespum', 'solutions')
+    rpc = Satnet_RPC('crespum', 'solutions')
     print rpc.call('configuration.sc.list')
 
     :param user:
@@ -90,14 +91,21 @@ class SATNET_RPC():
         L{String}
 
     """
-    def __init__(self, user, pwd):
-        self._rpc_client = RPCClient(
-            JSONRPCProtocolFix(),
-            HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
-        )
+    def __init__(self, user, pwd, debug=False):
+        if not debug:
+            self._rpc_client = RPCClient(
+                JSONRPCProtocolFix(),
+                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
+            )
+        else:
+            self._rpc_client = RPCClient(
+                JSONRPCProtocolFix(),
+                HttpSessionTransport('http://localhost:8000/jrpc/')
+            )
+
         self._keepAlive()
         if not self.call('system.login', user, pwd):
-            raise Exception()
+            raise BadCredentials()
 
 
     def _keepAlive(self):

@@ -39,3 +39,9 @@ class RemoteClientNotification(Exception):
         2. Remote user and invoking user coincide 
             (i.e. MCC and GSS are the same)
     """
+
+class BadCredentials(Exception):
+
+    """
+    Incorrect username/password.
+    """

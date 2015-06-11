@@ -29,7 +29,6 @@ from twisted.internet.error import ReactorNotRunning
 from twisted.protocols.amp import AMP
 from twisted.cred.credentials import UsernamePassword
 
-from ampauth.client import login
 from commands import *
 
 import serial, getpass, sys, getopt
@@ -42,8 +41,8 @@ class ClientProtocol(AMP):
     ser = None
 
     def user_login(self):
-
-        d = login(self, UsernamePassword(self.USERNAME, self.PASSWORD))
+        d = self.callRemote(
+            PasswordLogin, sUsername=self.USERNAME, sPassword=self.PASSWORD)
         def connected(self, proto):
             proto.callRemote(StartRemote, iSlotId=1)
         d.addCallback(connected, self)
