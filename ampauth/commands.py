@@ -24,7 +24,7 @@ from twisted.protocols import amp
 from twisted.cred.error import UnauthorizedLogin
 
 
-class PasswordLogin(amp.Command):
+class Login(amp.Command):
 
     """
     Command to authenticate an user.  The server response is a boolean
