@@ -21,3 +21,4 @@ pyOpenSSL==0.15.1
 pytz==2015.4
 service-identity==14.0.0
 twisted==15.2.1
+tinyrpc==0.5
