@@ -109,7 +109,7 @@ class Satnet_RPC():
 
 
     def _keepAlive(self):
-        threading.Timer(300, _keepAlive).start()
+        threading.Timer(300, self._keepAlive).start()
         self.call('network.keepAlive')
 
     def call(self, call, *args):
