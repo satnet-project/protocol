@@ -27,8 +27,10 @@ from twisted.protocols.amp import IBoxReceiver
 from twisted.python import log
 from twisted.protocols.policies import TimeoutMixin
 
-from commands import PasswordLogin
+from commands import Login
 from twisted.cred.error import UnauthorizedLogin
+from errors import BadCredentials
+from rpcrequests import Satnet_RPC
 
 
 class CredReceiver(AMP, TimeoutMixin):
@@ -38,16 +40,10 @@ class CredReceiver(AMP, TimeoutMixin):
     to be used for credentials purposes. The specific SATNET protocol will be
     implemented in L{SATNETServer} (see server_amp.py).
 
-    :ivar portal: 
-        The L{Portal} against which login will be performed.  This is
-        expected to be set by the factory which creates instances of this
-        class.
-    :type portal:
-        L{Portal}
-
-    :ivar logout: 
-        C{None} or a no-argument callable.  This is set to the logout object
-        returned by L{Portal.login} and is set while an avatar is logged in.
+    :ivar rpc_if: 
+        Endpoint to make RPC calls.
+    :type rpc_if:
+        L{Satnet_RPC}
 
     :ivar sUsername:
         Each protocol belongs to a User. This field represents User.username
@@ -59,13 +55,26 @@ class CredReceiver(AMP, TimeoutMixin):
         will be automagically disconnected.
     :type iTimeOut:
         L{int}
+
+    :ivar session:
+        Reference to a object in charge of removing the user from active_protocols
+        when it is inactive.
+    :type session:
+        L{IDelayedCall}
+
+    :ivar factory:
+        The duration of the session timeout in seconds. After this time the user
+        will be automagically disconnected.
+    :type factory:
+        L{CredAMPServerFactory}        
     """
 
-    portal = None
+    rpc_if = None
     logout = None
     sUsername = ''
     iTimeOut = 300  # seconds
-    iSlotEndCallId = None
+    session = None
+    factory = None
 
     def connectionMade(self):
         self.setTimeout(self.iTimeOut)
@@ -84,8 +93,8 @@ class CredReceiver(AMP, TimeoutMixin):
         # Remove the client from active_protocols and/or active_connections
         if self.sUsername != '':
             self.factory.active_protocols.pop(self.sUsername)
-            if self.iSlotEndCallId is not None:
-                self.iSlotEndCallId.cancel()
+            if self.session is not None:
+                self.session.cancel()
         log.err(reason.getErrorMessage())
         log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
         # divided by 2 because the dictionary is doubly linked
@@ -94,7 +103,7 @@ class CredReceiver(AMP, TimeoutMixin):
         self.transport.loseConnection()
         super(CredReceiver, self).connectionLost(reason)
 
-    def passwordLogin(self, sUsername, sPassword):
+    def login(self, sUsername, sPassword):
         """
         Generate a new challenge for the given username.
         """
@@ -105,8 +114,22 @@ class CredReceiver(AMP, TimeoutMixin):
             self.sUsername = sUsername
             self.factory.active_protocols[sUsername] = None
 
-        d = self.portal.login(
-            UsernamePassword(sUsername, sPassword), None, IBoxReceiver)
+        try:
+            self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
+            #avatar.factory = self.factory
+            #avatar.credProto = self
+            #avatar.sUsername = sUsername
+            self.factory.active_protocols[sUsername] = self
+            log.msg('Connection made')
+            log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
+            log.msg('Active connections: ' + str(len(self.factory.active_connections)))
+
+            return {'bAuthenticated': True}
+
+        except BadCredentials as e:
+            log.err('Incorrect username and/or password')
+            log.err(e)
+
 
         def cbLoggedIn((interface, avatar, logout)):
             self.logout = logout
@@ -126,7 +149,7 @@ class CredReceiver(AMP, TimeoutMixin):
             return {'bAuthenticated': True}
         d.addCallback(cbLoggedIn)
         return d
-    PasswordLogin.responder(passwordLogin)
+    Login.responder(login)
 
 
 class CredAMPServerFactory(ServerFactory):
@@ -137,12 +160,6 @@ class CredAMPServerFactory(ServerFactory):
     This factory takes care of associating a L{Portal} with the L{CredReceiver}
     instances it creates. If the login is succesfully achieved, a L{SATNETServer}
     instance is also created.
-
-    :ivar portal: 
-        The portal which will be used by L{CredReceiver} instances
-        created by this factory.
-    :type portal:
-        L{Portal}
 
     :ivar active_protocols:
         A dictionary containing a reference to all active protocols (clients).
@@ -163,12 +180,6 @@ class CredAMPServerFactory(ServerFactory):
     active_protocols = {}
     active_connections = {}
 
-    def __init__(self, portal):
-        self.portal = portal
+    def __init__(self):
         self.active_protocols = {}
         self.active_connections = {}
-
-    def buildProtocol(self, addr):
-        proto = ServerFactory.buildProtocol(self, addr)
-        proto.portal = self.portal
-        return proto

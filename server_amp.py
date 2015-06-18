@@ -20,13 +20,8 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-# First of all we need to add satnet-release-1/WebServices to the path
-# to import Django modules
-import os, sys, logging, django
+import os, sys, logging
 from datetime import datetime
-sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-django.setup()
 
 from twisted.python import log
 from twisted.protocols.amp import AMP
@@ -35,14 +30,8 @@ from twisted.internet import protocol
 from twisted.cred.portal import Portal
 
 from commands import *
-from ampauth.credentials import *
 from ampauth.server import *
 from errors import *
-
-from services.common import misc
-from services.scheduling.models import operational
-from services.configuration.models.channels import SpacecraftChannel
-from services.communications.models import Message
 
 
 class SATNETServer(AMP):
@@ -94,7 +83,7 @@ class SATNETServer(AMP):
         if (slot_remaining_time <= 0):
             log.err('This slot (' + str(iSlotId) + ') has expired')
             raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
-        self.credProto.iSlotEndCallId = reactor.callLater(
+        self.credProto.session = reactor.callLater(
             slot_remaining_time, self.vSlotEnd, iSlotId)
         if remoteUsr not in self.factory.active_protocols:
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
@@ -222,7 +211,7 @@ class SATNETServer(AMP):
             NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
         # Remove the timer ID reference to avoid it to be canceled
         # a second time when the client disconnects
-        self.credProto.iSlotEndCallId = None
+        self.credProto.session = None
 
 
 def main():
@@ -230,11 +219,7 @@ def main():
 
     log.startLogging(sys.stdout)
 
-    checker = DjangoAuthChecker()
-    realm = Realm()
-    portal = Portal(realm, [checker])
-
-    pf = CredAMPServerFactory(portal)
+    pf = CredAMPServerFactory()
     cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
     reactor.listenSSL(1234, pf, cert.options())

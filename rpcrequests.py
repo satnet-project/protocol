@@ -44,7 +44,7 @@ class HttpSessionTransport(HttpPostClientTransport):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        r = self.s.post(self.endpoint, data=message, **self.request_kwargs)
+        r = self.s.post(self.endpoint, data=message, headers={'content-type':'application/json'})
 
         if expect_reply:
             return r.content
@@ -66,11 +66,11 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
                 req.pop('error')
             if req['result'] is None:
                 req.pop('result')
+            return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
         except Exception as e:
             print "Error loading JSON response"
             print e
 
-        return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
 
 class Satnet_RPC():
     """
@@ -103,13 +103,14 @@ class Satnet_RPC():
                 HttpSessionTransport('http://localhost:8000/jrpc/')
             )
 
-        self._keepAlive()
         if not self.call('system.login', user, pwd):
             raise BadCredentials()
+        else:
+            self.call('network.keepAlive')
 
 
     def _keepAlive(self):
-        threading.Timer(300, self._keepAlive).start()
+        threading.Timer(300, self._keepAlive).start() # set daemon to false
         self.call('network.keepAlive')
 
     def call(self, call, *args):
