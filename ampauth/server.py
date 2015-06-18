@@ -129,26 +129,8 @@ class CredReceiver(AMP, TimeoutMixin):
         except BadCredentials as e:
             log.err('Incorrect username and/or password')
             log.err(e)
+            raise
 
-
-        def cbLoggedIn((interface, avatar, logout)):
-            self.logout = logout
-            self.boxReceiver = avatar
-            self.boxReceiver.startReceivingBoxes(self.boxSender)
-            # Pass to the SATNET server information of the active users.
-            # If the next two lines were removed, only the authentication
-            # server would have that information.
-            avatar.factory = self.factory
-            avatar.credProto = self
-            avatar.sUsername = sUsername
-            self.factory.active_protocols[sUsername] = avatar
-            log.msg('Connection made')
-            log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
-            log.msg('Active connections: ' + str(len(self.factory.active_connections)))
-
-            return {'bAuthenticated': True}
-        d.addCallback(cbLoggedIn)
-        return d
     Login.responder(login)
 
 

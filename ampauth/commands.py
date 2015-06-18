@@ -22,7 +22,7 @@ __author__ = 'xabicrespog@gmail.com'
 
 from twisted.protocols import amp
 from twisted.cred.error import UnauthorizedLogin
-
+from errors import BadCredentials
 
 class Login(amp.Command):
 
@@ -51,4 +51,5 @@ class Login(amp.Command):
     response = [('bAuthenticated', amp.Boolean())]
     errors = {
         UnauthorizedLogin: 'UNAUTHORIZED_LOGIN',
+        BadCredentials: 'BAD_CREDENTIALS',
         NotImplementedError: 'NOT_IMPLEMENTED_ERROR'}
