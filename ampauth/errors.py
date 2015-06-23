@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-   Copyright 2014, 2015 Xabier Crespo Álvarez
+   Copyright 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,22 +20,8 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-class SlotErrorNotification(Exception):
+class BadCredentials(Exception):
 
     """
-    One of the following situations may raise this error:
-        1. Slot not operational yet
-        2. Multiple slots with the same ID
-        3. Slot not reserved yet
-        4. Slot not assigned to the invoking user
-    """
-
-
-class RemoteClientNotification(Exception):
-
-    """
-    One of the following situations may raise this error:
-        1. Remote user not connected yet
-        2. Remote user and invoking user coincide 
-            (i.e. MCC and GSS are the same)
+    Incorrect username/password.
     """

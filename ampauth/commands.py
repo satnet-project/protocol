@@ -22,7 +22,7 @@ __author__ = 'xabicrespog@gmail.com'
 
 from twisted.protocols import amp
 from twisted.cred.error import UnauthorizedLogin
-from errors import BadCredentials
+from ampauth.errors import BadCredentials
 
 class Login(amp.Command):
 
