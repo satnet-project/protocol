@@ -24,7 +24,7 @@ from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
 import requests, json, threading
-from errors import BadCredentials
+# from errors import BadCredentials
 
 class HttpSessionTransport(HttpPostClientTransport):
     """

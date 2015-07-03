@@ -18,7 +18,10 @@ create_testing_keys()
     # 5: Generate server bundle (Certificate + Private key)
     cat key/test.crt key/test.key > key/server.pem
     # 6: Generate clients bundle (Certificate)
-    cp key/test.crt key/public.pem    
+    cp key/test.crt key/public.pem
+
+    # 7: Copy key to working folder
+    mv key ../
 }
 
 create_testing_keys
