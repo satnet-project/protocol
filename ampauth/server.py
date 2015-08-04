@@ -32,6 +32,7 @@ from twisted.cred.error import UnauthorizedLogin
 from errors import BadCredentials
 from rpcrequests import Satnet_RPC
 
+from server_amp import SATNETServer
 
 class CredReceiver(AMP, TimeoutMixin):
 
@@ -116,10 +117,12 @@ class CredReceiver(AMP, TimeoutMixin):
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
+            self.factory.protocol = SATNETServer
             #avatar.factory = self.factory
             #avatar.credProto = self
             #avatar.sUsername = sUsername
             self.factory.active_protocols[sUsername] = self
+
             log.msg('Connection made')
             log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
             log.msg('Active connections: ' + str(len(self.factory.active_connections)))
