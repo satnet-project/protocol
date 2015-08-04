@@ -34,7 +34,7 @@ from ampauth.server import *
 from errors import *
 
 
-class SATNETServer(AMP):
+class SATNETServer(protocol.Protocol):
 
     """
     Integration between AMP and L{twisted.cred}. This class is only intended
@@ -219,6 +219,9 @@ def main():
 
     log.startLogging(sys.stdout)
 
+    """
+    Crea la factoria donde se inicia el protocolo para el server
+    """
     pf = CredAMPServerFactory()
     cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
