@@ -33,6 +33,8 @@ from commands import *
 from ampauth.server import *
 from errors import *
 
+from rpcrequests import *
+
 
 class SATNETServer(protocol.Protocol):
 
@@ -103,7 +105,10 @@ class SATNETServer(protocol.Protocol):
 
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
-        self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
+        #self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
+
+        self.slot = Satnet_Slot(str(iSlotId))
+
         # If slot NOT operational yet...
         if not self.slot:
             log.err('Slot ' + str(iSlotId) + ' is not yet operational')
@@ -219,9 +224,6 @@ def main():
 
     log.startLogging(sys.stdout)
 
-    """
-    Crea la factoria donde se inicia el protocolo para el server
-    """
     pf = CredAMPServerFactory()
     cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
