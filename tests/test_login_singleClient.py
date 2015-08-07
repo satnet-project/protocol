@@ -20,7 +20,9 @@
 __author__ = 'xabicrespog@gmail.com'
 
 import sys, os
-sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 
 from django.core import management
@@ -174,3 +176,6 @@ class TestSingleClient(unittest.TestCase):
         def checkError(result):
             self.assertEqual(result.message, 'Incorrect password')
         return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+
+if __name__ == '__main__':
+    unittest.main()  

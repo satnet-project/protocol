@@ -22,7 +22,9 @@ __author__ = 'xabicrespog@gmail.com'
 import os, sys, logging, datetime, django, pytz
 from django.core import management
 
-sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
@@ -451,3 +453,6 @@ class TestPassiveMessage(unittest.TestCase):
 
         msg = yield self.factory1.onMessageReceived
         self.assertEqual(msg, __sMessage2_A2B)
+
+if __name__ == '__main__':
+    unittest.main()  

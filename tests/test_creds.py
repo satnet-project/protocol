@@ -22,7 +22,9 @@ __author__ = 'xabicrespog@gmail.com'
 import sys, os
 from twisted.python import log
 
-sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 
 from django.core import management
@@ -58,7 +60,7 @@ class CredentialsChecker(unittest.TestCase):
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
         management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")
         management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
         self._setUp_databases()
         
@@ -99,4 +101,7 @@ class CredentialsChecker(unittest.TestCase):
 
         def checkError(result):
             self.assertEqual(result.message, 'Incorrect password')
-        return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)        
+        return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError) 
+
+if __name__ == '__main__':
+    unittest.main()       
