@@ -61,7 +61,7 @@ class CredentialsChecker(unittest.TestCase):
         wrongPass = 'wrongPass'
 
         """
-        Mock para guardar los datos en la base de datos.
+        TO-DO emulate a db with mock
         """
         self.db = mock.Mock()
 
@@ -71,12 +71,6 @@ class CredentialsChecker(unittest.TestCase):
         self.db.wrongUser = wrongUser
         self.db.wrongPass = wrongPass
 
-        """
-        El problema que tengo al crear un patch para el metodo create_user_profile
-        es que el patch invoca al entorno de Django. Para los tests del server está
-        bien, ya que tengo el entorno, pero yo no dispongo de este.
-        ¿Paso del entorno y simulo la respuesta o creo un entorno completo simulado?
-        """
         #db_tools.create_user_profile(
         #    username=username_1, password=password_1, email=email_1)
 
@@ -94,25 +88,18 @@ class CredentialsChecker(unittest.TestCase):
         return
 
     """
-    Log in with valid credentianls. The server should return True
+    Log in with valid credentials. The server should return True
     """
     def test_GoodCredentials(self):
 
         """
-        Crear un mock para el proceso de autentificacion
-        Este nos tiene que decir si es correcto y si es incorrecto tiene
-        que avisar sobre que tipo de fallo tenemos.
-        """
-
-        """
-        Devuelve un id de usuario
+        This method gave us an user_id.
         """
         creds = credentials.UsernamePassword(self.db.username, self.db.password)
         checker = DjangoAuthChecker()
         d = checker.requestAvatarId(creds)
 
         """
-        Devuelve true si es correcto
         """
         # def checkRequestAvatarCb(result):
         #     self.assertEqual(result.username, 'xabi.crespo')
