@@ -19,10 +19,38 @@
 """
 __author__ = 's.gongoragarcia@gmail.com'
 
+from zope.interface import implements
+from twisted.python import failure, log
+from twisted.cred import portal, checkers, error, credentials
+from twisted.internet import defer
 
-import unittest, mock
+import os
 
-class DjangoAuthChecker():
+from django.conf import settings
+settings.configure()
 
-  def requestAvatarId(self, creds):
-    pass
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+
+from django.contrib.auth.models import User, check_password
+
+
+class DjangoAuthChecker:
+    implements(checkers.ICredentialsChecker)
+    credentialInterfaces = (credentials.IUsernamePassword,
+    credentials.IUsernameHashedPassword)
+
+    def _passwordMatch(self, matched, user):
+        if matched:
+            return user
+        else:
+            return failure.Failure(error.UnauthorizedLogin())
+
+    def requestAvatarId(self, credentials):
+        try:
+            user = User.objects.get(username='potato')
+            return defer.maybeDeferred(
+                check_password,
+                credentials.password,
+                user.password).addCallback(self._passwordMatch, user)
+        except User.DoesNotExist:
+            return defer.fail(error.UnauthorizedLogin())
