@@ -61,20 +61,12 @@ class CredentialsChecker(unittest.TestCase):
         only for this test suite.
         """
         #self.__verbose_testing = False
-        username_1 = 'xabi.crespo'
-        password_1 = 'pwd4django'
-        email_1 = 'xabi@aguarda.es'
+        self.username = 'xabi.crespo'
+        self.password = 'pwd4django'
+        self.email = 'xabi@aguarda.es'
 
-        wrongUser = 'wrongUser'
-        wrongPass = 'wrongPass'
-
-        self.db = mock.Mock()
-
-        self.db.username = username_1
-        self.db.password = password_1
-        self.db.email = email_1
-        self.db.wrongUser = wrongUser
-        self.db.wrongPass = wrongPass
+        self.wrongUser = 'wrongUser'
+        self.wrongPass = 'wrongPass'
 
         """
         Test database.
@@ -89,8 +81,8 @@ class CredentialsChecker(unittest.TestCase):
 
         cursor.execute('''insert into users
                             (user, password, email)
-                        values
-                            ("xabi.crespo", "pwd4django", "xabi@aguarda.es")''')
+                        values (?, ?, ?)''', 
+                            (self.username, self.password, self.email))
 
         self.connection = connection
 
@@ -113,16 +105,12 @@ class CredentialsChecker(unittest.TestCase):
     """
     def test_GoodCredentials(self):
 
-        """
-        This method gave us an user_id.
-        """
-
-        creds = credentials.UsernamePassword(self.db.username, self.db.password)
+        creds = credentials.UsernamePassword(self.username, self.password)
         checker = DjangoAuthChecker()
         d = checker.requestAvatarId(creds, self.connection)
 
-        """
-        """
+        self.connection.close()
+
         # def checkRequestAvatarCb(result):
         #     self.assertEqual(result.username, 'xabi.crespo')
 
@@ -135,10 +123,11 @@ class CredentialsChecker(unittest.TestCase):
     """
     def test_BadUsername(self):
 
-        """
-        creds = credentials.UsernamePassword(self.db.wrongUser, self.db.password)
+        creds = credentials.UsernamePassword(self.wrongUser, self.password)
         checker = DjangoAuthChecker()
-        """
+        d = checker.requestAvatarId(creds, self.connection)
+
+        self.connection.close()
 
         # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
         # checker.requestAvatarId, creds)
@@ -148,11 +137,12 @@ class CredentialsChecker(unittest.TestCase):
     with 'Incorrect password' message
     """
     def test_BadPassword(self):
-        """
-        creds = credentials.UsernamePassword(self.db.username, self.db.wrongPass)
+
+        creds = credentials.UsernamePassword(self.username, self.wrongPass)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds)
-        """
+        d = checker.requestAvatarId(creds, self.connection)
+
+        self.connection.close()
 
         # def checkError(result):
         #     self.assertEqual(result.message, 'Incorrect password')
