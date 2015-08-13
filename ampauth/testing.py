@@ -35,9 +35,9 @@ from django.contrib.auth.models import User, check_password
 
 
 class DjangoAuthChecker:
-    implements(checkers.ICredentialsChecker)
-    credentialInterfaces = (credentials.IUsernamePassword,
-    credentials.IUsernameHashedPassword)
+    #implements(checkers.ICredentialsChecker)
+    #credentialInterfaces = (credentials.IUsernamePassword,
+    #credentials.IUsernameHashedPassword)
 
     def _passwordMatch(self, matched, user):
         if matched:
@@ -45,12 +45,30 @@ class DjangoAuthChecker:
         else:
             return failure.Failure(error.UnauthorizedLogin())
 
-    def requestAvatarId(self, credentials):
-        try:
-            user = User.objects.get(username='potato')
-            return defer.maybeDeferred(
-                check_password,
-                credentials.password,
-                user.password).addCallback(self._passwordMatch, user)
-        except User.DoesNotExist:
-            return defer.fail(error.UnauthorizedLogin())
+    # def requestAvatarId(self, credentials):
+    #     try:
+    #         user = User.objects.get(username='potato')
+    #         return defer.maybeDeferred(
+    #             check_password,
+    #             credentials.password,
+    #             user.password).addCallback(self._passwordMatch, user)
+    #     except User.DoesNotExist:
+    #         return defer.fail(error.UnauthorizedLogin())
+
+    def requestAvatarId(self, credentials, connection):
+
+      username = credentials.username
+      password = credentials.password
+
+      self.connection = connection
+
+      cursor = self.connection.cursor()
+      cursor.execute('''select * from users
+                          where
+                              user like :username
+                          and
+                              password like :password''',
+                    locals())
+      
+      #for row in cursor:
+      #  print row[0]

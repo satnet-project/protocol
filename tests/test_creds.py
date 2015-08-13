@@ -31,6 +31,14 @@ __author__ = 'xabicrespog@gmail.com'
 import sys, os
 import unittest, mock, kiss
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+
+from sqlite3 import connect, PARSE_DECLTYPES
+from datetime import date
+from ampauth.users import Employees
+
+
 from twisted.python import log
 from twisted.cred import credentials
 from twisted.cred.error import UnauthorizedLogin
@@ -60,9 +68,6 @@ class CredentialsChecker(unittest.TestCase):
         wrongUser = 'wrongUser'
         wrongPass = 'wrongPass'
 
-        """
-        TO-DO emulate a db with mock
-        """
         self.db = mock.Mock()
 
         self.db.username = username_1
@@ -71,8 +76,23 @@ class CredentialsChecker(unittest.TestCase):
         self.db.wrongUser = wrongUser
         self.db.wrongPass = wrongPass
 
-        #db_tools.create_user_profile(
-        #    username=username_1, password=password_1, email=email_1)
+        """
+        Test database.
+        """
+        connection = connect(':memory:', detect_types = PARSE_DECLTYPES)
+        cursor = connection.cursor()
+
+        cursor.execute('''create table users
+                            (user text,
+                            password text,
+                            email text)''')
+
+        cursor.execute('''insert into users
+                            (user, password, email)
+                        values
+                            ("xabi.crespo", "pwd4django", "xabi@aguarda.es")''')
+
+        self.connection = connection
 
     def setUp(self):
         log.startLogging(sys.stdout)
@@ -81,7 +101,8 @@ class CredentialsChecker(unittest.TestCase):
         #management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")
-        #management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        #management.execute_from_command_line(['manage.py', 'createsuperuser',\
+        # '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
@@ -95,14 +116,16 @@ class CredentialsChecker(unittest.TestCase):
         """
         This method gave us an user_id.
         """
+
         creds = credentials.UsernamePassword(self.db.username, self.db.password)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds)
+        d = checker.requestAvatarId(creds, self.connection)
 
         """
         """
         # def checkRequestAvatarCb(result):
         #     self.assertEqual(result.username, 'xabi.crespo')
+
         # d.addCallback(checkRequestAvatarCb)
         # return d
 
@@ -111,19 +134,25 @@ class CredentialsChecker(unittest.TestCase):
     with 'Incorrect username' message
     """
     def test_BadUsername(self):
+
+        """
         creds = credentials.UsernamePassword(self.db.wrongUser, self.db.password)
         checker = DjangoAuthChecker()
+        """
 
-        # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username', checker.requestAvatarId, creds)
+        # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
+        # checker.requestAvatarId, creds)
     
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
     with 'Incorrect password' message
     """
     def test_BadPassword(self):
+        """
         creds = credentials.UsernamePassword(self.db.username, self.db.wrongPass)
         checker = DjangoAuthChecker()
         d = checker.requestAvatarId(creds)
+        """
 
         # def checkError(result):
         #     self.assertEqual(result.message, 'Incorrect password')
