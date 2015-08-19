@@ -42,17 +42,10 @@ class CredentialsChecker(unittest.TestCase):
     """
 
     def _setUp_databases(self):
-        """
-        This method populates the database with some information to be used
-        only for this test suite.
-        """
-        #self.__verbose_testing = False
+
         self.username = 'xabi.crespo'
         self.password = 'pwd4django'
         self.email = 'xabi@aguarda.es'
-
-        self.wrongUser = 'wrongUser'
-        self.wrongPass = 'wrongPass'
 
         """
         Test database.
@@ -125,9 +118,16 @@ class CredentialsChecker(unittest.TestCase):
     """
     def test_GoodCredentials(self):
 
+        """
+        Mock object.
+        """
+        mockUserGoodCredentials = mock.Mock()
+        mockUserGoodCredentials.username = 'xabi.crespo'
+        mockUserGoodCredentials.password = 'pwd4django'
+
         creds = credentials.UsernamePassword(self.username, self.password)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds)
+        d = checker.requestAvatarId(creds, mockUserGoodCredentials)
 
         self.connection.close()
 
@@ -137,26 +137,26 @@ class CredentialsChecker(unittest.TestCase):
         d.addCallback(checkRequestAvatarCb)
         return d
 
-        os.remove('test.db')
-
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
     with 'Incorrect username' message
     """
-    def test_BadUsername(self):
+    # def test_BadUsername(self):
 
-        creds = credentials.UsernamePassword(self.wrongUser, self.password)
-        checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds)
+    #     """
+    #     Mock object.
+    #     """
+    #     mockUserBadUsername = mock.Mock()
+    #     mockUserBadUsername.username = 'wrongUser'
+    #     mockUserBadUsername.password = 'pwd4django'
 
-        self.connection.close()
+    #     creds = credentials.UsernamePassword(self.username, self.password)
+    #     checker = DjangoAuthChecker()
 
-        # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
-        # checker.requestAvatarId, creds)
+    #     self.connection.close()
 
-        # d.a
-
-        os.remove('test.db')
+    #     return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
+    #     checker.requestAvatarId, creds, mockUserBadUsername)
     
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
@@ -164,15 +164,22 @@ class CredentialsChecker(unittest.TestCase):
     """
     # def test_BadPassword(self):
 
-        # creds = credentials.UsernamePassword(self.username, self.wrongPass)
-        # checker = DjangoAuthChecker()
-        # d = checker.requestAvatarId(creds, self.connection)
+    #     """
+    #     Mock object.
+    #     """
+    #     mockUserBadPassword = mock.Mock()
+    #     mockUserBadPassword.username = 'xabi.crespo'
+    #     mockUserBadPassword.password = 'wrongPass'
 
-        # self.connection.close()
+    #     creds = credentials.UsernamePassword(self.username, self.password)
+    #     checker = DjangoAuthChecker()
+    #     d = checker.requestAvatarId(creds, mockUserBadPassword)
 
-        # def checkError(result):
-        #     self.assertEqual(result.message, 'Incorrect password')
-        # return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError) 
+    #     self.connection.close()
+
+    #     def checkError(result):
+    #         self.assertEqual(result.message, 'Incorrect password')
+    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError) 
 
 if __name__ == '__main__':
 

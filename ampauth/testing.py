@@ -19,9 +19,9 @@
 """
 __author__ = 's.gongoragarcia@gmail.com'
 
-import os
+from os import path
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../tests"))
+BASE_DIR = path.abspath(path.join(path.dirname(__file__), "../tests"))
 
 from zope.interface import implements
 from twisted.python import failure, log
@@ -30,23 +30,18 @@ from twisted.internet import defer
 from twisted.python import log
 
 from django.test import Client
-# from django.test.utils import override_settings
-
 from django.conf import settings
 
 settings.configure(DEBUG=True, 
 					DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-        			'NAME': os.path.join(BASE_DIR, 'test.db'),
-    			 	'TEST_NAME': os.path.join(BASE_DIR, 'test.db'),}},
+        			'NAME': path.join(BASE_DIR, 'test.db'),
+    			 	'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
     			 	INSTALLED_APPS = ('django.contrib.auth',))
 
 from django.contrib.auth.models import User, check_password
 
 
 class DjangoAuthChecker():
-    implements(checkers.ICredentialsChecker)
-    credentialInterfaces = (credentials.IUsernamePassword,
-    credentials.IUsernameHashedPassword)
 
     def _passwordMatch(self, matched, user):
 
@@ -55,18 +50,16 @@ class DjangoAuthChecker():
         else:
             return failure.Failure(error.UnauthorizedLogin())
 
-    def requestAvatarId(self, credentials):
+    def requestAvatarId(self, databaseCredentials, testCredentials):
 
-    	user = User.objects.create_user(credentials.username, 'lennon@thebeatles.com',\
-    	 credentials.password)
-
-    	print user
+    	user = User.objects.create_user(databaseCredentials.username,\
+    	 'lennon@thebeatles.com', databaseCredentials.password)
 
         try:
-            user = User.objects.get(username=credentials.username)
+            user = User.objects.get(username=testCredentials.username)
 
-            return defer.maybeDeferred(user.check_password, credentials.password).\
+            return defer.maybeDeferred(user.check_password, databaseCredentials.password).\
             addCallback(self._passwordMatch, user)
 
         except User.DoesNotExist:
-            return defer.fail(error.UnauthorizedLogin())
+            raise error.UnauthorizedLogin("Incorrect username")
