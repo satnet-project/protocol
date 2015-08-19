@@ -19,33 +19,20 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-#import sys, os
-#from twisted.python import log
-
-# sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-# from django.core import management
-# from services.common.testing import helpers as db_tools
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
 
 import sys, os
 import unittest, mock, kiss
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
 from sqlite3 import connect, PARSE_DECLTYPES
 from datetime import date
-from ampauth.users import Employees
-
 
 from twisted.python import log
 from twisted.cred import credentials
 from twisted.cred.error import UnauthorizedLogin
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from ampauth.testing import DjangoAuthChecker
+from ampauth.testing import DjangoAuthChecker, UserModel
 
 
 class CredentialsChecker(unittest.TestCase):
@@ -71,18 +58,64 @@ class CredentialsChecker(unittest.TestCase):
         """
         Test database.
         """
-        connection = connect(':memory:', detect_types = PARSE_DECLTYPES)
-        cursor = connection.cursor()
 
-        cursor.execute('''create table users
-                            (user text,
-                            password text,
-                            email text)''')
+        column = ['username', 'first_name', 'last_name', 'email', 'password',\
+         'groups', 'user_permissions', 'is_staff', 'is_active',\
+          'is_superuser', 'last_login', 'date_joined']
 
-        cursor.execute('''insert into users
-                            (user, password, email)
-                        values (?, ?, ?)''', 
-                            (self.username, self.password, self.email))
+
+        first_type = 'INTEGER'
+        second_type = 'INTEGER'
+        third_type = 'INTEGER'
+        forth_type = 'INTEGER'
+        forth_type = 'INTEGER'
+
+        _type = 'INTEGER'
+        _datetimetype = 'TEXT'
+
+
+        # connection = connect(':memory:', detect_types = PARSE_DECLTYPES)
+        connection = connect('test.db', detect_types = PARSE_DECLTYPES)
+
+
+        connection.execute('CREATE TABLE {tn} ({nf} {ft}) '\
+                            .format(tn='auth_user', nf=column[0], ft=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[1], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[2], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[3], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[4], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[5], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[6], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[7], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[8], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[9], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[10], ct=_type))
+
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[11], ct=_datetimetype))
+
+
+        contact = UserModel(user_name='xabi.crespo', password='pwd4django')
 
         self.connection = connection
 
@@ -107,7 +140,7 @@ class CredentialsChecker(unittest.TestCase):
 
         creds = credentials.UsernamePassword(self.username, self.password)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, self.connection)
+        d = checker.requestAvatarId(creds)
 
         self.connection.close()
 
@@ -117,17 +150,19 @@ class CredentialsChecker(unittest.TestCase):
         # d.addCallback(checkRequestAvatarCb)
         # return d
 
+        os.rm('test.db')
+
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
     with 'Incorrect username' message
     """
-    def test_BadUsername(self):
+    # def test_BadUsername(self):
 
-        creds = credentials.UsernamePassword(self.wrongUser, self.password)
-        checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, self.connection)
+        # creds = credentials.UsernamePassword(self.wrongUser, self.password)
+        # checker = DjangoAuthChecker()
+        # d = checker.requestAvatarId(creds, self.connection)
 
-        self.connection.close()
+        # self.connection.close()
 
         # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
         # checker.requestAvatarId, creds)
@@ -136,13 +171,13 @@ class CredentialsChecker(unittest.TestCase):
     Log in with wrong password. The server should raise UnauthorizedLogin
     with 'Incorrect password' message
     """
-    def test_BadPassword(self):
+    # def test_BadPassword(self):
 
-        creds = credentials.UsernamePassword(self.username, self.wrongPass)
-        checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, self.connection)
+        # creds = credentials.UsernamePassword(self.username, self.wrongPass)
+        # checker = DjangoAuthChecker()
+        # d = checker.requestAvatarId(creds, self.connection)
 
-        self.connection.close()
+        # self.connection.close()
 
         # def checkError(result):
         #     self.assertEqual(result.message, 'Incorrect password')

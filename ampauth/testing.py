@@ -19,25 +19,41 @@
 """
 __author__ = 's.gongoragarcia@gmail.com'
 
+import os
+
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../tests"))
+
 from zope.interface import implements
 from twisted.python import failure, log
 from twisted.cred import portal, checkers, error, credentials
 from twisted.internet import defer
 
-import os
+from django.test import Client
+# from django.test.utils import override_settings
 
 from django.conf import settings
-settings.configure()
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+settings.configure(DEBUG=True, 
+					DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
+        			'NAME': os.path.join(BASE_DIR, 'test.db'),
+    			 	'TEST_NAME': os.path.join(BASE_DIR, 'test.db'),}},
+    			 	INSTALLED_APPS = ('django.contrib.auth',))
 
 from django.contrib.auth.models import User, check_password
+from django.db import models
 
 
-class DjangoAuthChecker:
-    #implements(checkers.ICredentialsChecker)
-    #credentialInterfaces = (credentials.IUsernamePassword,
-    #credentials.IUsernameHashedPassword)
+# class UserModel(models.Model):
+
+# 	user_name = models.CharField(max_length=255,)
+# 	password = models.CharField(max_length=255,)
+# 	email = models.EmailField()
+
+
+class DjangoAuthChecker():
+    implements(checkers.ICredentialsChecker)
+    credentialInterfaces = (credentials.IUsernamePassword,
+    credentials.IUsernameHashedPassword)
 
     def _passwordMatch(self, matched, user):
         if matched:
@@ -45,30 +61,15 @@ class DjangoAuthChecker:
         else:
             return failure.Failure(error.UnauthorizedLogin())
 
-    # def requestAvatarId(self, credentials):
-    #     try:
-    #         user = User.objects.get(username='potato')
-    #         return defer.maybeDeferred(
-    #             check_password,
-    #             credentials.password,
-    #             user.password).addCallback(self._passwordMatch, user)
-    #     except User.DoesNotExist:
-    #         return defer.fail(error.UnauthorizedLogin())
+    def requestAvatarId(self, credentials):
 
-    def requestAvatarId(self, credentials, connection):
+    	user = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
 
-      username = credentials.username
-      password = credentials.password
-
-      self.connection = connection
-
-      cursor = self.connection.cursor()
-      cursor.execute('''select * from users
-                          where
-                              user like :username
-                          and
-                              password like :password''',
-                    locals())
-      
-      #for row in cursor:
-      #  print row[0]
+        try:
+            user = User.objects.get(username='john')
+            return defer.maybeDeferred(
+                check_password,
+                credentials.password,
+                user.password).addCallback(self._passwordMatch, user)
+        except User.DoesNotExist:
+            return defer.fail(error.UnauthorizedLogin())
