@@ -27,6 +27,7 @@ from zope.interface import implements
 from twisted.python import failure, log
 from twisted.cred import portal, checkers, error, credentials
 from twisted.internet import defer
+from twisted.python import log
 
 from django.test import Client
 # from django.test.utils import override_settings
@@ -43,13 +44,6 @@ from django.contrib.auth.models import User, check_password
 from django.db import models
 
 
-# class UserModel(models.Model):
-
-# 	user_name = models.CharField(max_length=255,)
-# 	password = models.CharField(max_length=255,)
-# 	email = models.EmailField()
-
-
 class DjangoAuthChecker():
     implements(checkers.ICredentialsChecker)
     credentialInterfaces = (credentials.IUsernamePassword,
@@ -64,6 +58,9 @@ class DjangoAuthChecker():
     def requestAvatarId(self, credentials):
 
     	user = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
+
+    	log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User")
+    	print user
 
         try:
             user = User.objects.get(username='john')

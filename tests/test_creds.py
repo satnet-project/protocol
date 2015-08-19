@@ -32,7 +32,7 @@ from twisted.python import log
 from twisted.cred import credentials
 from twisted.cred.error import UnauthorizedLogin
 
-from ampauth.testing import DjangoAuthChecker, UserModel
+from ampauth.testing import DjangoAuthChecker
 
 
 class CredentialsChecker(unittest.TestCase):
@@ -59,20 +59,13 @@ class CredentialsChecker(unittest.TestCase):
         Test database.
         """
 
-        column = ['username', 'first_name', 'last_name', 'email', 'password',\
-         'groups', 'user_permissions', 'is_staff', 'is_active',\
+        column = ['id', 'username', 'first_name', 'last_name', 'email',\
+         'password', 'groups', 'user_permissions', 'is_staff', 'is_active',\
           'is_superuser', 'last_login', 'date_joined']
 
-
-        first_type = 'INTEGER'
-        second_type = 'INTEGER'
-        third_type = 'INTEGER'
-        forth_type = 'INTEGER'
-        forth_type = 'INTEGER'
-
         _type = 'INTEGER'
+        _typetext = 'INTEGER'
         _datetimetype = 'TEXT'
-
 
         # connection = connect(':memory:', detect_types = PARSE_DECLTYPES)
         connection = connect('test.db', detect_types = PARSE_DECLTYPES)
@@ -82,52 +75,47 @@ class CredentialsChecker(unittest.TestCase):
                             .format(tn='auth_user', nf=column[0], ft=_type))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[1], ct=_type))
+                            .format(tn='auth_user', cn=column[1], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[2], ct=_type))
+                            .format(tn='auth_user', cn=column[2], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[3], ct=_type))
+                            .format(tn='auth_user', cn=column[3], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[4], ct=_type))
+                            .format(tn='auth_user', cn=column[4], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[5], ct=_type))
+                            .format(tn='auth_user', cn=column[5], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[6], ct=_type))
+                            .format(tn='auth_user', cn=column[6], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[7], ct=_type))
+                            .format(tn='auth_user', cn=column[7], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[8], ct=_type))
+                            .format(tn='auth_user', cn=column[8], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[9], ct=_type))
+                            .format(tn='auth_user', cn=column[9], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[10], ct=_type))
+                            .format(tn='auth_user', cn=column[10], ct=_typetext))
 
         connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[11], ct=_datetimetype))
+                            .format(tn='auth_user', cn=column[11], ct=_typetext))
 
-
-        contact = UserModel(user_name='xabi.crespo', password='pwd4django')
+        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                            .format(tn='auth_user', cn=column[12], ct=_datetimetype))
 
         self.connection = connection
 
     def setUp(self):
         log.startLogging(sys.stdout)
 
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        #management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
-        
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")
-        #management.execute_from_command_line(['manage.py', 'createsuperuser',\
-        # '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting database")
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
@@ -149,8 +137,6 @@ class CredentialsChecker(unittest.TestCase):
 
         # d.addCallback(checkRequestAvatarCb)
         # return d
-
-        os.rm('test.db')
 
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
