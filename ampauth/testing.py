@@ -41,7 +41,6 @@ settings.configure(DEBUG=True,
     			 	INSTALLED_APPS = ('django.contrib.auth',))
 
 from django.contrib.auth.models import User, check_password
-from django.db import models
 
 
 class DjangoAuthChecker():
@@ -50,6 +49,7 @@ class DjangoAuthChecker():
     credentials.IUsernameHashedPassword)
 
     def _passwordMatch(self, matched, user):
+
         if matched:
             return user
         else:
@@ -57,16 +57,16 @@ class DjangoAuthChecker():
 
     def requestAvatarId(self, credentials):
 
-    	user = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
+    	user = User.objects.create_user(credentials.username, 'lennon@thebeatles.com',\
+    	 credentials.password)
 
-    	log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User")
     	print user
 
         try:
-            user = User.objects.get(username='john')
-            return defer.maybeDeferred(
-                check_password,
-                credentials.password,
-                user.password).addCallback(self._passwordMatch, user)
+            user = User.objects.get(username=credentials.username)
+
+            return defer.maybeDeferred(user.check_password, credentials.password).\
+            addCallback(self._passwordMatch, user)
+
         except User.DoesNotExist:
             return defer.fail(error.UnauthorizedLogin())

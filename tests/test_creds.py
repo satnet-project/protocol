@@ -41,7 +41,6 @@ class CredentialsChecker(unittest.TestCase):
     Testing the server credentials handling
     """
 
-    #@mock.patch.object(services.common.testing.helpers, 'create_user_profile')
     def _setUp_databases(self):
         """
         This method populates the database with some information to be used
@@ -132,26 +131,32 @@ class CredentialsChecker(unittest.TestCase):
 
         self.connection.close()
 
-        # def checkRequestAvatarCb(result):
-        #     self.assertEqual(result.username, 'xabi.crespo')
+        def checkRequestAvatarCb(result):
+            self.assertEqual(result.username, self.username)
 
-        # d.addCallback(checkRequestAvatarCb)
-        # return d
+        d.addCallback(checkRequestAvatarCb)
+        return d
+
+        os.remove('test.db')
 
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
     with 'Incorrect username' message
     """
-    # def test_BadUsername(self):
+    def test_BadUsername(self):
 
-        # creds = credentials.UsernamePassword(self.wrongUser, self.password)
-        # checker = DjangoAuthChecker()
-        # d = checker.requestAvatarId(creds, self.connection)
+        creds = credentials.UsernamePassword(self.wrongUser, self.password)
+        checker = DjangoAuthChecker()
+        d = checker.requestAvatarId(creds)
 
-        # self.connection.close()
+        self.connection.close()
 
         # return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
         # checker.requestAvatarId, creds)
+
+        # d.a
+
+        os.remove('test.db')
     
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
