@@ -22,14 +22,13 @@ __author__ = 'xabicrespog@gmail.com'
 import os, sys, logging, datetime, django, pytz
 from django.core import management
 
-#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
+#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
+#django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
 # Dependencies for _setUp_databases
-from services.common import misc, simulation
+#from services.common import misc, simulation
 from services.common.testing import helpers
 
 from services.configuration.jrpc.views import channels as jrpc_channels_if
@@ -58,6 +57,30 @@ from errors import *
 
 from services.common import misc
 
+"""
+Mock stuff.
+"""
+
+import mock
+
+from django.conf import settings
+
+settings.configure(DEBUG=True, 
+  DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
+      'NAME': path.join(BASE_DIR, 'test.db'),
+    'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
+    INSTALLED_APPS = ('django.contrib.auth',))
+
+
+@mock.patch('services.common.simulation')
+def _ServicesCommonSimulation(self):
+    pass
+
+@mock.patch('services.common.misc')
+def _ServicesCommonMisc(self):
+    pass
+
+
 
 """
 To perform correct end to end tests:
@@ -72,6 +95,8 @@ disconnects to avoid duplicated fires of a same deferred
 For more information about how to perform end to end
 unit tests check http://blackjml.livejournal.com/23029.html
 """
+
+
 
 
 class ClientProtocolTest(ClientProtocol):
