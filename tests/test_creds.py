@@ -59,9 +59,7 @@ class CredentialsChecker(unittest.TestCase):
         _typetext = 'INTEGER'
         _datetimetype = 'TEXT'
 
-        # connection = connect(':memory:', detect_types = PARSE_DECLTYPES)
         connection = connect('test.db', detect_types = PARSE_DECLTYPES)
-
 
         connection.execute('CREATE TABLE {tn} ({nf} {ft}) '\
                             .format(tn='auth_user', nf=column[0], ft=_type))
@@ -109,14 +107,15 @@ class CredentialsChecker(unittest.TestCase):
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting database")
         self._setUp_databases()
-        
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
+
         return
 
     """
     Log in with valid credentials. The server should return True
     """
     def test_GoodCredentials(self):
+
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running GoodCrendentials test")
 
         """
         Mock object.
@@ -127,9 +126,7 @@ class CredentialsChecker(unittest.TestCase):
 
         creds = credentials.UsernamePassword(self.username, self.password)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, mockUserGoodCredentials)
-
-        self.connection.close()
+        d = checker.requestAvatarId(creds, mockUserGoodCredentials, 'test.db')
 
         def checkRequestAvatarCb(result):
             self.assertEqual(result.username, self.username)
@@ -137,27 +134,32 @@ class CredentialsChecker(unittest.TestCase):
         d.addCallback(checkRequestAvatarCb)
         return d
 
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCrendentials test ok!")
+
+
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
     with 'Incorrect username' message
     """
-    # def test_BadUsername(self):
+    def test_BadUsername(self):
 
-    #     """
-    #     Mock object.
-    #     """
-    #     mockUserBadUsername = mock.Mock()
-    #     mockUserBadUsername.username = 'wrongUser'
-    #     mockUserBadUsername.password = 'pwd4django'
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running BadUsername test")
 
-    #     creds = credentials.UsernamePassword(self.username, self.password)
-    #     checker = DjangoAuthChecker()
+        """
+        Mock object.
+        """
+        mockUserBadUsername = mock.Mock()
+        mockUserBadUsername.username = 'wrongUser'
+        mockUserBadUsername.password = 'pwd4django'
 
-    #     self.connection.close()
+        creds = credentials.UsernamePassword(self.username, self.password)
+        checker = DjangoAuthChecker()
 
-    #     return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
-    #     checker.requestAvatarId, creds, mockUserBadUsername)
-    
+        return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
+        checker.requestAvatarId, creds, mockUserBadUsername, 'test.db')
+
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BadUsername test ok!")
+
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
     with 'Incorrect password' message
@@ -179,7 +181,17 @@ class CredentialsChecker(unittest.TestCase):
 
     #     def checkError(result):
     #         self.assertEqual(result.message, 'Incorrect password')
-    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError) 
+    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+
+    def tearDown(self):
+
+        try:
+            self.connection.close()
+            os.remove('test.db')
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database")
+        except:
+            pass 
+
 
 if __name__ == '__main__':
 

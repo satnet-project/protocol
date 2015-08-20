@@ -29,16 +29,8 @@ from twisted.cred import portal, checkers, error, credentials
 from twisted.internet import defer
 from twisted.python import log
 
-from django.test import Client
+from django.test import Client, override_settings
 from django.conf import settings
-
-settings.configure(DEBUG=True, 
-					DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-        			'NAME': path.join(BASE_DIR, 'test.db'),
-    			 	'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
-    			 	INSTALLED_APPS = ('django.contrib.auth',))
-
-from django.contrib.auth.models import User, check_password
 
 
 class DjangoAuthChecker():
@@ -50,10 +42,28 @@ class DjangoAuthChecker():
         else:
             return failure.Failure(error.UnauthorizedLogin())
 
-    def requestAvatarId(self, databaseCredentials, testCredentials):
+    def requestAvatarId(self, databaseCredentials, testCredentials, DBName):
 
-    	user = User.objects.create_user(databaseCredentials.username,\
-    	 'lennon@thebeatles.com', databaseCredentials.password)
+        try:
+            settings.configure(DEBUG=True, 
+              DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
+                  'NAME': path.join(BASE_DIR, 'test.db'),
+                'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
+                INSTALLED_APPS = ('django.contrib.auth',))
+
+
+            from django.contrib.auth.models import User, check_password
+
+            user = User.objects.create_user(databaseCredentials.username,\
+            'test@satnet.org', databaseCredentials.password)
+
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Settings configured.")
+
+        except RuntimeError:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Settings already configured.")
+
+        from django.contrib.auth.models import User, check_password
+    	
 
         try:
             user = User.objects.get(username=testCredentials.username)
@@ -62,4 +72,4 @@ class DjangoAuthChecker():
             addCallback(self._passwordMatch, user)
 
         except User.DoesNotExist:
-            raise error.UnauthorizedLogin("Incorrect username")
+            raise error.UnauthorizedLogin("Incorrect username.")
