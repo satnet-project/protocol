@@ -39,10 +39,10 @@ class DjangoAuthChecker():
 
         if matched:
             return user
-        else:
-            return failure.Failure(error.UnauthorizedLogin())
+        elif matched == False:
+            return error.UnauthorizedLogin("Incorrect password.")
 
-    def requestAvatarId(self, databaseCredentials, testCredentials, DBName):
+    def requestAvatarId(self, databaseCredentials, testCredentials):
 
         try:
             settings.configure(DEBUG=True, 
@@ -68,7 +68,7 @@ class DjangoAuthChecker():
         try:
             user = User.objects.get(username=testCredentials.username)
 
-            return defer.maybeDeferred(user.check_password, databaseCredentials.password).\
+            return defer.maybeDeferred(user.check_password, testCredentials.password).\
             addCallback(self._passwordMatch, user)
 
         except User.DoesNotExist:

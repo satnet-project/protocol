@@ -110,6 +110,7 @@ class CredentialsChecker(unittest.TestCase):
 
         return
 
+
     """
     Log in with valid credentials. The server should return True
     """
@@ -126,7 +127,7 @@ class CredentialsChecker(unittest.TestCase):
 
         creds = credentials.UsernamePassword(self.username, self.password)
         checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, mockUserGoodCredentials, 'test.db')
+        d = checker.requestAvatarId(creds, mockUserGoodCredentials)
 
         def checkRequestAvatarCb(result):
             self.assertEqual(result.username, self.username)
@@ -139,7 +140,7 @@ class CredentialsChecker(unittest.TestCase):
 
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
-    with 'Incorrect username' message
+    with 'Incorrect username' message.
     """
     def test_BadUsername(self):
 
@@ -156,39 +157,44 @@ class CredentialsChecker(unittest.TestCase):
         checker = DjangoAuthChecker()
 
         return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
-        checker.requestAvatarId, creds, mockUserBadUsername, 'test.db')
+        checker.requestAvatarId, creds, mockUserBadUsername)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BadUsername test ok!")
 
+
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
-    with 'Incorrect password' message
+    with 'Incorrect password' message.
     """
-    # def test_BadPassword(self):
+    def test_BadPassword(self):
 
-    #     """
-    #     Mock object.
-    #     """
-    #     mockUserBadPassword = mock.Mock()
-    #     mockUserBadPassword.username = 'xabi.crespo'
-    #     mockUserBadPassword.password = 'wrongPass'
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running BadPassword test")
 
-    #     creds = credentials.UsernamePassword(self.username, self.password)
-    #     checker = DjangoAuthChecker()
-    #     d = checker.requestAvatarId(creds, mockUserBadPassword)
+        """
+        Mock object.
+        """
+        mockUserBadPassword = mock.Mock()
+        mockUserBadPassword.username = 'xabi.crespo'
+        mockUserBadPassword.password = 'wrongPass'
 
-    #     self.connection.close()
+        creds = credentials.UsernamePassword(self.username, self.password)
+        checker = DjangoAuthChecker()
+        d = checker.requestAvatarId(creds, mockUserBadPassword)
 
-    #     def checkError(result):
-    #         self.assertEqual(result.message, 'Incorrect password')
-    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+        return self.assertRaisesRegexp(d, 'Incorrect password')
 
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BadPassword test ok!")
+
+
+    """
+    Erase the database file after each test.
+    """
     def tearDown(self):
 
         try:
             self.connection.close()
             os.remove('test.db')
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database")
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
         except:
             pass 
 
