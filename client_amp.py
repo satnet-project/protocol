@@ -29,7 +29,7 @@ from twisted.internet.error import ReactorNotRunning
 from twisted.protocols.amp import AMP
 from twisted.cred.credentials import UsernamePassword
 
-from commands import *
+from _commands import NotifyMsg, NotifyEvent
 
 import serial, getpass, sys, getopt
 

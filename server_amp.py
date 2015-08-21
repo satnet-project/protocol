@@ -29,12 +29,13 @@ from twisted.internet import reactor, ssl
 from twisted.internet import protocol
 from twisted.cred.portal import Portal
 
-from commands import *
+# from commands import *
 from ampauth.server import *
 from errors import *
 
 from rpcrequests import *
 
+from _commands import StartRemote, EndRemote, SendMsg
 
 class SATNETServer(protocol.Protocol):
 

@@ -19,68 +19,57 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
+from os import path
 import os, sys, logging, datetime, django, pytz
 from django.core import management
+import mock
+import unittest
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
 #os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 #django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
 # Dependencies for _setUp_databases
 #from services.common import misc, simulation
-from services.common.testing import helpers
+#from services.common.testing import helpers
 
-from services.configuration.jrpc.views import channels as jrpc_channels_if
-from services.configuration.jrpc.views import rules as jrpc_rules_if
-from services.configuration.jrpc.serializers import serialization as jrpc_keys
-from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
-from services.scheduling.jrpc.views import spacecraft as jrpc_sc_scheduling
-from services.configuration.models import rules, availability, channels
-from services.configuration import signals
-from services.scheduling.models import operational
-from services.network.models import server as server_models
+# from services.configuration.jrpc.views import channels as jrpc_channels_if
+# from services.configuration.jrpc.views import rules as jrpc_rules_if
+
+# from services.configuration.jrpc.serializers import serialization as jrpc_keys
+# from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
+# from services.scheduling.jrpc.views import spacecraft as jrpc_sc_scheduling
+# from services.configuration.models import rules, availability, channels
+# from services.configuration import signals
+# from services.scheduling.models import operational
+# from services.network.models import server as server_models
 
 # Dependencies for the tests
+from twisted.python import log
 from twisted.internet import defer, protocol
-from twisted.trial import unittest
 from twisted.cred.portal import Portal
 from twisted.internet import reactor, ssl
 
-from ampauth.credentials import *
+# from ampauth.credentials import *
+
 from ampauth.server import *
-from ampauth.client import login
-from ampauth.server import CredReceiver
+from ampauth.commands import Login
 from client_amp import ClientProtocol
-from commands import *
+from _commands import NotifyMsg, NotifyEvent
 from errors import *
 
-from services.common import misc
 
 """
-Mock stuff.
+Configuration settings.
 """
-
-import mock
-
+BASE_DIR = path.abspath(path.join(path.dirname(__file__), "."))
 from django.conf import settings
-
 settings.configure(DEBUG=True, 
   DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
       'NAME': path.join(BASE_DIR, 'test.db'),
     'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
     INSTALLED_APPS = ('django.contrib.auth',))
-
-
-@mock.patch('services.common.simulation')
-def _ServicesCommonSimulation(self):
-    pass
-
-@mock.patch('services.common.misc')
-def _ServicesCommonMisc(self):
-    pass
-
-
 
 """
 To perform correct end to end tests:
@@ -95,8 +84,6 @@ disconnects to avoid duplicated fires of a same deferred
 For more information about how to perform end to end
 unit tests check http://blackjml.livejournal.com/23029.html
 """
-
-
 
 
 class ClientProtocolTest(ClientProtocol):
@@ -276,14 +263,54 @@ class TestStartRemote(unittest.TestCase):
             __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
 
     def setUp(self):
+
+        """
+        Patch methods.
+        """
+
+        @mock.patch('services.common.simulation')
+        def _ServicesCommonSimulation(self):
+            pass
+
+        @mock.patch('services.common.misc')
+        def _ServicesCommonMisc(self):
+            pass
+
+        @mock.patch('services.common.testing.helpers')
+        def _ServicesCommonTestingHelpers(self):
+            pass
+
+        # Import channels as jrpc_channels_if
+        @mock.patch('services.configuration.jrpc.views.jrpc_channels_if')
+        def _ServicesConfigurationJrpcViewsChannels(self):
+            pass
+
+        # Import rules as jrpc_rules_if
+        @mock.patch('services.configuration.jrpc.views.jrpc_rules_if')
+        def _ServicesConfigurationJrpcViewsRules(self):
+            pass
+
+        # Import serialization as jrpc_keys
+        @mock.patch('services.configuration.jrpc.serializers.jrpc_keys')
+        def _ServicesConfigurationJrpcSerializersJrpc_keys(self):
+            pass
+
+        # Import server as server_models
+        # @mock.patch('services.network.models.server_models')
+        @mock.patch('server_models')
+        def _ServicesNetworkModelsServer_models(self):
+            pass
+
+        # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
+        # management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
+        
+        # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
+        # management.execute_from_command_line(['manage.py', 'createsuperuser',
+        #     '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+
         log.startLogging(sys.stdout)
 
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
-        
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        management.execute_from_command_line(['manage.py', 'createsuperuser',
-            '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting database")
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
