@@ -135,6 +135,14 @@ services_configuration_signals_models.connect_rules_2_availability =\
  MagicMock(return_value = 'test')
 
 # operational.OperationalSlot.objects.get_simulator().set_debug() - TO-DO
+operational_OperationalSlot_objects_get_simulator = Mock()
+operational_OperationalSlot_objects_get_simulator.set_debug =\
+ MagicMock(return_value = 'test')
+
+# operational.OperationalSlot.objects.set_debug()
+operational_OperationalSlot_objects = Mock()
+operational_OperationalSlot_objects.set_debug =\
+ MagicMock(return_value = 'test')
 
 # from services.scheduling.models.operational.OperationalSlot import objects
 services_scheduling_models_operational_OperationalSlot_objects = Mock()
@@ -315,8 +323,9 @@ class TestStartRemote(unittest.TestCase):
             user_profile=__usr_2, identifier=__gs_1_id,
         )
 
-        operational.OperationalSlot.objects.get_simulator().set_debug()
-        operational.OperationalSlot.objects.set_debug()
+        # operational.OperationalSlot.objects.get_simulator().set_debug()
+        operational_OperationalSlot_objects_get_simulator.set_debug()
+        operational_OperationalSlot_objects.set_debug()
 
         services_configuration_models_channels.gs_channel_create(
             ground_station_id=__gs_1_id,
@@ -324,13 +333,13 @@ class TestStartRemote(unittest.TestCase):
             configuration=__gs_1_ch_1_cfg
         )
 
-        rules.add_rule(
+        services_configuration_jrpc_views_rules.add_rule(
             __gs_1_id, __gs_1_ch_1_id,
             services_common_testing_helpers.create_jrpc_daily_rule(
-                starting_time=misc.localize_time_utc(datetime.time(
+                starting_time=services_common_misc.localize_time_utc(datetime.time(
                     hour=8, minute=0, second=0
                 )),
-                ending_time=misc.localize_time_utc(datetime.time(
+                ending_time=services_common_misc.localize_time_utc(datetime.time(
                     hour=23, minute=55, second=0
                 ))
             )
@@ -478,7 +487,7 @@ class TestStartRemote(unittest.TestCase):
 
         # User 1 sends a message to user 2
         res = yield self.factory2.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+            SendMsg, sMsg=__sMessageA2B, iTimestamp=services_common_misc.get_utc_timestamp())
         self.assertTrue(res['bResult'])
 
         msg = yield self.factory1.onMessageReceived
@@ -486,7 +495,7 @@ class TestStartRemote(unittest.TestCase):
 
         # User 2 sends a message to user 1
         res = yield self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageB2A, iTimestamp=misc.get_utc_timestamp())
+            SendMsg, sMsg=__sMessageB2A, iTimestamp=services_common_misc.get_utc_timestamp())
         self.assertTrue(res['bResult'])
 
         msg = yield self.factory2.onMessageReceived
