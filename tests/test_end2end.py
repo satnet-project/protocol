@@ -22,7 +22,7 @@ __author__ = 'xabicrespog@gmail.com'
 from os import path
 import os, sys, logging, datetime, django, pytz
 from django.core import management
-import mock
+from mock import Mock, MagicMock
 import unittest
 
 sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
@@ -31,19 +31,120 @@ sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 #django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
 # Dependencies for _setUp_databases
-#from services.common import misc, simulation
-#from services.common.testing import helpers
+# from services.common import misc
+services_common_misc = Mock()
+services_common_misc.localize_time_utc =\
+ MagicMock(return_value = 'test')
 
-# from services.configuration.jrpc.views import channels as jrpc_channels_if
-# from services.configuration.jrpc.views import rules as jrpc_rules_if
+services_common_misc.get_utc_timestamp =\
+ MagicMock(return_value = 'test')
 
-# from services.configuration.jrpc.serializers import serialization as jrpc_keys
+# from services.common.testing import helpers
+services_common_testing_helpers = Mock()
+services_common_testing_helpers.init_available =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.init_tles_database =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.create_band =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.create_user_profile =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.create_sc =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.create_gs =\
+ MagicMock(return_value = 'test')
+
+services_common_testing_helpers.create_jrpc_daily_rule =\
+ MagicMock(return_value = 'test')
+
+# from services.configuration.jrpc.views import channels
+services_configuration_jrpc_views_channels = Mock()
+services_configuration_jrpc_views_channels.gs_channel_create =\
+ MagicMock(return_value = 'test')
+
+services_configuration_jrpc_views_channels.sc_channel_create =\
+ MagicMock(return_value = 'test')
+
+# from services.configuration.jrpc.views import rules
+services_configuration_jrpc_views_rules = Mock()
+services_configuration_jrpc_views_rules.add_rule =\
+ MagicMock(return_value = 'test')
+
+# from services.configuration.jrpc.serializers import serialization as services_configuration_jrpc_serializers_serialization
+# TO-DO How does it work?
+services_configuration_jrpc_serializers_serialization = Mock()
+services_configuration_jrpc_serializers_serialization.FREQUENCY_K = 'testData'
+services_configuration_jrpc_serializers_serialization.MODULATION_K = 'testData'
+services_configuration_jrpc_serializers_serialization.POLARIZATION_K = 'testData'
+services_configuration_jrpc_serializers_serialization.BITRATE_K = 'testData'
+services_configuration_jrpc_serializers_serialization.BANDWIDTH_K = 'testData'
+services_configuration_jrpc_serializers_serialization.BAND_K = 'testData'
+services_configuration_jrpc_serializers_serialization.AUTOMATED_K = 'testData'
+services_configuration_jrpc_serializers_serialization.MODULATIONS_K = 'testData'
+services_configuration_jrpc_serializers_serialization.BITRATES_K = 'testData'
+services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K = 'testData'
+
 # from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
-# from services.scheduling.jrpc.views import spacecraft as jrpc_sc_scheduling
-# from services.configuration.models import rules, availability, channels
-# from services.configuration import signals
-# from services.scheduling.models import operational
-# from services.network.models import server as server_models
+services_scheduling_jrpc_views_groundstations = Mock()
+services_scheduling_jrpc_views_groundstations.get_operational_slots =\
+ MagicMock(return_value = 'test')
+
+services_scheduling_jrpc_views_groundstations.confirm_selections =\
+ MagicMock(return_value = 'test')
+
+# from services.scheduling.jrpc.views import spacecraft
+services_scheduling_jrpc_views_spacecraft = Mock()
+services_scheduling_jrpc_views_spacecraft.get_operational_slots =\
+ MagicMock(return_value = 'test')
+
+services_scheduling_jrpc_views_spacecraft.select_slots =\
+ MagicMock(return_value = 'test') 
+
+# from services.configuration.models import rules
+services_configuration_models_rules = Mock()
+services_configuration_models_rules.add_rule = MagicMock(return_value = 'test')
+
+# from services.configuration.models import availability - Not used.
+# services_configuration_models_availability = Mock()
+
+# from services.configuration.models import channels
+services_configuration_models_channels = Mock()
+services_configuration_models_channels.gs_channel_create =\
+ MagicMock(return_value = 'test')
+
+services_configuration_models_channels.sc_channel_create =\
+ MagicMock(return_value = 'test')
+
+# from services.configuration.signals import models
+services_configuration_signals_models = Mock()
+services_configuration_signals_models.connect_availability_2_operational =\
+ MagicMock(return_value = 'test')
+
+services_configuration_signals_models.connect_channels_2_compatibility =\
+ MagicMock(return_value = 'test')
+
+services_configuration_signals_models.connect_compatibility_2_operational =\
+ MagicMock(return_value = 'test')
+
+services_configuration_signals_models.connect_rules_2_availability =\
+ MagicMock(return_value = 'test')
+
+# operational.OperationalSlot.objects.get_simulator().set_debug() - TO-DO
+
+# from services.scheduling.models.operational.OperationalSlot import objects
+services_scheduling_models_operational_OperationalSlot_objects = Mock()
+services_scheduling_models_operational_OperationalSlot_objects.set_debug =\
+ MagicMock(return_value = 'test')
+
+# from services.network.models.server.Server import objects
+services_network_models_server_Server_objects = Mock()
+services_network_models_server_Server_objects.load_local_server =\
+ MagicMock(return_value = 'ReturnValueOfLoadLocalServer')
 
 # Dependencies for the tests
 from twisted.python import log
@@ -51,21 +152,11 @@ from twisted.internet import defer, protocol
 from twisted.cred.portal import Portal
 from twisted.internet import reactor, ssl
 
-# from ampauth.credentials import *
-
 from ampauth.server import *
 from ampauth.commands import Login
 from client_amp import ClientProtocol
 from _commands import NotifyMsg, NotifyEvent
 from errors import *
-
-
-fake_module = mock.MagicMock()
-sys.modules['servers_models.Server.objects.load_local_server'] = fake_module
-setattr(servers_models.Server.objects, 'load_local_server', fake_module)
-
-from server_models.Server.objects import load_local_server
-
 
 """
 Configuration settings.
@@ -136,61 +227,63 @@ class TestStartRemote(unittest.TestCase):
         This method populates the database with some information to be used
         only for this test.
         """
-        server_models.Server.objects.load_local_server()
+
+        # TO-DO
+        services_network_models_server_Server_objects.load_local_server() 
 
         __sc_1_id = 'humsat-sc'
         __sc_1_tle_id = 'HUMSAT-D'
         __sc_1_ch_1_id = 'humsat-fm'
         __sc_1_ch_1_cfg = {
-            jrpc_keys.FREQUENCY_K: '437000000',
-            jrpc_keys.MODULATION_K: 'FM',
-            jrpc_keys.POLARIZATION_K: 'LHCP',
-            jrpc_keys.BITRATE_K: '300',
-            jrpc_keys.BANDWIDTH_K: '12.500000000'
+            services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
+            services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
+            services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
+            services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
+            services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
         }
 
         __sc_2_id = 'beesat-sc'
         __sc_2_tle_id = 'BEESAT-2'
         __sc_2_ch_1_id = 'beesat-fm'
         __sc_2_ch_1_cfg = {
-            jrpc_keys.FREQUENCY_K: '437000000',
-            jrpc_keys.MODULATION_K: 'FM',
-            jrpc_keys.POLARIZATION_K: 'LHCP',
-            jrpc_keys.BITRATE_K: '300',
-            jrpc_keys.BANDWIDTH_K: '12.500000000'
+            services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
+            services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
+            services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
+            services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
+            services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
         }
 
         __gs_1_id = 'gs-la'
         __gs_1_ch_1_id = 'gs-la-fm'
         __gs_1_ch_1_cfg = {
-            jrpc_keys.BAND_K:
+            services_configuration_jrpc_serializers_serialization.BAND_K:
             'UHF / U / 435000000.000000 / 438000000.000000',
-            jrpc_keys.AUTOMATED_K: False,
-            jrpc_keys.MODULATIONS_K: ['FM'],
-            jrpc_keys.POLARIZATIONS_K: ['LHCP'],
-            jrpc_keys.BITRATES_K: [300, 600, 900],
-            jrpc_keys.BANDWIDTHS_K: [12.500000000, 25.000000000]
+            services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
+            services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
+            services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
+            services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
+            services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
         }
         __gs_1_ch_2_id = 'gs-la-fm-2'
         __gs_1_ch_2_cfg = {
-            jrpc_keys.BAND_K:
+            services_configuration_jrpc_serializers_serialization.BAND_K:
             'UHF / U / 435000000.000000 / 438000000.000000',
-            jrpc_keys.AUTOMATED_K: False,
-            jrpc_keys.MODULATIONS_K: ['FM'],
-            jrpc_keys.POLARIZATIONS_K: ['LHCP'],
-            jrpc_keys.BITRATES_K: [300, 600, 900],
-            jrpc_keys.BANDWIDTHS_K: [12.500000000, 25.000000000]
+            services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
+            services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
+            services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
+            services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
+            services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
         }
 
-        signals.models.connect_availability_2_operational()
-        signals.models.connect_channels_2_compatibility()
-        signals.models.connect_compatibility_2_operational()
-        signals.models.connect_rules_2_availability()
-        #signals.connect_segments_2_booking_tle()
+        services_configuration_signals_models.models.connect_availability_2_operational()
+        services_configuration_signals_models.models.connect_channels_2_compatibility()
+        services_configuration_signals_models.models.connect_compatibility_2_operational()
+        services_configuration_signals_models.models.connect_rules_2_availability()
+        #services_configuration_signals_models.connect_segments_2_booking_tle()
 
-        helpers.init_available()
-        helpers.init_tles_database()
-        __band = helpers.create_band()
+        services_common_testing_helpers.init_available()
+        services_common_testing_helpers.init_tles_database()
+        __band = services_common_testing_helpers.create_band()
 
         __usr_1_name = 'crespo'
         __usr_1_pass = 'cre.spo'
@@ -201,39 +294,39 @@ class TestStartRemote(unittest.TestCase):
         __usr_2_mail = 'tubio@tubio.gal'
 
         # Default values: username=testuser, password=testuser.
-        __user_def = helpers.create_user_profile()
-        __usr_1 = helpers.create_user_profile(
+        __user_def = services_common_testing_helpers.create_user_profile()
+        __usr_1 = services_common_testing_helpers.create_user_profile(
             username=__usr_1_name, password=__usr_1_pass, email=__usr_1_mail)
-        __usr_2 = helpers.create_user_profile(
+        __usr_2 = services_common_testing_helpers.create_user_profile(
             username=__usr_2_name, password=__usr_2_pass, email=__usr_2_mail)
 
-        __sc_1 = helpers.create_sc(
+        __sc_1 = services_common_testing_helpers.create_sc(
             user_profile=__usr_1,
             identifier=__sc_1_id,
             tle_id=__sc_1_tle_id,
         )
 
-        __sc_2 = helpers.create_sc(
+        __sc_2 = services_common_testing_helpers.create_sc(
             user_profile=__usr_2,
             identifier=__sc_2_id,
             tle_id=__sc_2_tle_id,
         )
-        __gs_1 = helpers.create_gs(
+        __gs_1 = services_common_testing_helpers.create_gs(
             user_profile=__usr_2, identifier=__gs_1_id,
         )
 
         operational.OperationalSlot.objects.get_simulator().set_debug()
         operational.OperationalSlot.objects.set_debug()
 
-        jrpc_channels_if.gs_channel_create(
+        services_configuration_models_channels.gs_channel_create(
             ground_station_id=__gs_1_id,
             channel_id=__gs_1_ch_1_id,
             configuration=__gs_1_ch_1_cfg
         )
 
-        jrpc_rules_if.add_rule(
+        rules.add_rule(
             __gs_1_id, __gs_1_ch_1_id,
-            helpers.create_jrpc_daily_rule(
+            services_common_testing_helpers.create_jrpc_daily_rule(
                 starting_time=misc.localize_time_utc(datetime.time(
                     hour=8, minute=0, second=0
                 )),
@@ -243,30 +336,30 @@ class TestStartRemote(unittest.TestCase):
             )
         )
 
-        jrpc_channels_if.sc_channel_create(
+        services_configuration_models_channels.sc_channel_create(
             spacecraft_id=__sc_1_id,
             channel_id=__sc_1_ch_1_id,
             configuration=__sc_1_ch_1_cfg
         )
 
-        jrpc_channels_if.sc_channel_create(
+        services_configuration_models_channels.sc_channel_create(
             spacecraft_id=__sc_2_id,
             channel_id=__sc_2_ch_1_id,
             configuration=__sc_2_ch_1_cfg
         )
 
-        sc_1_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_1_id)
-        sc_2_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_2_id)
+        sc_1_o_slots = services_scheduling_jrpc_views_spacecraft.get_operational_slots(__sc_1_id)
+        sc_2_o_slots = services_scheduling_jrpc_views_spacecraft.get_operational_slots(__sc_2_id)
 
-        sc_1_s_slots = jrpc_sc_scheduling.select_slots(
+        sc_1_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
             __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots])
 
-        sc_2_s_slots = jrpc_sc_scheduling.select_slots(
+        sc_2_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
             __sc_2_id, [int(slot['identifier']) for slot in sc_2_o_slots])
 
-        gs_1_o_slots = jrpc_gs_scheduling.get_operational_slots(__gs_1_id)
+        gs_1_o_slots = services_scheduling_jrpc_views_groundstations.get_operational_slots(__gs_1_id)
 
-        gs_c_slots = jrpc_gs_scheduling.confirm_selections(
+        gs_c_slots = services_scheduling_jrpc_views_groundstations.confirm_selections(
             __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
 
     def setUp(self):
