@@ -60,6 +60,13 @@ from _commands import NotifyMsg, NotifyEvent
 from errors import *
 
 
+fake_module = mock.MagicMock()
+sys.modules['servers_models.Server.objects.load_local_server'] = fake_module
+setattr(servers_models.Server.objects, 'load_local_server', fake_module)
+
+from server_models.Server.objects import load_local_server
+
+
 """
 Configuration settings.
 """
@@ -263,44 +270,6 @@ class TestStartRemote(unittest.TestCase):
             __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
 
     def setUp(self):
-
-        """
-        Patch methods.
-        """
-
-        @mock.patch('services.common.simulation')
-        def _ServicesCommonSimulation(self):
-            pass
-
-        @mock.patch('services.common.misc')
-        def _ServicesCommonMisc(self):
-            pass
-
-        @mock.patch('services.common.testing.helpers')
-        def _ServicesCommonTestingHelpers(self):
-            pass
-
-        # Import channels as jrpc_channels_if
-        @mock.patch('services.configuration.jrpc.views.jrpc_channels_if')
-        def _ServicesConfigurationJrpcViewsChannels(self):
-            pass
-
-        # Import rules as jrpc_rules_if
-        @mock.patch('services.configuration.jrpc.views.jrpc_rules_if')
-        def _ServicesConfigurationJrpcViewsRules(self):
-            pass
-
-        # Import serialization as jrpc_keys
-        @mock.patch('services.configuration.jrpc.serializers.jrpc_keys')
-        def _ServicesConfigurationJrpcSerializersJrpc_keys(self):
-            pass
-
-        # Import server as server_models
-        # @mock.patch('services.network.models.server_models')
-        @mock.patch('server_models')
-        def _ServicesNetworkModelsServer_models(self):
-            pass
-
         # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
         # management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
