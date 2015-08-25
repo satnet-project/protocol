@@ -73,3 +73,10 @@ class DjangoAuthChecker():
 
         except User.DoesNotExist:
             raise error.UnauthorizedLogin("Incorrect username.")
+
+class Testing():
+
+    def create_user_profile(self, username, password, email):
+        print username
+        print password
+        print email
