@@ -28,6 +28,7 @@ import unittest
 sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
 from ampauth.testing import DjangoAuthChecker, Testing
+from django.db import models
 
 #os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 #django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
@@ -45,10 +46,6 @@ services_common_misc.get_utc_timestamp =\
 services_common_testing_helpers = Mock()
 
 services_common_testing_helpers.create_jrpc_daily_rule =\
- MagicMock(return_value = 'test')
-
-services_configuration_jrpc_views_channels = Mock()
-services_configuration_jrpc_views_channels.sc_channel_create =\
  MagicMock(return_value = 'test')
 
 # from services.configuration.jrpc.views import rules
@@ -83,7 +80,6 @@ services_scheduling_jrpc_views_spacecraft = Mock()
 # services_scheduling_jrpc_views_spacecraft.get_operational_slots =\
 #  MagicMock(return_value = 'test')
 
-
 services_scheduling_jrpc_views_spacecraft.select_slots =\
  MagicMock('test1', 'test2')
 services_scheduling_jrpc_views_spacecraft.return_value = '2'
@@ -92,13 +88,8 @@ services_scheduling_jrpc_views_spacecraft.return_value = '2'
 services_configuration_models_rules = Mock()
 services_configuration_models_rules.add_rule = MagicMock(return_value = 'test')
 
-# from services.configuration.models import availability - Not used.
-# services_configuration_models_availability = Mock()
-
 # from services.configuration.models import channels
 services_configuration_models_channels = Mock()
-services_configuration_models_channels.gs_channel_create =\
- MagicMock(return_value = 'test')
 
 services_configuration_models_channels.sc_channel_create =\
  MagicMock(return_value = 'test')
@@ -118,8 +109,6 @@ services_scheduling_models_operational_OperationalSlot_objects = Mock()
 services_scheduling_models_operational_OperationalSlot_objects.set_debug =\
  MagicMock(return_value = 'test')
 
-
-
 # from services.network.models.server.Server import objects
 services_network_models_server_Server_objects = Mock()
 services_network_models_server_Server_objects.load_local_server =\
@@ -134,7 +123,6 @@ from twisted.internet import reactor, ssl
 
 # For test purposes
 from twisted.manhole.service import Realm
-
 
 from ampauth.server import CredAMPServerFactory, CredReceiver
 from ampauth.commands import Login
@@ -153,6 +141,8 @@ settings.configure(DEBUG=True,
     'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
     INSTALLED_APPS = ('django.contrib.auth',))
 
+from django.contrib.auth.models import User
+
 """
 To perform correct end to end tests:
 1. The server must stop listening.
@@ -166,7 +156,6 @@ disconnects to avoid duplicated fires of a same deferred
 For more information about how to perform end to end
 unit tests check http://blackjml.livejournal.com/23029.html
 """
-
 
 class ClientProtocolTest(ClientProtocol):
 
@@ -210,16 +199,129 @@ class TestStartRemote(unittest.TestCase):
         print "load_local_server"
 
     def create_user_profile(self, username, password, email):
-        print "create_user_profile"
-        print username
-        print password
-        print email
+        from sqlite3 import connect, PARSE_DECLTYPES, OperationalError
 
+        try:
+            """
+            Table.
+            """
+
+            column = ['id', 'username', 'first_name', 'last_name', 'email',\
+             'password', 'groups', 'user_permissions', 'is_staff', 'is_active',\
+              'is_superuser', 'last_login', 'date_joined']
+
+            _type = 'INTEGER'
+            _typetext = 'INTEGER'
+            _datetimetype = 'TEXT'
+
+            self.connection = connect('test.db', detect_types = PARSE_DECLTYPES)
+
+            self.connection.execute('CREATE TABLE {tn} ({nf} {ft}) '\
+                                .format(tn='auth_user', nf=column[0], ft=_type))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[1], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[2], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[3], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[4], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[5], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[6], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[7], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[8], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[9], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[10], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[11], ct=_typetext))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                                .format(tn='auth_user', cn=column[12], ct=_datetimetype))
+
+        except OperationalError:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Table already created.")
+
+        user = User.objects.create_user(username, email, password)
+        print "User %s created" %(username)
+        return user
+
+
+    """
+    user = models.ForeignKey
+    identifier = models.CharField
+    callsign = models.CharField
+    channels = models.ManyToManyField
+    tle = models.ForeignKey
+    is_cluster = models.BooleanField
+    is_ufo = models.BooleanField
+    """
     def create_sc(self, user_profile, identifier, tle_id):
-        print "create_sc"
-        print user_profile
-        print identifier
-        print tle_id
+
+        from sqlite3 import connect, PARSE_DECLTYPES, OperationalError
+
+        try:
+            """
+            Table.
+            """
+
+            column = ['user_profile', 'identifier', 'callsign', 'channels', 'tle_id',\
+             'is_cluster', 'is_ufo']
+
+            _typeText = 'TEXT'
+            _typeInteger = 'INTEGER'
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
+                .format(tn='auth_user', cn=column[0], ct=_typeText))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[1], ct=_typeText))
+            
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[2], ct=_typeText))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[3], ct=_typeText))
+            
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[4], ct=_typeText))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[5], ct=_typeInteger))
+
+            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
+                format(tn='auth_user', cn=column[6], ct=_typeInteger))
+
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Spacecraft fields created.", system = "database-test")
+
+        except OperationalError:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Spacecraft fields already created.", system = "database-test")
+
+        spacecraft = User.objects.create_user(user_profile, identifier, tle_id)
+
+        print "Spacecraft %s created" %(identifier)
+
+    def sc_channel_create(self, spacecraft_id, channel_id, configuration):
+        print "sc_channel_create"
+        print spacecraft_id
+        print channel_id
+        print configuration
 
     def create_gs(self, user_profile, identifier):
         print "create_gs"
@@ -229,12 +331,6 @@ class TestStartRemote(unittest.TestCase):
     def gs_channel_create(self, ground_station_id, channel_id, configuration):
         print "create_gs_channel"
         print ground_station_id
-        print channel_id
-        print configuration
-
-    def sc_channel_create(self, spacecraft_id, channel_id, configuration):
-        print "sc_channel_create"
-        print spacecraft_id
         print channel_id
         print configuration
 
@@ -439,6 +535,7 @@ class TestStartRemote(unittest.TestCase):
             identifier=__sc_2_id,
             tle_id=__sc_2_tle_id,
         )
+
         __gs_1 = self.services_common_testing_helpers_create_gs(
             user_profile=__usr_2, 
             identifier=__gs_1_id,
@@ -580,6 +677,11 @@ class TestStartRemote(unittest.TestCase):
 
         return defer.gatherResults([d,
                                     self.clientDisconnected1, self.clientDisconnected2])
+
+        from os import remove
+        self.connection.close()
+        os.remove('test.db')
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
 
     """
     Basic remote connection between two clients. The procedure goes:
