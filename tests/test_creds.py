@@ -21,25 +21,18 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 import sys, os
-import unittest, mock, kiss
+import unittest, mock
+
+from unittest import TestCase
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sqlite3 import connect, PARSE_DECLTYPES
-from datetime import date
-
 from twisted.python import log
-from twisted.cred import credentials
-from twisted.cred.error import UnauthorizedLogin
 
-from ampauth.testing import DjangoAuthChecker
-
+from ampauth.errors import BadCredentials
+from rpcrequests import Satnet_RPC
 
 class CredentialsChecker(unittest.TestCase):
-
-    """
-    Testing the server credentials handling
-    """
 
     def _setUp_databases(self):
 
@@ -47,69 +40,13 @@ class CredentialsChecker(unittest.TestCase):
         self.password = 'pwd4django'
         self.email = 'xabi@aguarda.es'
 
-        """
-        Test database.
-        """
-
-        column = ['id', 'username', 'first_name', 'last_name', 'email',\
-         'password', 'groups', 'user_permissions', 'is_staff', 'is_active',\
-          'is_superuser', 'last_login', 'date_joined']
-
-        _type = 'INTEGER'
-        _typetext = 'INTEGER'
-        _datetimetype = 'TEXT'
-
-        connection = connect('test.db', detect_types = PARSE_DECLTYPES)
-
-        connection.execute('CREATE TABLE {tn} ({nf} {ft}) '\
-                            .format(tn='auth_user', nf=column[0], ft=_type))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[1], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[2], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[3], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[4], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[5], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[6], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[7], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[8], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[9], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[10], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[11], ct=_typetext))
-
-        connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                            .format(tn='auth_user', cn=column[12], ct=_datetimetype))
-
-        self.connection = connection
-
     def setUp(self):
         log.startLogging(sys.stdout)
 
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting database")
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting username")
         self._setUp_databases()
 
-        return
-
+        return True
 
     """
     Log in with valid credentials. The server should return True
@@ -125,21 +62,17 @@ class CredentialsChecker(unittest.TestCase):
         mockUserGoodCredentials.username = 'xabi.crespo'
         mockUserGoodCredentials.password = 'pwd4django'
 
-        creds = credentials.UsernamePassword(self.username, self.password)
-        checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, mockUserGoodCredentials)
+        @mock.patch('__main__.Satnet_RPC')
+        def Satnet_RPC(self, sUsername, sPassword, debug=True):
+            return True
 
-        def checkRequestAvatarCb(result):
-            self.assertEqual(result.username, self.username)
-
-        d.addCallback(checkRequestAvatarCb)
-        return d
+        self.rpc = Satnet_RPC('xabi.crespo', mockUserGoodCredentials.password,\
+         debug=True)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCrendentials test ok!")
 
-
     """
-    Log in with wrong username. The server should raise UnauthorizedLogin
+    Log in with wrong username. The server should raise BadCredentials
     with 'Incorrect username' message.
     """
     def test_BadUsername(self):
@@ -153,17 +86,18 @@ class CredentialsChecker(unittest.TestCase):
         mockUserBadUsername.username = 'wrongUser'
         mockUserBadUsername.password = 'pwd4django'
 
-        creds = credentials.UsernamePassword(self.username, self.password)
-        checker = DjangoAuthChecker()
-
-        return self.assertRaisesRegexp(UnauthorizedLogin, 'Incorrect username',\
-        checker.requestAvatarId, creds, mockUserBadUsername)
+        @mock.patch('__main__.Satnet_RPC')
+        def Satnet_RPC(self, sUsername, sPassword, debug=True):
+            raise BadCredentials("Incorrect username")    
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BadUsername test ok!")
 
+        return self.assertRaisesRegexp(BadCredentials, 'Incorrect username',\
+         Satnet_RPC, mockUserBadUsername.username, mockUserBadUsername.password,\
+          debug=True)
 
     """
-    Log in with wrong password. The server should raise UnauthorizedLogin
+    Log in with wrong password. The server should raise BadCredentials
     with 'Incorrect password' message.
     """
     def test_BadPassword(self):
@@ -177,26 +111,15 @@ class CredentialsChecker(unittest.TestCase):
         mockUserBadPassword.username = 'xabi.crespo'
         mockUserBadPassword.password = 'wrongPass'
 
-        creds = credentials.UsernamePassword(self.username, self.password)
-        checker = DjangoAuthChecker()
-        d = checker.requestAvatarId(creds, mockUserBadPassword)
-
-        return self.assertRaisesRegexp(d, 'Incorrect password')
+        @mock.patch('__main__.Satnet_RPC')
+        def Satnet_RPC(self, sUsername, sPassword, debug=True):
+            raise BadCredentials("Incorrect password")
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> BadPassword test ok!")
 
-
-    """
-    Erase the database file after each test.
-    """
-    def tearDown(self):
-
-        try:
-            self.connection.close()
-            os.remove('test.db')
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
-        except:
-            pass 
+        return self.assertRaisesRegexp(BadCredentials, 'Incorrect password',\
+         Satnet_RPC, mockUserBadPassword.username, mockUserBadPassword.password,\
+          debug=True)
 
 
 if __name__ == '__main__':
