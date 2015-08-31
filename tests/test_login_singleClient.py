@@ -21,39 +21,23 @@ __author__ = 'xabicrespog@gmail.com'
 
 import sys
 from os import path
+from mock import Mock, MagicMock
 import unittest
-
-import mock
 
 sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 from twisted.internet import defer, protocol
-# from twisted.trial import unittest
 from twisted.cred.portal import Portal
 from twisted.internet import reactor, ssl
+from twisted.python import log
 
 from client_amp import ClientProtocol
-from ampauth.server import CredReceiver
-# from ampauth.credentials import *
-from ampauth.server import *
-#from ampauth.client import login
+from ampauth.server import CredReceiver, CredAMPServerFactory
 from ampauth.commands import Login
-from ampauth.testing import DjangoAuthCheckers, Realm
+from ampauth.testing import Realm
 
-# from services.common.testing import helpers as db_tools
-
-"""
-Configuration settings.
-"""
-BASE_DIR = path.abspath(path.join(path.dirname(__file__), "."))
-from django.conf import settings
-settings.configure(DEBUG=True, 
-  DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-      'NAME': path.join(BASE_DIR, 'test.db'),
-    'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
-    INSTALLED_APPS = ('django.contrib.auth',))
-
-from django.contrib.auth.models import User
+from rpcrequests import Satnet_RPC
+from ampauth.errors import BadCredentials
 
 """
 To perform correct end to end tests:
@@ -90,38 +74,43 @@ class TestSingleClient(unittest.TestCase):
     TODO. Test timeout
     """
 
+    def funcion(self, username, password):
+        if username == self.mockUserGoodCredentials.username:
+            if password == self.mockUserGoodCredentials.password:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCredentials")
+                return True
+            elif password != self.mockUserGoodCredentials.password:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test ok!")
+                raise BadCredentials("Incorrect username and/or password")
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+        elif username != self.mockUserGoodCredentials.username:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test ok!")
+            raise BadCredentials("Incorrect username and/or password")
+        else:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+        
     def _setUp_databases(self):
         """
         This method populates the database with some information to be used
         only for this test suite.
         """
-        username_1 = 'xabi'
-        password_1 = 'pwdxabi'
-        email_1 = 'xabi@aguarda.es'
-
-        username_2 = 'marti'
-        password_2 = 'pwdmarti'
-        email_2 = 'marti@montederramo.es'
-
-        self.user_1 = mock.Mock()
-        self.user_1.username = username_1 
-        self.user_1.email = email_1
-        self.user_1.password = password_1
-
-        self.user_2 = mock.Mock()
-        self.user_2.username = username_2
-        self.user_2.email = email_2
-        self.user_2.password = password_2
+        self.mockUserGoodCredentials = Mock()
+        self.mockUserGoodCredentials.username = 's.gongoragarcia@gmail.com'
+        self.mockUserGoodCredentials.password = 'sgongarpass'
         
+        self.mockUserBadUsername = Mock()
+        self.mockUserBadUsername.username = 'WrongUser'
+        self.mockUserBadUsername.password = 'sgongarpass'
+
+        self.mockUserBadPassword = Mock()
+        self.mockUserBadPassword.username = 's.gongoragarcia@gmail.com'
+        self.mockUserBadPassword.password = 'WrongPass'
 
     def setUp(self):
         log.startLogging(sys.stdout)
-
-        # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        # management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        # management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
@@ -140,32 +129,34 @@ class TestSingleClient(unittest.TestCase):
 
         Should return a pair of creds.
         """
-        checker = DjangoAuthCheckers()
-        print checker
-        """
-        Realm?
-        """
-        realm = Realm()
-        """
-        Class Portal. A mediator between clients and a realm.
+        # checker = DjangoAuthCheckers()
+        # print checker
+        # """
+        # Realm?
+        # """
+        # realm = Realm()
+        # """
+        # Class Portal. A mediator between clients and a realm.
 
-        A portal is associated with one Realm and zero or more credentials checkers.
-        When a login is attempted, the portal finds the appropriate credentials
-        checker for the credentials given, invokes it, and if the credentials are
-        valid, retrieves the appropriate avatar from the Realm.
-        """
-        portal = Portal(realm, [checker])
+        # A portal is associated with one Realm and zero or more credentials checkers.
+        # When a login is attempted, the portal finds the appropriate credentials
+        # checker for the credentials given, invokes it, and if the credentials are
+        # valid, retrieves the appropriate avatar from the Realm.
+        # """
+        # portal = Portal(realm, [checker])
 
-        print portal
+        # print portal
 
         # pf = CredAMPServerFactory(portal)
-        pf = CredAMPServerFactory()
 
-        pf.protocol = CredReceiver
-        pf.onConnectionLost = d
+        self.pf = CredAMPServerFactory()
+        self.pf.protocol = CredReceiver()
+        # Patch!
+        self.pf.protocol.login = MagicMock(side_effect=self.funcion)
+        # self.pf.onConnectionLost = d
         cert = ssl.PrivateCertificate.loadPEM(
             open('../key/server.pem').read())
-        return reactor.listenSSL(1234, pf, cert.options())
+        return reactor.listenSSL(1234, self.pf, cert.options())
 
     def _connectClient(self, d1, d2):
         self.factory = protocol.ClientFactory.forProtocol(ClientProtocolTest)
@@ -181,49 +172,60 @@ class TestSingleClient(unittest.TestCase):
         d = defer.maybeDeferred(self.serverPort.stopListening)
         self.clientConnection.disconnect()
         return defer.gatherResults([d,
-                                    self.clientDisconnected])      
-        try:
-            self.connection.close()
-            os.remove('test.db')
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
-        except:
-            pass 
+                                    self.clientDisconnected])
 
     """
     Log in with valid credentianls. The server should return True
     """
+    # def test_validLogin(self):
 
-    def test_validLogin(self):
-        d = Login(self.factory.protoInstance, UsernamePassword(
-            'xabi', 'pwdxabi'))
-        d.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
-        return d
+    #     # d = Login(self.factory.protoInstance, UsernamePassword(
+    #     #     'xabi', 'pwdxabi'))
+    #     # d.addCallback(lambda res : self.assertTrue(res['True']))
 
-    # """
-    # Log in with wrong username. The server should raise UnauthorizedLogin
-    # with 'Incorrect username' message
-    # """
+    #     # objeto = CredReceiver()
 
-    # def test_wrongUsername(self):
-    #     d = login(self.factory.protoInstance, UsernamePassword(
-    #         'wrongUser', 'pwdxabi'))
+    #     # d = self.pf.protocol.login(mockUserGoodCredentials.username,\
+    #     #  mockUserGoodCredentials.password)
+    #     # print "d"
+    #     # print d
+    #     # d.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
 
-    #     def checkError(result):
-    #         self.assertEqual(result.message, 'Incorrect username')
-    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+    #     return self.assertTrue(self.pf.protocol.login(self.mockUserGoodCredentials.username,\
+    #      self.mockUserGoodCredentials.password)) 
 
-    # """
-    # Log in with wrong password. The server should raise UnauthorizedLogin
-    # with 'Incorrect password' message
-    # """
+    """
+    Log in with wrong username. The server should raise UnauthorizedLogin
+    with 'Incorrect username' message
+    """
+    def test_wrongUsername(self):
 
-    # def test_wrongPassword(self):
+    # #     d = login(self.factory.protoInstance, UsernamePassword(
+    # #         'wrongUser', 'pwdxabi'))
+
+    # #     def checkError(result):
+    # #         self.assertEqual(result.message, 'Incorrect username')
+    # #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+
+
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test starts!")
+
+        return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
+         self.pf.protocol.login, self.mockUserBadUsername.username,\
+          self.mockUserBadUsername.password)
+
+    """
+    Log in with wrong password. The server should raise UnauthorizedLogin
+    with 'Incorrect password' message
+    """
+    def test_wrongPassword(self):
     #     d = login(self.factory.protoInstance, UsernamePassword(
     #         'xabi', 'wrongPass'))
 
-    #     def checkError(result):
-    #         self.assertEqual(result.message, 'Incorrect password')
-    #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test starts!")
+
+        return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
+         self.pf.protocol.login, self.mockUserBadPassword.username, self.mockUserBadPassword.password)
 
 if __name__ == '__main__':
     unittest.main()  
