@@ -108,31 +108,33 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         Generate a new challenge for the given username.
         """
-        if sUsername in self.factory.active_protocols:
+        self.active_protocols = {}
+        self.active_connections = {}
+
+        if sUsername in self.active_protocols:
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
             self.sUsername = sUsername
-            self.factory.active_protocols[sUsername] = None
+            self.active_protocols[sUsername] = None
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
-            self.factory.protocol = SATNETServer
+            self.protocol = SATNETServer
             #avatar.factory = self.factory
             #avatar.credProto = self
             #avatar.sUsername = sUsername
-            self.factory.active_protocols[sUsername] = self
-
+            self.active_protocols[sUsername] = self
             log.msg('Connection made')
-            log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
-            log.msg('Active connections: ' + str(len(self.factory.active_connections)))
+            log.msg('Active clients: ' + str(len(self.active_protocols)))
+            log.msg('Active connections: ' + str(len(self.active_connections)))
 
             return {'bAuthenticated': True}
 
         except BadCredentials as e:
             log.err('Incorrect username and/or password')
-            log.err(e)
-            raise
+            # log.err(e)
+            raise BadCredentials("Incorrect username and/or password")
 
     Login.responder(login)
 
