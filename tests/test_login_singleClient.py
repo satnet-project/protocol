@@ -29,6 +29,7 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 from twisted.internet import defer, protocol
 from twisted.cred.portal import Portal
 from twisted.internet import reactor, ssl
+from twisted.internet.error import CannotListenError
 from twisted.python import log
 
 from client_amp import ClientProtocol
@@ -119,44 +120,24 @@ class TestSingleClient(unittest.TestCase):
         self.serverPort = self._listenServer(self.serverDisconnected)
         self.connected = defer.Deferred()
         self.clientDisconnected = defer.Deferred()
-        self.clientConnection = self._connectClient(self.connected,
-                                                    self.clientDisconnected)
+        self.clientConnection = self._connectClient(self.connected,\
+         self.clientDisconnected)
         return self.connected
 
     def _listenServer(self, d):
-        """
-        Class DjangoAuthCheckers.
-
-        Should return a pair of creds.
-        """
-        # checker = DjangoAuthCheckers()
-        # print checker
-        # """
-        # Realm?
-        # """
+        # checker = DjangoAuthChecker()
         # realm = Realm()
-        # """
-        # Class Portal. A mediator between clients and a realm.
-
-        # A portal is associated with one Realm and zero or more credentials checkers.
-        # When a login is attempted, the portal finds the appropriate credentials
-        # checker for the credentials given, invokes it, and if the credentials are
-        # valid, retrieves the appropriate avatar from the Realm.
-        # """
         # portal = Portal(realm, [checker])
-
-        # print portal
-
-        # pf = CredAMPServerFactory(portal)
-
-        self.pf = CredAMPServerFactory()
-        self.pf.protocol = CredReceiver()
-        # Patch!
-        self.pf.protocol.login = MagicMock(side_effect=self.funcion)
-        # self.pf.onConnectionLost = d
-        cert = ssl.PrivateCertificate.loadPEM(
-            open('../key/server.pem').read())
-        return reactor.listenSSL(1234, self.pf, cert.options())
+        try:
+            self.pf = CredAMPServerFactory()
+            self.pf.protocol = CredReceiver()
+            self.pf.protocol.login = MagicMock(side_effect=self.funcion)
+            self.pf.onConnectionLost = d
+            cert = ssl.PrivateCertificate.loadPEM(
+                open('../key/server.pem').read())
+            return reactor.listenSSL(1234, self.pf, cert.options())
+        except CannotListenError:
+            log.msg("Server already initialized")
 
     def _connectClient(self, d1, d2):
         self.factory = protocol.ClientFactory.forProtocol(ClientProtocolTest)
@@ -165,49 +146,31 @@ class TestSingleClient(unittest.TestCase):
 
         cert = ssl.Certificate.loadPEM(open('../key/public.pem').read())
         options = ssl.optionsForClientTLS(u'example.humsat.org', cert)
-
         return reactor.connectSSL("localhost", 1234, self.factory, options)
 
     def tearDown(self):
-        d = defer.maybeDeferred(self.serverPort.stopListening)
-        self.clientConnection.disconnect()
-        return defer.gatherResults([d,
-                                    self.clientDisconnected])
+        try:
+            d = defer.maybeDeferred(self.serverPort.stopListening)
+            self.clientConnection.disconnect()
+            return defer.gatherResults([d, self.clientDisconnected, self.serverDisconnected])
+        except AttributeError:
+            self.clientConnection.disconnect()
+            return defer.gatherResults([self.clientDisconnected, self.serverDisconnected])            
 
     """
     Log in with valid credentianls. The server should return True
     """
-    # def test_validLogin(self):
+    def test_validLogin(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Valid credentials test starts!")
 
-    #     # d = Login(self.factory.protoInstance, UsernamePassword(
-    #     #     'xabi', 'pwdxabi'))
-    #     # d.addCallback(lambda res : self.assertTrue(res['True']))
-
-    #     # objeto = CredReceiver()
-
-    #     # d = self.pf.protocol.login(mockUserGoodCredentials.username,\
-    #     #  mockUserGoodCredentials.password)
-    #     # print "d"
-    #     # print d
-    #     # d.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
-
-    #     return self.assertTrue(self.pf.protocol.login(self.mockUserGoodCredentials.username,\
-    #      self.mockUserGoodCredentials.password)) 
+        return self.assertTrue(self.pf.protocol.login(self.mockUserGoodCredentials.username,\
+         self.mockUserGoodCredentials.password)) 
 
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
     with 'Incorrect username' message
     """
     def test_wrongUsername(self):
-
-    # #     d = login(self.factory.protoInstance, UsernamePassword(
-    # #         'wrongUser', 'pwdxabi'))
-
-    # #     def checkError(result):
-    # #         self.assertEqual(result.message, 'Incorrect username')
-    # #     return self.assertFailure(d, UnauthorizedLogin).addCallback(checkError)
-
-
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test starts!")
 
         return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
@@ -219,9 +182,6 @@ class TestSingleClient(unittest.TestCase):
     with 'Incorrect password' message
     """
     def test_wrongPassword(self):
-    #     d = login(self.factory.protoInstance, UsernamePassword(
-    #         'xabi', 'wrongPass'))
-
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test starts!")
 
         return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
