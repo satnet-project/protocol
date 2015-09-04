@@ -26,19 +26,17 @@ import unittest
 
 sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
-from twisted.internet import defer, protocol
-from twisted.cred.portal import Portal
-from twisted.internet import reactor, ssl
+from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
+from twisted.cred.portal import Portal
 from twisted.python import log
 
-from client_amp import ClientProtocol
-from ampauth.server import CredReceiver, CredAMPServerFactory
 from ampauth.commands import Login
-from ampauth.testing import Realm
-
-from rpcrequests import Satnet_RPC
 from ampauth.errors import BadCredentials
+from ampauth.server import CredReceiver, CredAMPServerFactory
+from ampauth.testing import Realm
+from client_amp import ClientProtocol
+from rpcrequests import Satnet_RPC
 
 """
 To perform correct end to end tests:
@@ -72,7 +70,7 @@ class TestSingleClient(unittest.TestCase):
 
     """
     Testing for one single client connection
-    TODO. Test timeout
+    To-do. Test timeout
     """
 
     def funcion(self, username, password):
@@ -97,15 +95,15 @@ class TestSingleClient(unittest.TestCase):
         only for this test suite.
         """
         self.mockUserGoodCredentials = Mock()
-        self.mockUserGoodCredentials.username = 's.gongoragarcia@gmail.com'
-        self.mockUserGoodCredentials.password = 'sgongarpass'
+        self.mockUserGoodCredentials.username = 'sam'
+        self.mockUserGoodCredentials.password = 'pwdsam'
         
         self.mockUserBadUsername = Mock()
         self.mockUserBadUsername.username = 'WrongUser'
-        self.mockUserBadUsername.password = 'sgongarpass'
+        self.mockUserBadUsername.password = 'pwdsam'
 
         self.mockUserBadPassword = Mock()
-        self.mockUserBadPassword.username = 's.gongoragarcia@gmail.com'
+        self.mockUserBadPassword.username = 'sam'
         self.mockUserBadPassword.password = 'WrongPass'
 
     def setUp(self):
@@ -115,7 +113,6 @@ class TestSingleClient(unittest.TestCase):
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
-
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
         self.connected = defer.Deferred()
@@ -125,6 +122,9 @@ class TestSingleClient(unittest.TestCase):
         return self.connected
 
     def _listenServer(self, d):
+        """
+        To-do. Factory not initialized.
+        """
         # checker = DjangoAuthChecker()
         # realm = Realm()
         # portal = Portal(realm, [checker])
