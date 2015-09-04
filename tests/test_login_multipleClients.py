@@ -20,25 +20,24 @@
 __author__ = 'xabicrespog@gmail.com'
 
 import sys, os
-#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
+import unittest
+from os import path
+from mock import Mock, MagicMock
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
+sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
-from django.core import management
-
-from twisted.internet import defer, protocol
-from twisted.trial import unittest
+from twisted.internet import defer, protocol, reactor, ssl
+from twisted.internet.error import CannotListenError
 from twisted.cred.portal import Portal
-from twisted.internet import reactor, ssl
+from twisted.python import log
 
-from ampauth.credentials import *
-from ampauth.server import *
-from ampauth.client import login
-from ampauth.server import CredReceiver
+from ampauth.commands import Login
+from ampauth.errors import BadCredentials, UnauthorizedLogin
+from ampauth.server import CredReceiver, CredAMPServerFactory
+from ampauth.testing import Realm
 from client_amp import ClientProtocol
+from rpcrequests import Satnet_RPC
 
-from services.common.testing import helpers as db_tools
 
 """
 To perform correct end to end tests:
@@ -71,63 +70,91 @@ class TestMultipleClients(unittest.TestCase):
     Testing multiple client connections
     TDOD. Test multiple valid connections
     """
+
+    def mockLoginMethod(self, username, password):
+        if username == self.mockUser1.username:
+            if password == self.mockUser1.password:
+
+                if username in self.active_users:
+                    raise UnauthorizedLogin("Client already logged in")
+                else:
+                    self.active_users.append(username)
+
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
+                self.active_users.append(username)
+                return defer.Deferred('bAuthenticated')
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+        elif username == self.mockUser2.username:
+            if password == self.mockUser2.password:
+
+                if username in self.active_users:
+                    raise UnauthorizedLogin("Client already logged in")
+                else:
+                    self.active_users.append(username)
+
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
+                return defer.Deferred('bAuthenticated')
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+        else:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+
     def _setUp_databases(self):
         """
         This method populates the database with some information to be used
         only for this test suite.
         """
-        #self.__verbose_testing = False
-        username_1 = 'xabi'
-        password_1 = 'pwdxabi'
-        email_1 = 'xabi@aguarda.es'
+        self.mockUser1 = Mock()
+        self.mockUser1.username = 'xabi'
+        self.mockUser1.password = 'pwdxabi'
 
-        username_2 = 'marti'
-        password_2 = 'pwdmarti'
-        email_2 = 'marti@montederramo.es'
+        self.mockUser2 = Mock()
+        self.mockUser2.username = 'sam'
+        self.mockUser2.password = 'pwdsam'
 
-        db_tools.create_user_profile(
-            username=username_1, password=password_1, email=email_1)
-        db_tools.create_user_profile(
-            username=username_2, password=password_2, email=email_2)
+        self.active_users = []
 
     def setUp(self):
         log.startLogging(sys.stdout)
-
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        management.execute_from_command_line(['manage.py', 'createsuperuser', '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
+
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
 
         self.connected1 = defer.Deferred()
         self.clientDisconnected1 = defer.Deferred()
         self.factory1 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
-        self.clientConnection1 = self._connectClients(self.factory1, self.connected1,
-                                                      self.clientDisconnected1)
+        self.clientConnection1 = self._connectClients(self.factory1,\
+         self.connected1, self.clientDisconnected1)
 
         self.connected2 = defer.Deferred()
         self.clientDisconnected2 = defer.Deferred()
         self.factory2 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
-        self.clientConnection2 = self._connectClients(self.factory2, self.connected2,
-                                                      self.clientDisconnected2)
+        self.clientConnection2 = self._connectClients(self.factory2,\
+         self.connected2, self.clientDisconnected2)
 
         return defer.gatherResults([self.connected1, self.connected2])
 
     def _listenServer(self, d):
-        checker = DjangoAuthChecker()
-        realm = Realm()
-        portal = Portal(realm, [checker])
-        pf = CredAMPServerFactory(portal)
-        pf.protocol = CredReceiver
-        pf.onConnectionLost = d
-        cert = ssl.PrivateCertificate.loadPEM(
-            open('../key/server.pem').read())
-        return reactor.listenSSL(1234, pf, cert.options())
+        # checker = DjangoAuthChecker()
+        # realm = Realm()
+        # portal = Portal(realm, [checker])
+        # pf = CredAMPServerFactory(portal)
+        try:
+            self.pf = CredAMPServerFactory()
+            self.pf.protocol = CredReceiver
+            self.pf.protocol.login = MagicMock(side_effect=self.mockLoginMethod)
+            self.pf.onConnectionLost = d
+            cert = ssl.PrivateCertificate.loadPEM(
+                open('../key/server.pem').read())
+            return reactor.listenSSL(1234, self.pf, cert.options())
+        except CannotListenError:
+            log.msg("Server already initialized")
 
     def _connectClients(self, factory, d1, d2):
         factory.onConnectionMade = d1
@@ -139,13 +166,17 @@ class TestMultipleClients(unittest.TestCase):
         return reactor.connectSSL("localhost", 1234, factory, options)
 
     def tearDown(self):
-        d = defer.maybeDeferred(self.serverPort.stopListening)
-        self.clientConnection1.disconnect()
-        self.clientConnection2.disconnect()
-
-        return defer.gatherResults([d,
-                                    self.clientDisconnected1, self.clientDisconnected2
-                                    ])
+        try:
+            d = defer.maybeDeferred(self.serverPort.stopListening)
+            self.clientConnection1.disconnect()
+            self.clientConnection2.disconnect()
+            return defer.gatherResults([d, self.clientDisconnected1,\
+             self.clientDisconnected2])
+        except AttributeError:
+            self.clientConnection1.disconnect()
+            self.clientConnection2.disconnect()
+            return defer.gatherResults([self.clientDisconnected1,\
+             self.clientDisconnected2])
 
     """
     Log in two different clients with the same credentials. The server should 
@@ -153,30 +184,39 @@ class TestMultipleClients(unittest.TestCase):
     """
     def test_duplicatedUser(self):
 
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'xabi', 'pwdxabi'))
+        # d1 = login(self.factory1.protoInstance, UsernamePassword(
+        #     'xabi', 'pwdxabi'))
+        # d1.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
+
+        # d2 = login(self.factory2.protoInstance, UsernamePassword(
+        #     'xabi', 'pwdxabi'))
+
+        # def checkError(result):
+        #     self.assertEqual(result.message, 'Client already logged in')
+        # d2 = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
+        # return defer.gatherResults([d1, d2])
+
+
+        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
         d1.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
 
-        d2 = login(self.factory2.protoInstance, UsernamePassword(
-            'xabi', 'pwdxabi'))
+        return self.assertRaisesRegexp(UnauthorizedLogin, 'Client already logged in',\
+         self.pf.protocol.login, 'xabi', 'pwdxabi')
 
-        def checkError(result):
-            self.assertEqual(result.message, 'Client already logged in')
-        d2 = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
-        return defer.gatherResults([d1, d2])
-
-
+    """
+    Log in two different clients with good credentials. The server should
+    return True.
+    """
     def test_simultaneousUsers(self):
 
-        d1 = login(self.factory1.protoInstance, UsernamePassword(
-            'xabi', 'pwdxabi'))
+        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
         d1.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
 
-        d2 = login(self.factory2.protoInstance, UsernamePassword(
-            'marti', 'pwdmarti'))
+        d2 = self.pf.protocol.login('sam', 'pwdsam')
         d2.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
 
         return defer.gatherResults([d1, d2])
+
 
 if __name__ == '__main__':
     unittest.main()  
