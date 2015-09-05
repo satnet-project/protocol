@@ -156,8 +156,15 @@ class TestPassiveMessage(unittest.TestCase):
 
         # Sets the return value of the function for all cases.
         # To-do. Gets a different value according the case.
-        if iSlotId != 0:
+
+        print self.iSlots_available
+
+        if iSlotId in self.iSlots_available:
+            self.flag_StartRemote = 'StartRemote.REMOTE_READY'
+        else:
             self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
+
+        self.iSlots_available.append(iSlotId)
 
         return self.flag_StartRemote
 
@@ -181,6 +188,8 @@ class TestPassiveMessage(unittest.TestCase):
         self.mockUser2 = Mock()
         self.mockUser2.username = 'sam'
         self.mockUser2.password = 'pwdsam'
+
+        self.iSlots_available = []
 
         # """
         # This method populates the database with some information to be used
@@ -504,86 +513,92 @@ class TestPassiveMessage(unittest.TestCase):
         d3 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B, iTimestamp=get_utc_timestamp())
         self.assertTrue(d3)
 
-    # """
-    # Basic remote connection between two clients. The procedure goes:
-    #     1. Client A -> login
-    #     2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
-    #     3. Client B -> login
-    #     4. Client B -> StartRemote (should return StartRemote.REMOTE_READY)
-    #     5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED + client B username)
-    #     6. Client B -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED+ client A username)        
-    #     7. Client B -> sendMsg(__sMessageA2B)
-    #     8. Client A -> notifyMsg (should receive __sMessageA2B)
-    #     7. Client B -> sendMsg(__sMessageA2B)
-    #     8. Client A -> notifyMsg (should receive __sMessageA2B)
+    """
+    Basic remote connection between two clients. The procedure goes:
+        1. Client A -> login
+        2. Client A -> StartRemote (should return StartRemote.REMOTE_NOT_CONNECTED)
+        3. Client B -> login
+        4. Client B -> StartRemote (should return StartRemote.REMOTE_READY)
+        5. Client A -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED + client B username)
+        6. Client B -> notifyEvent (should receive NotifyEvent.REMOTE_CONNECTED+ client A username)        
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
+        7. Client B -> sendMsg(__sMessageA2B)
+        8. Client A -> notifyMsg (should receive __sMessageA2B)
 
-    # """
+    """
 
-    # @defer.inlineCallbacks
-    # def test_sendMsg(self):
-    #     __iSlotId = 1
-    #     __sMessage1_A2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
-    #     __sMessage2_A2B = "adios, vista dos meus ollos: non sei cando nos veremos."
-    #     __user1_name = 'crespo'
-    #     __user1_pass = 'cre.spo'
-    #     __user2_name = 'tubio'
-    #     __user2_pass = 'tu.bio'
+    # @defer.inlineCallbacks // Why?
+    def test_sendMsg(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_sendMsg starts")
 
-    #     self.factory1.onMessageReceived = defer.Deferred()
-    #     self.factory1.onEventReceived = defer.Deferred()
-    #     self.factory2.onEventReceived = defer.Deferred()
+        __iSlotId = 1
+        __sMessage1_A2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
+        __sMessage2_A2B = "adios, vista dos meus ollos: non sei cando nos veremos."
+        __user1_name = 'xabi'
+        __user1_pass = 'pwdxabi'
+        __user2_name = 'sam'
+        __user2_pass = 'pwdsam'
 
-    #     # User 1 (login + start remote)
-    #     """
-    #     Login, puedo usar el mock de los otros ejemplos.
-    #     """
-    #     res = yield login(self.factory1.protoInstance, UsernamePassword(
-    #         __user1_name, __user1_pass))
-    #     self.assertTrue(res['bAuthenticated'])
+        self.factory1.onMessageReceived = defer.Deferred()
+        self.factory1.onEventReceived = defer.Deferred()
+        self.factory2.onEventReceived = defer.Deferred()
 
-    #     """
-    #     StartRemote JRPC
-    #     """
-    #     res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-    #     self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+        # User 1 (login + start remote)
+        # res = yield login(self.factory1.protoInstance, UsernamePassword(
+        #     __user1_name, __user1_pass))
+        # self.assertTrue(res['bAuthenticated'])
 
-    #     # User 2 (login + start remote)
-    #     """
-    #     Login, puedo usar el mock de los otros ejemplos.
-    #     """
-    #     res = yield login(self.factory2.protoInstance, UsernamePassword(
-    #         __user2_name, __user2_pass))
-    #     self.assertTrue(res['bAuthenticated'])
+        d1 = self.pf.protocol.login(__user1_name, __user1_pass)
+        self.assertTrue(d1)  
 
-    #     """
-    #     StartRemote JRPC
-    #     """
-    #     res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-    #     self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
+        # res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-    #     # Events notifying REMOTE_CONNECTED to both clients
-    #     ev = yield self.factory1.onEventReceived
-    #     self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
-    #     self.factory1.onEventReceived = defer.Deferred()
-    #     ev = yield self.factory2.onEventReceived
-    #     self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
-    #     self.factory2.onEventReceived = defer.Deferred()
+        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')      
 
-    #     # User 1 sends a message to user 2
-    #     res = yield self.factory2.protoInstance.callRemote(
-    #         SendMsg, sMsg=__sMessage1_A2B, iTimestamp=misc.get_utc_timestamp())
-    #     self.assertTrue(res['bResult'])
+        # User 2 (login + start remote)
+        # res = yield login(self.factory2.protoInstance, UsernamePassword(
+        #     __user2_name, __user2_pass))
+        # self.assertTrue(res['bAuthenticated'])
 
-    #     msg = yield self.factory1.onMessageReceived
-    #     self.assertEqual(msg, __sMessage1_A2B)
-    #     self.factory1.onMessageReceived = defer.Deferred()
+        d3 = self.pf.protocol.login(__user2_name, __user2_pass)
+        self.assertTrue(d3)         
 
-    #     res = yield self.factory2.protoInstance.callRemote(
-    #         SendMsg, sMsg=__sMessage2_A2B, iTimestamp=misc.get_utc_timestamp())
-    #     self.assertTrue(res['bResult'])
+        # res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
 
-    #     msg = yield self.factory1.onMessageReceived
-    #     self.assertEqual(msg, __sMessage2_A2B)
+        d4 = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(d4, 'StartRemote.REMOTE_READY')
+
+        """
+
+        # Events notifying REMOTE_CONNECTED to both clients
+        ev = yield self.factory1.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory1.onEventReceived = defer.Deferred()
+        ev = yield self.factory2.onEventReceived
+        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        self.factory2.onEventReceived = defer.Deferred()
+
+        # User 1 sends a message to user 2
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessage1_A2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessage1_A2B)
+        self.factory1.onMessageReceived = defer.Deferred()
+
+        res = yield self.factory2.protoInstance.callRemote(
+            SendMsg, sMsg=__sMessage2_A2B, iTimestamp=misc.get_utc_timestamp())
+        self.assertTrue(res['bResult'])
+
+        msg = yield self.factory1.onMessageReceived
+        self.assertEqual(msg, __sMessage2_A2B)
+
+        """
 
 if __name__ == '__main__':
     unittest.main()  
