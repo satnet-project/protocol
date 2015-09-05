@@ -76,25 +76,30 @@ class TestMultipleClients(unittest.TestCase):
             if password == self.mockUser1.password:
 
                 if username in self.active_users:
+                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Client already logged in")
                     raise UnauthorizedLogin("Client already logged in")
                 else:
                     self.active_users.append(username)
 
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                self.active_users.append(username)
-                return defer.Deferred('bAuthenticated')
+                bAuthenticated = True
+                return bAuthenticated
+                # return bAuthenticate = True
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
 
                 if username in self.active_users:
+                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Client already logged in")
                     raise UnauthorizedLogin("Client already logged in")
                 else:
                     self.active_users.append(username)
 
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                return defer.Deferred('bAuthenticated')
+                bAuthenticated = True
+                return bAuthenticated
+                # return defer.Deferred('bAuthenticate')
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         else:
@@ -196,9 +201,8 @@ class TestMultipleClients(unittest.TestCase):
         # d2 = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
         # return defer.gatherResults([d1, d2])
 
-
         d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        d1.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
+        self.assertTrue(d1)
 
         return self.assertRaisesRegexp(UnauthorizedLogin, 'Client already logged in',\
          self.pf.protocol.login, 'xabi', 'pwdxabi')
@@ -210,12 +214,10 @@ class TestMultipleClients(unittest.TestCase):
     def test_simultaneousUsers(self):
 
         d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        d1.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
+        self.assertTrue(d1)
 
         d2 = self.pf.protocol.login('sam', 'pwdsam')
-        d2.addCallback(lambda res : self.assertTrue(res['bAuthenticated']))
-
-        return defer.gatherResults([d1, d2])
+        self.assertTrue(d2)
 
 
 if __name__ == '__main__':
