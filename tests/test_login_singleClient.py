@@ -31,7 +31,6 @@ from twisted.internet.error import CannotListenError
 from twisted.cred.portal import Portal
 from twisted.python import log
 
-from ampauth.commands import Login
 from ampauth.errors import BadCredentials
 from ampauth.server import CredReceiver, CredAMPServerFactory
 from ampauth.testing import Realm
