@@ -19,8 +19,12 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-from os import path
-import os, sys, logging, datetime, django, pytz
+from os import path, remove
+import sys
+import logging
+import datetime
+import django
+import pytz
 from django.core import management
 from mock import Mock, MagicMock
 import unittest
@@ -29,9 +33,6 @@ sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
 from ampauth.testing import DjangoAuthChecker, Testing
 from django.db import models
-
-#os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-#django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
 
 # Dependencies for _setUp_databases
 # from services.common import misc
@@ -678,9 +679,8 @@ class TestStartRemote(unittest.TestCase):
         return defer.gatherResults([d,
                                     self.clientDisconnected1, self.clientDisconnected2])
 
-        from os import remove
         self.connection.close()
-        os.remove('test.db')
+        remove('test.db')
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
 
     """

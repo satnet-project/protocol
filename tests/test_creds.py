@@ -20,8 +20,10 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-import sys, os
-import unittest, mock
+import sys
+import os
+import unittest
+import mock
 
 from unittest import TestCase
 

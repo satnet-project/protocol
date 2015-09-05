@@ -19,7 +19,12 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-import os, sys, logging, datetime, django, pytz
+import os
+import sys
+import logging
+import datetime
+import django
+import pytz
 from django.core import management
 
 #sys.path.append(os.path.dirname(os.getcwd()) + "/server")

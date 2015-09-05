@@ -51,8 +51,13 @@ __author__ = 'xabicrespog@gmail.com'
 # from services.common import misc
 
 from os import path
-import os, sys, logging, datetime, django, pytz
-from django.core import management
+import os
+import sys
+# import logging
+import datetime
+# import django
+import pytz
+# from django.core import management
 import unittest
 from mock import Mock, MagicMock
 
@@ -320,6 +325,7 @@ class TestPassiveMessage(unittest.TestCase):
         # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
         # management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
         
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> New test")
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
         # management.execute_from_command_line(['manage.py', 'createsuperuser',
         #     '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
@@ -393,6 +399,7 @@ class TestPassiveMessage(unittest.TestCase):
     # get_utc_timestamp use?
     # @defer.inlineCallbacks // Why?
     def test_passiveMessage(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_passiveMessage starts")
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
 
@@ -418,6 +425,7 @@ class TestPassiveMessage(unittest.TestCase):
         d3 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B, iTimestamp=get_utc_timestamp())
         self.assertTrue(d3)
 
+
     """
     Wrong procedure. The client tries to send a message before invoking StartRemote command. 
     The procedure goes:
@@ -428,6 +436,7 @@ class TestPassiveMessage(unittest.TestCase):
 
     # get_utc_timestamp use?
     def test_wrongMessageProcedure(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_wrongMessageProcedure starts")
         # __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
 
@@ -462,25 +471,38 @@ class TestPassiveMessage(unittest.TestCase):
 
     # @defer.inlineCallbacks // Why?
     def test_SCDisconnecteds(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_SCDisconnecteds starts")
+
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
         
-        self.factory1.onEventReceived = defer.Deferred()
+        # self.factory1.onEventReceived = defer.Deferred()
 
-        # To notify when a new message is received by the client
-        res = yield login(self.factory1.protoInstance, UsernamePassword('crespo', 'cre.spo'))
-        self.assertTrue(res['bAuthenticated'])
+        # # To notify when a new message is received by the client
+        # res = yield login(self.factory1.protoInstance, UsernamePassword('crespo', 'cre.spo'))
+        # self.assertTrue(res['bAuthenticated'])
 
-        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+        # res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-        res = yield self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
-        self.assertTrue(res['bResult'])
+        # res = yield self.factory1.protoInstance.callRemote(
+        #     SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
+        # self.assertTrue(res['bResult'])
 
-        # Events notifying REMOTE_CONNECTED to both clients
-        ev = yield self.factory1.onEventReceived
-        self.assertEqual(ev, NotifyEvent.REMOTE_DISCONNECTED)
+        # # Events notifying REMOTE_CONNECTED to both clients
+        # ev = yield self.factory1.onEventReceived
+        # self.assertEqual(ev, NotifyEvent.REMOTE_DISCONNECTED)
+
+        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(d1)
+
+        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')
+
+        get_utc_timestamp = Mock(return_value='return')
+
+        d3 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B, iTimestamp=get_utc_timestamp())
+        self.assertTrue(d3)
 
     # """
     # Basic remote connection between two clients. The procedure goes:

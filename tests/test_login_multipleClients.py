@@ -19,7 +19,8 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-import sys, os
+import sys
+import os
 import unittest
 from os import path
 from mock import Mock, MagicMock
