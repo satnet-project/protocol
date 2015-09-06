@@ -20,6 +20,7 @@
 __author__ = 'xabicrespog@gmail.com'
 
 from os import path, remove
+import os
 import sys
 import logging
 import datetime
@@ -31,8 +32,8 @@ import unittest
 
 sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
-from ampauth.testing import DjangoAuthChecker, Testing
-from django.db import models
+from ampauth.testing import DjangoAuthChecker
+# from django.db import models
 
 # Dependencies for _setUp_databases
 # from services.common import misc
@@ -131,18 +132,18 @@ from client_amp import ClientProtocol
 from _commands import NotifyMsg, NotifyEvent
 from errors import *
 
-"""
-Configuration settings.
-"""
-BASE_DIR = path.abspath(path.join(path.dirname(__file__), "."))
-from django.conf import settings
-settings.configure(DEBUG=True, 
-  DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
-      'NAME': path.join(BASE_DIR, 'test.db'),
-    'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
-    INSTALLED_APPS = ('django.contrib.auth',))
+# """
+# Configuration settings.
+# """
+# BASE_DIR = path.abspath(path.join(path.dirname(__file__), "."))
+# from django.conf import settings
+# settings.configure(DEBUG=True, 
+#   DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3',
+#       'NAME': path.join(BASE_DIR, 'test.db'),
+#     'TEST_NAME': path.join(BASE_DIR, 'test.db'),}},
+#     INSTALLED_APPS = ('django.contrib.auth',))
 
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 
 """
 To perform correct end to end tests:
@@ -195,128 +196,46 @@ class TestStartRemote(unittest.TestCase):
     Testing multiple client connections
     TODO. Test multiple valid connections
     """
+    def mockLoginMethod(self, username, password):
+        if username == self.mockUser1.username:
+            if password == self.mockUser1.password:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
+                bAuthenticated = True
+                return bAuthenticated
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+
+        elif username == self.mockUser2.username:
+            if password == self.mockUser2.password:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
+                bAuthenticated = True
+                return bAuthenticated
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+
+        else:
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+
+    def mockStartRemote(self, iSlotId):
+        # Sets the return value of the function for all cases.
+        if iSlotId in self.iSlots_available:
+            self.flag_StartRemote = 'StartRemote.REMOTE_READY'
+        else:
+            self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
+
+        self.iSlots_available.append(iSlotId)
+
+        return self.flag_StartRemote
+
+    def mockSendMsg(self, sMsg, iTimestamp):
+        try:
+            if self.flag_StartRemote != 0:
+                return True
+        except:
+            raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
 
     def load_local_server(self):
         print "load_local_server"
-
-    def create_user_profile(self, username, password, email):
-        from sqlite3 import connect, PARSE_DECLTYPES, OperationalError
-
-        try:
-            """
-            Table.
-            """
-
-            column = ['id', 'username', 'first_name', 'last_name', 'email',\
-             'password', 'groups', 'user_permissions', 'is_staff', 'is_active',\
-              'is_superuser', 'last_login', 'date_joined']
-
-            _type = 'INTEGER'
-            _typetext = 'INTEGER'
-            _datetimetype = 'TEXT'
-
-            self.connection = connect('test.db', detect_types = PARSE_DECLTYPES)
-
-            self.connection.execute('CREATE TABLE {tn} ({nf} {ft}) '\
-                                .format(tn='auth_user', nf=column[0], ft=_type))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[1], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[2], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[3], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[4], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[5], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[6], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[7], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[8], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[9], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[10], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[11], ct=_typetext))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                                .format(tn='auth_user', cn=column[12], ct=_datetimetype))
-
-        except OperationalError:
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Table already created.")
-
-        user = User.objects.create_user(username, email, password)
-        print "User %s created" %(username)
-        return user
-
-
-    """
-    user = models.ForeignKey
-    identifier = models.CharField
-    callsign = models.CharField
-    channels = models.ManyToManyField
-    tle = models.ForeignKey
-    is_cluster = models.BooleanField
-    is_ufo = models.BooleanField
-    """
-    def create_sc(self, user_profile, identifier, tle_id):
-
-        from sqlite3 import connect, PARSE_DECLTYPES, OperationalError
-
-        try:
-            """
-            Table.
-            """
-
-            column = ['user_profile', 'identifier', 'callsign', 'channels', 'tle_id',\
-             'is_cluster', 'is_ufo']
-
-            _typeText = 'TEXT'
-            _typeInteger = 'INTEGER'
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}"\
-                .format(tn='auth_user', cn=column[0], ct=_typeText))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[1], ct=_typeText))
-            
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[2], ct=_typeText))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[3], ct=_typeText))
-            
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[4], ct=_typeText))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[5], ct=_typeInteger))
-
-            self.connection.execute("ALTER TABLE {tn} ADD COLUMN '{cn}' {ct}".\
-                format(tn='auth_user', cn=column[6], ct=_typeInteger))
-
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Spacecraft fields created.", system = "database-test")
-
-        except OperationalError:
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Spacecraft fields already created.", system = "database-test")
-
-        spacecraft = User.objects.create_user(user_profile, identifier, tle_id)
-
-        print "Spacecraft %s created" %(identifier)
 
     def sc_channel_create(self, spacecraft_id, channel_id, configuration):
         print "sc_channel_create"
@@ -447,220 +366,217 @@ class TestStartRemote(unittest.TestCase):
         only for this test.
         """
 
-        """ TO-DO
-        This method loads the information for the local server, updating any
-        change in the IP address that may have happened. In case the server
-        does not exist in the database, it creates the local server for the
-        very first time.
-        """
-        self.services_network_models_server_Server_objects_load_local_server() 
+        self.mockUser1 = Mock()
+        self.mockUser1.username = 'xabi'
+        self.mockUser1.password = 'pwdxabi'
 
-        __sc_1_id = 'humsat-sc'
-        __sc_1_tle_id = 'HUMSAT-D'
-        __sc_1_ch_1_id = 'humsat-fm'
-        __sc_1_ch_1_cfg = {
-            services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
-            services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
-            services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
-            services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
-            services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
-        }
+        self.mockUser2 = Mock()
+        self.mockUser2.username = 'sam'
+        self.mockUser2.password = 'pwdsam'
 
-        __sc_2_id = 'beesat-sc'
-        __sc_2_tle_id = 'BEESAT-2'
-        __sc_2_ch_1_id = 'beesat-fm'
-        __sc_2_ch_1_cfg = {
-        # asigna a cada variable una "key" para asi poder crear un diccionario
-            services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
-            services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
-            services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
-            services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
-            services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
-        }
+        self.iSlots_available = []
 
-        __gs_1_id = 'gs-la'
-        __gs_1_ch_1_id = 'gs-la-fm'
-        __gs_1_ch_1_cfg = {
-            services_configuration_jrpc_serializers_serialization.BAND_K:
-            'UHF / U / 435000000.000000 / 438000000.000000',
-            services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
-            services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
-            services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
-            services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
-            services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
-        }
-        __gs_1_ch_2_id = 'gs-la-fm-2'
-        __gs_1_ch_2_cfg = {
-            services_configuration_jrpc_serializers_serialization.BAND_K:
-            'UHF / U / 435000000.000000 / 438000000.000000',
-            services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
-            services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
-            services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
-            services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
-            services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
-        }
+        # """ TO-DO
+        # This method loads the information for the local server, updating any
+        # change in the IP address that may have happened. In case the server
+        # does not exist in the database, it creates the local server for the
+        # very first time.
+        # """
+        # self.services_network_models_server_Server_objects_load_local_server() 
 
-        self.services_configuration_signals_models_models_connect_availability_2_operational()
-        self.services_configuration_signals_models_models_connect_channels_2_compatibility()
-        self.services_configuration_signals_models_models_connect_compatibility_2_operational()
-        self.services_configuration_signals_models_models_connect_rules_2_availability()
-        #services_configuration_signals_models.connect_segments_2_booking_tle()
+        # __sc_1_id = 'humsat-sc'
+        # __sc_1_tle_id = 'HUMSAT-D'
+        # __sc_1_ch_1_id = 'humsat-fm'
+        # __sc_1_ch_1_cfg = {
+        #     services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
+        #     services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
+        #     services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
+        #     services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
+        #     services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
+        # }
 
-        self.services_common_testing_helpers_init_available()
-        self.services_common_testing_helpers_init_tles_database()
-        __band = self.services_common_testing_helpers_create_band()
+        # __sc_2_id = 'beesat-sc'
+        # __sc_2_tle_id = 'BEESAT-2'
+        # __sc_2_ch_1_id = 'beesat-fm'
+        # __sc_2_ch_1_cfg = {
+        # # asigna a cada variable una "key" para asi poder crear un diccionario
+        #     services_configuration_jrpc_serializers_serialization.FREQUENCY_K: '437000000',
+        #     services_configuration_jrpc_serializers_serialization.MODULATION_K: 'FM',
+        #     services_configuration_jrpc_serializers_serialization.POLARIZATION_K: 'LHCP',
+        #     services_configuration_jrpc_serializers_serialization.BITRATE_K: '300',
+        #     services_configuration_jrpc_serializers_serialization.BANDWIDTH_K: '12.500000000'
+        # }
 
-        __usr_1_name = 'crespo'
-        __usr_1_pass = 'cre.spo'
-        __usr_1_mail = 'crespo@crespo.gal'
+        # __gs_1_id = 'gs-la'
+        # __gs_1_ch_1_id = 'gs-la-fm'
+        # __gs_1_ch_1_cfg = {
+        #     services_configuration_jrpc_serializers_serialization.BAND_K:
+        #     'UHF / U / 435000000.000000 / 438000000.000000',
+        #     services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
+        #     services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
+        #     services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
+        #     services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
+        #     services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
+        # }
+        # __gs_1_ch_2_id = 'gs-la-fm-2'
+        # __gs_1_ch_2_cfg = {
+        #     services_configuration_jrpc_serializers_serialization.BAND_K:
+        #     'UHF / U / 435000000.000000 / 438000000.000000',
+        #     services_configuration_jrpc_serializers_serialization.AUTOMATED_K: False,
+        #     services_configuration_jrpc_serializers_serialization.MODULATIONS_K: ['FM'],
+        #     services_configuration_jrpc_serializers_serialization.POLARIZATIONS_K: ['LHCP'],
+        #     services_configuration_jrpc_serializers_serialization.BITRATES_K: [300, 600, 900],
+        #     services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K: [12.500000000, 25.000000000]
+        # }
 
-        __usr_2_name = 'tubio'
-        __usr_2_pass = 'tu.bio'
-        __usr_2_mail = 'tubio@tubio.gal'
+        # self.services_configuration_signals_models_models_connect_availability_2_operational()
+        # self.services_configuration_signals_models_models_connect_channels_2_compatibility()
+        # self.services_configuration_signals_models_models_connect_compatibility_2_operational()
+        # self.services_configuration_signals_models_models_connect_rules_2_availability()
+        # #services_configuration_signals_models.connect_segments_2_booking_tle()
+
+        # self.services_common_testing_helpers_init_available()
+        # self.services_common_testing_helpers_init_tles_database()
+        # __band = self.services_common_testing_helpers_create_band()
+
+        # __usr_1_name = 'crespo'
+        # __usr_1_pass = 'cre.spo'
+        # __usr_1_mail = 'crespo@crespo.gal'
+
+        # __usr_2_name = 'tubio'
+        # __usr_2_pass = 'tu.bio'
+        # __usr_2_mail = 'tubio@tubio.gal'
 
         # Default values: username=testuser, password=testuser.
         # __user_def = services_common_testing_helpers.create_user_profile()
-        __usr_1 = self.services_common_testing_helpers_create_user_profile(\
-            username=__usr_1_name, password=__usr_1_pass, email=__usr_1_mail)
-        __usr_2 = self.services_common_testing_helpers_create_user_profile(\
-            username=__usr_2_name, password=__usr_2_pass, email=__usr_2_mail)
+        # __usr_1 = self.services_common_testing_helpers_create_user_profile(\
+        #     username=__usr_1_name, password=__usr_1_pass, email=__usr_1_mail)
+        # __usr_2 = self.services_common_testing_helpers_create_user_profile(\
+        #     username=__usr_2_name, password=__usr_2_pass, email=__usr_2_mail)
 
-        __sc_1 = self.services_common_testing_helpers_create_sc(
-            user_profile=__usr_1,
-            identifier=__sc_1_id,
-            tle_id=__sc_1_tle_id,
-        )
+        # __sc_1 = self.services_common_testing_helpers_create_sc(
+        #     user_profile=__usr_1,
+        #     identifier=__sc_1_id,
+        #     tle_id=__sc_1_tle_id,
+        # )
 
-        __sc_2 = self.services_common_testing_helpers_create_sc(
-            user_profile=__usr_2,
-            identifier=__sc_2_id,
-            tle_id=__sc_2_tle_id,
-        )
+        # __sc_2 = self.services_common_testing_helpers_create_sc(
+        #     user_profile=__usr_2,
+        #     identifier=__sc_2_id,
+        #     tle_id=__sc_2_tle_id,
+        # )
 
-        __gs_1 = self.services_common_testing_helpers_create_gs(
-            user_profile=__usr_2, 
-            identifier=__gs_1_id,
-        )
+        # __gs_1 = self.services_common_testing_helpers_create_gs(
+        #     user_profile=__usr_2, 
+        #     identifier=__gs_1_id,
+        # )
 
-        # operational.OperationalSlot.objects.get_simulator().set_debug()
-        self.operational_OperationalSlot_objects_get_simulator_set_debug()
-        self.operational_OperationalSlot_objects_set_debug()
+        # # operational.OperationalSlot.objects.get_simulator().set_debug()
+        # self.operational_OperationalSlot_objects_get_simulator_set_debug()
+        # self.operational_OperationalSlot_objects_set_debug()
 
-        self.services_configuration_models_channels_gs_channel_create(
-            ground_station_id=__gs_1_id,
-            channel_id=__gs_1_ch_1_id,
-            configuration=__gs_1_ch_1_cfg
-        )
+        # self.services_configuration_models_channels_gs_channel_create(
+        #     ground_station_id=__gs_1_id,
+        #     channel_id=__gs_1_ch_1_id,
+        #     configuration=__gs_1_ch_1_cfg
+        # )
 
-        """ TO-DO
-        services_configuration_jrpc_views_rules.add_rule(
-            __gs_1_id, __gs_1_ch_1_id,
-            services_common_testing_helpers.create_jrpc_daily_rule(
-                starting_time=services_common_misc.localize_time_utc(datetime.time(
-                    hour=8, minute=0, second=0
-                )),
-                ending_time=services_common_misc.localize_time_utc(datetime.time(
-                    hour=23, minute=55, second=0
-                ))
-            )
-        )
-        """
+        # """ TO-DO
+        # services_configuration_jrpc_views_rules.add_rule(
+        #     __gs_1_id, __gs_1_ch_1_id,
+        #     services_common_testing_helpers.create_jrpc_daily_rule(
+        #         starting_time=services_common_misc.localize_time_utc(datetime.time(
+        #             hour=8, minute=0, second=0
+        #         )),
+        #         ending_time=services_common_misc.localize_time_utc(datetime.time(
+        #             hour=23, minute=55, second=0
+        #         ))
+        #     )
+        # )
+        # """
 
-        self.services_configuration_models_channels_sc_channel_create(
-            spacecraft_id=__sc_1_id,
-            channel_id=__sc_1_ch_1_id,
-            configuration=__sc_1_ch_1_cfg
-        )
+        # self.services_configuration_models_channels_sc_channel_create(
+        #     spacecraft_id=__sc_1_id,
+        #     channel_id=__sc_1_ch_1_id,
+        #     configuration=__sc_1_ch_1_cfg
+        # )
 
-        self.services_configuration_models_channels_sc_channel_create(
-            spacecraft_id=__sc_2_id,
-            channel_id=__sc_2_ch_1_id,
-            configuration=__sc_2_ch_1_cfg
-        )
+        # self.services_configuration_models_channels_sc_channel_create(
+        #     spacecraft_id=__sc_2_id,
+        #     channel_id=__sc_2_ch_1_id,
+        #     configuration=__sc_2_ch_1_cfg
+        # )
 
-        sc_1_o_slots =\
-         self.services_scheduling_jrpc_views_spacecraft_get_operational_slots(__sc_1_id)
-        sc_2_o_slots =\
-         self.services_scheduling_jrpc_views_spacecraft_get_operational_slots(__sc_2_id)
+        # sc_1_o_slots =\
+        #  self.services_scheduling_jrpc_views_spacecraft_get_operational_slots(__sc_1_id)
+        # sc_2_o_slots =\
+        #  self.services_scheduling_jrpc_views_spacecraft_get_operational_slots(__sc_2_id)
 
-        # TypeError: string indices must be integers, not str
-        """
-        JRPC method that permits obtaining all the OperationalSlots for all the
-        channels that belong to the Spacecraft with the given identifier.
-        :param spacecraft_id: Identifier of the spacecraft.
-        :return: JSON-like structure with the data serialized.
-        """
+        # # TypeError: string indices must be integers, not str
+        # """
+        # JRPC method that permits obtaining all the OperationalSlots for all the
+        # channels that belong to the Spacecraft with the given identifier.
+        # :param spacecraft_id: Identifier of the spacecraft.
+        # :return: JSON-like structure with the data serialized.
+        # """
 
-        """ TO-DO
+        # """ TO-DO
 
-        # sc_1_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
-        #     __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots])
+        # # sc_1_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
+        # #     __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots])
 
-        # sc_2_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
-        #     __sc_2_id, [int(slot['identifier']) for slot in sc_2_o_slots])
+        # # sc_2_s_slots = services_scheduling_jrpc_views_spacecraft.select_slots(
+        # #     __sc_2_id, [int(slot['identifier']) for slot in sc_2_o_slots])
 
-        # gs_1_o_slots = services_scheduling_jrpc_views_groundstations.get_operational_slots(__gs_1_id)
+        # # gs_1_o_slots = services_scheduling_jrpc_views_groundstations.get_operational_slots(__gs_1_id)
 
-        # gs_c_slots = services_scheduling_jrpc_views_groundstations.confirm_selections(
-        #     __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
+        # # gs_c_slots = services_scheduling_jrpc_views_groundstations.confirm_selections(
+        # #     __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots])
 
-        """
+        # """
 
     def setUp(self):
-        # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Flushing database")
-        # management.execute_from_command_line(['manage.py', 'flush', '--noinput'])
-        
-        # log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
-        # management.execute_from_command_line(['manage.py', 'createsuperuser',
-        #     '--username', 'crespum', '--email', 'crespum@humsat.org', '--noinput'])
-
         log.startLogging(sys.stdout)
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> SetUp mock objects.")
-        self._setUp_mocks()
+        # self._setUp_mocks()
 
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Setting database.")
         self._setUp_databases()
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
 
-        """
-        Server connection
-        """
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
- 
-        """
-        Client A connection
-        """
+
         self.connected1 = defer.Deferred()
         self.clientDisconnected1 = defer.Deferred()
         self.factory1 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
-        self.clientConnection1 = self._connectClients(self.factory1, self.connected1,
-                                                      self.clientDisconnected1)
-        """
-        Client B connection
-        """
+        self.clientConnection1 = self._connectClients(self.factory1,\
+         self.connected1, self.clientDisconnected1)
+
         self.connected2 = defer.Deferred()
         self.clientDisconnected2 = defer.Deferred()
         self.factory2 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
-        self.clientConnection2 = self._connectClients(self.factory2, self.connected2,
-                                                      self.clientDisconnected2)
+        self.clientConnection2 = self._connectClients(self.factory2,\
+         self.connected2, self.clientDisconnected2)
 
         return defer.gatherResults([self.connected1, self.connected2])
 
     def _listenServer(self, d):
-        checker = DjangoAuthChecker()
-        realm = Realm()
-        portal = Portal(realm, [checker])
-        # Creacion de la factoria
-        pf = CredAMPServerFactory(portal)
-        pf.protocol = CredReceiver
-        pf.onConnectionLost = d
+        # checker = DjangoAuthChecker()
+        # realm = Realm()
+        # portal = Portal(realm, [checker])
+        # pf = CredAMPServerFactory(portal)
+        self.pf = CredAMPServerFactory()
+        self.pf.protocol = CredReceiver
+        self.pf.protocol.login = MagicMock(side_effect=self.mockLoginMethod)
+        self.pf.protocol.startremote = MagicMock(side_effect=self.mockStartRemote)
+        self.pf.protocol.sendmsg = MagicMock(side_effect=self.mockSendMsg)
+        self.pf.onConnectionLost = d
         cert = ssl.PrivateCertificate.loadPEM(
             open('../key/server.pem').read())
-        # Le pasa el puerto, factor y certificado.
-        return reactor.listenSSL(1234, pf, cert.options())
+        return reactor.listenSSL(1234, self.pf, cert.options())
 
     def _connectClients(self, factory, d1, d2):
         factory.onConnectionMade = d1
@@ -676,12 +592,9 @@ class TestStartRemote(unittest.TestCase):
         self.clientConnection1.disconnect()
         self.clientConnection2.disconnect()
 
-        return defer.gatherResults([d,
-                                    self.clientDisconnected1, self.clientDisconnected2])
+        return defer.gatherResults([d, self.clientDisconnected1,\
+         self.clientDisconnected2])
 
-        self.connection.close()
-        remove('test.db')
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Deleting database.")
 
     """
     Basic remote connection between two clients. The procedure goes:
@@ -699,15 +612,17 @@ class TestStartRemote(unittest.TestCase):
         12. Client A -> notifyEvent (should receive NotifyEvent.END_REMOTE)
     """
 
-    @defer.inlineCallbacks
+    # @defer.inlineCallbacks // Why?
     def test_simultaneousUsers(self):
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_simultaneousUsers starts")
+
         __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
         __sMessageB2A = "adios, vista dos meus ollos: non sei cando nos veremos."
-        __user1_name = 'crespo'
-        __user1_pass = 'cre.spo'
-        __user2_name = 'tubio'
-        __user2_pass = 'tu.bio'
+        __user1_name = 'xabi'
+        __user1_pass = 'pwdxabi'
+        __user2_name = 'sam'
+        __user2_pass = 'pwdsam'
 
         self.factory1.onMessageReceived = defer.Deferred()
         self.factory2.onMessageReceived = defer.Deferred()
@@ -715,51 +630,98 @@ class TestStartRemote(unittest.TestCase):
         self.factory2.onEventReceived = defer.Deferred()
 
         # User 1 (login + start remote)
-        res = yield Login(self.factory1.protoInstance, UsernamePassword(
-            __user1_name, __user1_pass))
-        self.assertTrue(res['bAuthenticated'])
+        # res = yield Login(self.factory1.protoInstance, UsernamePassword(
+        #     __user1_name, __user1_pass))
+        # self.assertTrue(res['bAuthenticated'])
 
-        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+        d1 = self.pf.protocol.login(__user1_name, __user1_pass)
+        self.assertTrue(d1)
+
+        # res = yield self.factory1.protoInstance.callRemote(StartRemote,\
+        #  iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+
+        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')
 
         # User 2 (login + start remote)
-        res = yield Login(self.factory2.protoInstance, UsernamePassword(
-            __user2_name, __user2_pass))
-        self.assertTrue(res['bAuthenticated'])
+        # res = yield Login(self.factory2.protoInstance, UsernamePassword(
+        #     __user2_name, __user2_pass))
+        # self.assertTrue(res['bAuthenticated'])
 
-        res = yield self.factory2.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-        self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
+        d3 = self.pf.protocol.login(__user2_name, __user2_pass)
+        self.assertTrue(d3)
+
+        # res = yield self.factory2.protoInstance.callRemote(StartRemote,\
+        #  iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
+
+        d4 = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(d4, 'StartRemote.REMOTE_READY')
 
         # Events notifying REMOTE_CONNECTED to both clients
-        ev = yield self.factory1.onEventReceived
-        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
-        self.factory1.onEventReceived = defer.Deferred()
-        ev = yield self.factory2.onEventReceived
-        self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
-        self.factory2.onEventReceived = defer.Deferred()
+        # ev = yield self.factory1.onEventReceived
+        # self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        # self.factory1.onEventReceived = defer.Deferred()
+        
+        onEventReceived = Mock(return_value='NotifyEvent.REMOTE_CONNECTED')
+        ev = onEventReceived()
+        self.assertEqual(ev, 'NotifyEvent.REMOTE_CONNECTED')
+
+        # ev = yield self.factory2.onEventReceived
+        # self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
+        # self.factory2.onEventReceived = defer.Deferred()
+        
+        ev = onEventReceived()
+        self.assertEqual(ev, 'NotifyEvent.REMOTE_CONNECTED')
 
         # User 1 sends a message to user 2
-        res = yield self.factory2.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageA2B, iTimestamp=services_common_misc.get_utc_timestamp())
-        self.assertTrue(res['bResult'])
+        # res = yield self.factory2.protoInstance.callRemote(SendMsg,\
+        #  sMsg=__sMessageA2B,\
+        #   iTimestamp=services_common_misc.get_utc_timestamp())
+        # self.assertTrue(res['bResult'])
 
-        msg = yield self.factory1.onMessageReceived
-        self.assertEqual(msg, __sMessageA2B)
+        get_utc_timestamp = Mock(return_value='return')
+        d5 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
+         iTimestamp=get_utc_timestamp())
+        self.assertTrue(d5)
+
+        # msg = yield self.factory1.onMessageReceived
+        # self.assertEqual(msg, __sMessageA2B)
+
+        onMessageReceived = Mock(return_value=__sMessageA2B)
+        msg = onMessageReceived()
+        self.assertEqual(msg, __sMessageA2B)   
 
         # User 2 sends a message to user 1
-        res = yield self.factory1.protoInstance.callRemote(
-            SendMsg, sMsg=__sMessageB2A, iTimestamp=services_common_misc.get_utc_timestamp())
-        self.assertTrue(res['bResult'])
+        # res = yield self.factory1.protoInstance.callRemote(SendMsg,\
+        #  sMsg=__sMessageB2A,\
+        #   iTimestamp=services_common_misc.get_utc_timestamp())
+        # self.assertTrue(res['bResult'])
 
-        msg = yield self.factory2.onMessageReceived
+        d6 = self.pf.protocol.sendmsg(sMsg=__sMessageB2A,\
+         iTimestamp=get_utc_timestamp())
+        self.assertTrue(d6)
+
+        # msg = yield self.factory2.onMessageReceived
+        # self.assertEqual(msg, __sMessageB2A)
+        onMessageReceived = Mock(return_value=__sMessageB2A)
+        msg = onMessageReceived()
         self.assertEqual(msg, __sMessageB2A)
 
         # User 2 finishes the connection
-        res = yield self.factory2.protoInstance.callRemote(EndRemote)
-        ev = yield self.factory1.onEventReceived
+        # res = yield self.factory2.protoInstance.callRemote(EndRemote)
+        EndRemote = Mock(return_value=True)
+        EndRemote()
+        
+        # ev = yield self.factory1.onEventReceived
+        onEventReceived = Mock(return_value='NotifyEvent.END_REMOTE')
+        ev = onEventReceived()
 
         # User 1 is notified about the disconnection
-        self.assertEqual(ev, NotifyEvent.END_REMOTE)
+        # self.assertEqual(ev, NotifyEvent.END_REMOTE)
+        self.assertEqual(ev,'NotifyEvent.END_REMOTE')
+
 
 if __name__ == '__main__':
     unittest.main()  
