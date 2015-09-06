@@ -123,6 +123,7 @@ class ClientProtocolTest(ClientProtocol):
     NotifyEvent.responder(vNotifyEvent)
 """
 
+
 class TestPassiveMessage(unittest.TestCase):
 
     """
@@ -151,9 +152,7 @@ class TestPassiveMessage(unittest.TestCase):
             log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
 
     def mockStartRemote(self, iSlotId):
-
         # Sets the return value of the function for all cases.
-
         if iSlotId in self.iSlots_available:
             self.flag_StartRemote = 'StartRemote.REMOTE_READY'
         else:
@@ -172,7 +171,6 @@ class TestPassiveMessage(unittest.TestCase):
             raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
 
     def _setUp_databases(self):
-
         """
         Users.
         """
