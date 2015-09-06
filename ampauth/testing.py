@@ -24,8 +24,12 @@ from os import path
 BASE_DIR = path.abspath(path.join(path.dirname(__file__), "../tests"))
 
 from zope.interface import implements
-from twisted.python import failure, log
-from twisted.cred import portal, checkers, error, credentials
+from twisted.python import failure
+from twisted.python import log
+from twisted.cred import portal
+from twisted.cred import checkers
+from twisted.cred import error
+from twisted.cred import credentials
 from twisted.internet import defer
 from twisted.python import log
 from twisted.spread import pb

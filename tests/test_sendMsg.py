@@ -153,7 +153,6 @@ class TestPassiveMessage(unittest.TestCase):
     def mockStartRemote(self, iSlotId):
 
         # Sets the return value of the function for all cases.
-        # To-do. Gets a different value according the case.
 
         if iSlotId in self.iSlots_available:
             self.flag_StartRemote = 'StartRemote.REMOTE_READY'
@@ -586,6 +585,7 @@ class TestPassiveMessage(unittest.TestCase):
         # ev = yield self.factory1.onEventReceived
         # self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
         # self.factory1.onEventReceived = defer.Deferred()
+        
         onEventReceived = Mock(return_value='NotifyEvent.REMOTE_CONNECTED')
         ev = onEventReceived()
         self.assertEqual(ev, 'NotifyEvent.REMOTE_CONNECTED')
@@ -593,8 +593,9 @@ class TestPassiveMessage(unittest.TestCase):
         # ev = yield self.factory2.onEventReceived
         # self.assertEqual(ev, NotifyEvent.REMOTE_CONNECTED)
         # self.factory2.onEventReceived = defer.Deferred()
+        
         ev = onEventReceived()
-
+        self.assertTrue(ev, 'NotifyEvent.REMOTE_CONNECTED')
 
         # # User 1 sends a message to user 2
         # res = yield self.factory2.protoInstance.callRemote(SendMsg,\
