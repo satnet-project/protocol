@@ -28,12 +28,12 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
-from twisted.cred.portal import Portal
+# from twisted.cred.portal import Portal
 from twisted.python import log
 
 from ampauth.errors import BadCredentials
 from ampauth.server import CredReceiver, CredAMPServerFactory
-from ampauth.testing import Realm
+# from ampauth.testing import Realm
 from client_amp import ClientProtocol
 from rpcrequests import Satnet_RPC
 
@@ -64,26 +64,27 @@ class ClientProtocolTest(ClientProtocol):
     def connectionLost(self, reason):
         self.factory.onConnectionLost.callback(self)
 
-
+"""
+Testing for one single client connection
+To-do. Test timeout
+"""
 class TestSingleClient(unittest.TestCase):
 
-    """
-    Testing for one single client connection
-    To-do. Test timeout
-    """
-
-    def funcion(self, username, password):
+    def mockLoginMethod(self, username, password):
+        """
+        Check the user credentials.
+        """
         if username == self.mockUserGoodCredentials.username:
             if password == self.mockUserGoodCredentials.password:
-                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCredentials")
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCredentials")
                 return True
             elif password != self.mockUserGoodCredentials.password:
-                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test ok!")
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test ok!")
                 raise BadCredentials("Incorrect username and/or password")
             else:
-                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         elif username != self.mockUserGoodCredentials.username:
-            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test ok!")
+            log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test ok!")
             raise BadCredentials("Incorrect username and/or password")
         else:
             log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
@@ -108,10 +109,10 @@ class TestSingleClient(unittest.TestCase):
     def setUp(self):
         log.startLogging(sys.stdout)
         
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Populating database")        
         self._setUp_databases()
         
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
         self.serverPort = self._listenServer(self.serverDisconnected)
         self.connected = defer.Deferred()
@@ -130,7 +131,7 @@ class TestSingleClient(unittest.TestCase):
         try:
             self.pf = CredAMPServerFactory()
             self.pf.protocol = CredReceiver()
-            self.pf.protocol.login = MagicMock(side_effect=self.funcion)
+            self.pf.protocol.login = MagicMock(side_effect=self.mockLoginMethod)
             self.pf.onConnectionLost = d
             cert = ssl.PrivateCertificate.loadPEM(
                 open('../key/server.pem').read())
@@ -151,18 +152,21 @@ class TestSingleClient(unittest.TestCase):
         try:
             d = defer.maybeDeferred(self.serverPort.stopListening)
             self.clientConnection.disconnect()
-            return defer.gatherResults([d, self.clientDisconnected, self.serverDisconnected])
+            return defer.gatherResults([d, self.clientDisconnected,\
+             self.serverDisconnected])
         except AttributeError:
             self.clientConnection.disconnect()
-            return defer.gatherResults([self.clientDisconnected, self.serverDisconnected])            
+            return defer.gatherResults([self.clientDisconnected,\
+             self.serverDisconnected])            
 
     """
     Log in with valid credentianls. The server should return True
     """
     def test_validLogin(self):
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Valid credentials test starts!")
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Valid credentials test starts!")
 
-        return self.assertTrue(self.pf.protocol.login(self.mockUserGoodCredentials.username,\
+        return self.assertTrue(self.pf.protocol.login(\
+            self.mockUserGoodCredentials.username,\
          self.mockUserGoodCredentials.password)) 
 
     """
@@ -170,21 +174,23 @@ class TestSingleClient(unittest.TestCase):
     with 'Incorrect username' message
     """
     def test_wrongUsername(self):
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test starts!")
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong username test starts!")
 
-        return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
-         self.pf.protocol.login, self.mockUserBadUsername.username,\
-          self.mockUserBadUsername.password)
+        return self.assertRaisesRegexp(BadCredentials,\
+         'Incorrect username and/or password', self.pf.protocol.login,\
+          self.mockUserBadUsername.username, self.mockUserBadUsername.password)
 
     """
     Log in with wrong password. The server should raise UnauthorizedLogin
     with 'Incorrect password' message
     """
     def test_wrongPassword(self):
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test starts!")
+        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test starts!")
 
-        return self.assertRaisesRegexp(BadCredentials, 'Incorrect username and/or password',\
-         self.pf.protocol.login, self.mockUserBadPassword.username, self.mockUserBadPassword.password)
+        return self.assertRaisesRegexp(BadCredentials,\
+         'Incorrect username and/or password',\
+          self.pf.protocol.login, self.mockUserBadPassword.username,\
+           self.mockUserBadPassword.password)
 
 if __name__ == '__main__':
     unittest.main()  
