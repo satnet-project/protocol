@@ -32,7 +32,6 @@ from mock import Mock, MagicMock
 sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 #sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../server")))
 
 # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
 # django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
@@ -127,21 +126,18 @@ class TestStartRemote(unittest.TestCase):
         if username == self.mockUser1.username:
             if password == self.mockUser1.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                # bAuthenticated = True
                 return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                # bAuthenticated = True
                 return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         elif username == self.mockUser3.username:
             if password == self.mockUser3.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User3 logged")
-                # bAuthenticated = True
                 return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
@@ -159,9 +155,11 @@ class TestStartRemote(unittest.TestCase):
             else:
                 return {'iResult': 'This user is not assigned to this slot'}
         elif iSlotId == 100:
-            raise SlotErrorNotification('Slot ' + str(iSlotId) + ' is not yet operational')
+            raise SlotErrorNotification('Slot ' + str(iSlotId) +\
+             ' is not yet operational')
         elif iSlotId == 2:
-            raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
+            raise SlotErrorNotification('Slot ' + str(iSlotId) +\
+             ' has not yet been reserved')
 
     def _setUp_databases(self):
         """
@@ -408,8 +406,10 @@ class TestStartRemote(unittest.TestCase):
 
         # def checkError(result):
         #     self.assertEqual(
-        #         result.message, 'Slot ' + str(__iSlotId) + ' is not yet operational')
-        # return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+        #         result.message, 'Slot ' + str(__iSlotId) +\
+        #          ' is not yet operational')
+        # return self.assertFailure(d1,\
+        #  SlotErrorNotification).addCallback(checkError)
 
         res = self.pf.protocol.login(self.mockUser1.username,\
          self.mockUser1.password)
@@ -457,8 +457,10 @@ class TestStartRemote(unittest.TestCase):
 
         # def checkError(result):
         #     self.assertEqual(
-        #         result.message, 'Slot ' + str(__iSlotId) + ' has not yet been reserved')
-        # return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+        #         result.message, 'Slot ' + str(__iSlotId) +\
+        #          ' has not yet been reserved')
+        # return self.assertFailure(d1,\
+        #  SlotErrorNotification).addCallback(checkError)
 
         res = self.pf.protocol.login(self.mockUser1.username,\
          self.mockUser1.password)
