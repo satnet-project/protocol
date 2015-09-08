@@ -29,13 +29,13 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
-from twisted.cred.portal import Portal
+# from twisted.cred.portal import Portal
 from twisted.python import log
 
-from ampauth.commands import Login
+# from ampauth.commands import Login
 from ampauth.errors import BadCredentials, UnauthorizedLogin
 from ampauth.server import CredReceiver, CredAMPServerFactory
-from ampauth.testing import Realm
+# from ampauth.testing import Realm
 from client_amp import ClientProtocol
 from rpcrequests import Satnet_RPC
 
@@ -77,30 +77,28 @@ class TestMultipleClients(unittest.TestCase):
             if password == self.mockUser1.password:
 
                 if username in self.active_users:
-                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Client already logged in")
+                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +\
+                     " Client already logged in")
                     raise UnauthorizedLogin("Client already logged in")
                 else:
                     self.active_users.append(username)
 
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                bAuthenticated = True
-                return bAuthenticated
-                # return bAuthenticate = True
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
 
                 if username in self.active_users:
-                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Client already logged in")
+                    log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" +\
+                     " Client already logged in")
                     raise UnauthorizedLogin("Client already logged in")
                 else:
                     self.active_users.append(username)
 
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                bAuthenticated = True
-                return bAuthenticated
-                # return defer.Deferred('bAuthenticate')
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         else:
@@ -199,14 +197,15 @@ class TestMultipleClients(unittest.TestCase):
 
         # def checkError(result):
         #     self.assertEqual(result.message, 'Client already logged in')
-        # d2 = self.assertFailure(d2, UnauthorizedLogin).addCallback(checkError)
+        # d2 = self.assertFailure(d2,\
+        #  UnauthorizedLogin).addCallback(checkError)
         # return defer.gatherResults([d1, d2])
 
-        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(d1)
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated'])
 
-        return self.assertRaisesRegexp(UnauthorizedLogin, 'Client already logged in',\
-         self.pf.protocol.login, 'xabi', 'pwdxabi')
+        return self.assertRaisesRegexp(UnauthorizedLogin,\
+         'Client already logged in', self.pf.protocol.login, 'xabi', 'pwdxabi')
 
     """
     Log in two different clients with good credentials. The server should
@@ -214,11 +213,11 @@ class TestMultipleClients(unittest.TestCase):
     """
     def test_simultaneousUsers(self):
 
-        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(d1)
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated'])
 
-        d2 = self.pf.protocol.login('sam', 'pwdsam')
-        self.assertTrue(d2)
+        res = self.pf.protocol.login('sam', 'pwdsam')
+        self.assertTrue(res['bAuthenticated'])
 
 
 if __name__ == '__main__':
