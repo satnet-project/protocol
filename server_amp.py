@@ -108,6 +108,7 @@ class SATNETServer(protocol.Protocol):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
         #self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
 
+        # To-do. Satnet_slot?
         self.slot = Satnet_Slot(str(iSlotId))
 
         # If slot NOT operational yet...
