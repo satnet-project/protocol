@@ -19,7 +19,6 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-import os
 import unittest
 from os import path
 import sys
@@ -65,7 +64,9 @@ from ampauth.server import CredReceiver, CredAMPServerFactory
 
 from client_amp import ClientProtocol
 from _commands import NotifyMsg, NotifyEvent
-from errors import *
+from errors import SlotErrorNotification, RemoteClientNotification
+
+from server_amp import SATNETServer
 
 # from services.common import misc
 
@@ -126,21 +127,41 @@ class TestStartRemote(unittest.TestCase):
         if username == self.mockUser1.username:
             if password == self.mockUser1.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                # bAuthenticated = True
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
-
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                # bAuthenticated = True
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
-
+        elif username == self.mockUser3.username:
+            if password == self.mockUser3.password:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User3 logged")
+                # bAuthenticated = True
+                return {'bAuthenticated': True}
+            else:
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
         else:
             log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
+
+    def mockStartRemote(self, iSlotId, username, password):
+        # Sets the return value of the function for all cases.
+
+        if iSlotId == self.mockUser1.slot:
+            if username == self.mockUser1.username and password == self.mockUser1.password:
+                return {'iResult': 'StartRemote.CLIENTS_COINCIDE'} # To-do
+            elif username == self.mockUser1.username and password == self.mockUser2.password:
+                return {'iResult': 'StartRemote.CLIENTS_COINCIDE'}    
+            else:
+                return {'iResult': 'This user is not assigned to this slot'}
+        elif iSlotId == 100:
+            raise SlotErrorNotification('Slot ' + str(iSlotId) + ' is not yet operational')
+        elif iSlotId == 2:
+            raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
 
     def _setUp_databases(self):
         """
@@ -149,6 +170,7 @@ class TestStartRemote(unittest.TestCase):
         """
 
         self.mockUser1 = Mock()
+        self.mockUser1.slot = 4
         self.mockUser1.username = 'xabi'
         self.mockUser1.password = 'pwdxabi'
 
@@ -156,7 +178,15 @@ class TestStartRemote(unittest.TestCase):
         self.mockUser2.username = 'sam'
         self.mockUser2.password = 'pwdsam'
 
+        self.mockUser3 = Mock()
+        self.mockUser3.username = 'user3'
+        self.mockUser3.password = 'us.er3'
+
+        # Better create a dict.
         self.iSlots_available = []
+        self.iSlots_available.append(self.mockUser1.slot)
+
+        self.iSlots_connected = []
 
         # server_models.Server.objects.load_local_server()
 
@@ -335,6 +365,7 @@ class TestStartRemote(unittest.TestCase):
             self.pf = CredAMPServerFactory()
             self.pf.protocol = CredReceiver
             self.pf.protocol.login = MagicMock(side_effect=self.mockLoginMethod)
+            self.pf.protocol.startremote = MagicMock(side_effect=self.mockStartRemote)
             self.pf.onConnectionLost = d
             cert = ssl.PrivateCertificate.loadPEM(
                 open('../key/server.pem').read())
@@ -380,62 +411,90 @@ class TestStartRemote(unittest.TestCase):
         #         result.message, 'Slot ' + str(__iSlotId) + ' is not yet operational')
         # return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
 
-        d1 = self.pf.protocol.login(self.mockUser1.username,\
+        res = self.pf.protocol.login(self.mockUser1.username,\
          self.mockUser1.password)
 
+        self.assertTrue(res['bAuthenticated'])
 
+        self.assertRaisesRegexp(SlotErrorNotification,\
+         'Slot ' + str(__iSlotId) + ' is not yet operational',\
+          self.pf.protocol.startremote, iSlotId=__iSlotId,\
+           username=self.mockUser1.username, password=self.mockUser1.password)
 
+    """
+    Basic remote connection when GSS and MCC clients correspond to the same user
+    """
+    def test_localClient(self):
+        __iSlotId = 4
 
+        # d1 = login(self.factory1.protoInstance, UsernamePassword(
+        #     'tubio', 'tu.bio'))
+        # d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
+        #     StartRemote, iSlotId=__iSlotId))
+        # d1.addCallback(lambda res: self.assertEqual(
+        #     res['iResult'], StartRemote.CLIENTS_COINCIDE))
+        # return d1
 
-    # """
-    # Basic remote connection when GSS and MCC clients correspond to the same user
-    # """
+        res = self.pf.protocol.login(self.mockUser2.username,\
+         self.mockUser2.password)
+        self.assertTrue(res['bAuthenticated'])
 
-    # def test_localClient(self):
-    #     __iSlotId = 4
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId,\
+         username=self.mockUser1.username, password=self.mockUser1.password)
 
-    #     d1 = login(self.factory1.protoInstance, UsernamePassword(
-    #         'tubio', 'tu.bio'))
-    #     d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-    #         StartRemote, iSlotId=__iSlotId))
-    #     d1.addCallback(lambda res: self.assertEqual(
-    #         res['iResult'], StartRemote.CLIENTS_COINCIDE))
+        self.assertEqual(res['iResult'], 'StartRemote.CLIENTS_COINCIDE')
 
-    #     return d1
+    """
+    Call StartRemote method without having reserved previously the slot
+    """
+    def test_slotNotReserved(self):
+        __iSlotId = 2
 
-    # """
-    # Call StartRemote method without having reserved previously the slot
-    # """
+        # d1 = login(self.factory1.protoInstance, UsernamePassword(
+        #     'crespo', 'cre.spo'))
+        # d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
+        #     StartRemote, iSlotId=__iSlotId))
 
-    # def test_slotNotReserved(self):
-    #     __iSlotId = 2
+        # def checkError(result):
+        #     self.assertEqual(
+        #         result.message, 'Slot ' + str(__iSlotId) + ' has not yet been reserved')
+        # return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
 
-    #     d1 = login(self.factory1.protoInstance, UsernamePassword(
-    #         'crespo', 'cre.spo'))
-    #     d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-    #         StartRemote, iSlotId=__iSlotId))
+        res = self.pf.protocol.login(self.mockUser1.username,\
+         self.mockUser1.password)
+        self.assertTrue(res['bAuthenticated'])
 
-    #     def checkError(result):
-    #         self.assertEqual(
-    #             result.message, 'Slot ' + str(__iSlotId) + ' has not yet been reserved')
-    #     return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+        self.assertRaisesRegexp(SlotErrorNotification,\
+         'Slot ' + str(__iSlotId) + ' has not yet been reserved',\
+          self.pf.protocol.startremote, iSlotId=__iSlotId,\
+           username=self.mockUser1.username, password=self.mockUser1.password)
 
-    # """
-    # Call StartRemote method without having selected the slot for this user
-    # """
+    """
+    Call StartRemote method without having selected the slot for this user
+    """
+    def test_slotNotAssigned(self):
+        __iSlotId = 4
 
-    # def test_slotNotAssigned(self):
-    #     __iSlotId = 4
+        # d1 = login(self.factory1.protoInstance, UsernamePassword(
+        #     'user3', 'us.er3'))
+        # d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
+        #     StartRemote, iSlotId=__iSlotId))
 
-    #     d1 = login(self.factory1.protoInstance, UsernamePassword(
-    #         'user3', 'us.er3'))
-    #     d1.addCallback(lambda l: self.factory1.protoInstance.callRemote(
-    #         StartRemote, iSlotId=__iSlotId))
+        # def checkError(result):
+        #     self.assertEqual(
+        #         result.message, 'This user is not assigned to this slot')
+        # return self.assertFailure(d1,\
+        #  SlotErrorNotification).addCallback(checkError)
 
-    #     def checkError(result):
-    #         self.assertEqual(
-    #             result.message, 'This user is not assigned to this slot')
-    #     return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
+        res = self.pf.protocol.login(self.mockUser3.username,\
+         self.mockUser3.password)
+        self.assertTrue(res['bAuthenticated'])
+
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId,\
+         username=self.mockUser3.username, password=self.mockUser3.password)
+
+        self.assertEqual(res['iResult'],\
+         'This user is not assigned to this slot')
 
 if __name__ == '__main__':
     unittest.main()  
