@@ -24,97 +24,97 @@ import os
 import sys
 import logging
 import datetime
-import django
+# import django
 import pytz
-from django.core import management
+# from django.core import management
 from mock import Mock, MagicMock
 import unittest
 
 sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
-from ampauth.testing import DjangoAuthChecker
-# from django.db import models
+# from ampauth.testing import DjangoAuthChecker
+# # from django.db import models
 
-# Dependencies for _setUp_databases
-# from services.common import misc
-services_common_misc = Mock()
-services_common_misc.localize_time_utc =\
- MagicMock(return_value = 'test')
-
-services_common_misc.get_utc_timestamp =\
- MagicMock(return_value = 'test')
-
-# from services.common.testing import helpers
-services_common_testing_helpers = Mock()
-
-services_common_testing_helpers.create_jrpc_daily_rule =\
- MagicMock(return_value = 'test')
-
-# from services.configuration.jrpc.views import rules
-services_configuration_jrpc_views_rules = Mock()
-services_configuration_jrpc_views_rules.add_rule =\
- MagicMock(return_value = 'test')
-
-# from services.configuration.jrpc.serializers import serialization as services_configuration_jrpc_serializers_serialization
-# TO-DO How does it work?
-services_configuration_jrpc_serializers_serialization = Mock()
-services_configuration_jrpc_serializers_serialization.FREQUENCY_K = 'testData'
-services_configuration_jrpc_serializers_serialization.MODULATION_K = 'testData'
-services_configuration_jrpc_serializers_serialization.POLARIZATION_K = 'testData'
-services_configuration_jrpc_serializers_serialization.BITRATE_K = 'testData'
-services_configuration_jrpc_serializers_serialization.BANDWIDTH_K = 'testData'
-services_configuration_jrpc_serializers_serialization.BAND_K = 'testData'
-services_configuration_jrpc_serializers_serialization.AUTOMATED_K = 'testData'
-services_configuration_jrpc_serializers_serialization.MODULATIONS_K = 'testData'
-services_configuration_jrpc_serializers_serialization.BITRATES_K = 'testData'
-services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K = 'testData'
-
-# from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
-services_scheduling_jrpc_views_groundstations = Mock()
-services_scheduling_jrpc_views_groundstations.get_operational_slots =\
- MagicMock(return_value = 'test')
-
-services_scheduling_jrpc_views_groundstations.confirm_selections =\
- MagicMock(return_value = 'test')
-
-# from services.scheduling.jrpc.views import spacecraft
-services_scheduling_jrpc_views_spacecraft = Mock()
-# services_scheduling_jrpc_views_spacecraft.get_operational_slots =\
+# # Dependencies for _setUp_databases
+# # from services.common import misc
+# services_common_misc = Mock()
+# services_common_misc.localize_time_utc =\
 #  MagicMock(return_value = 'test')
 
-services_scheduling_jrpc_views_spacecraft.select_slots =\
- MagicMock('test1', 'test2')
-services_scheduling_jrpc_views_spacecraft.return_value = '2'
+# services_common_misc.get_utc_timestamp =\
+#  MagicMock(return_value = 'test')
 
-# from services.configuration.models import rules
-services_configuration_models_rules = Mock()
-services_configuration_models_rules.add_rule = MagicMock(return_value = 'test')
+# # from services.common.testing import helpers
+# services_common_testing_helpers = Mock()
 
-# from services.configuration.models import channels
-services_configuration_models_channels = Mock()
+# services_common_testing_helpers.create_jrpc_daily_rule =\
+#  MagicMock(return_value = 'test')
 
-services_configuration_models_channels.sc_channel_create =\
- MagicMock(return_value = 'test')
+# # from services.configuration.jrpc.views import rules
+# services_configuration_jrpc_views_rules = Mock()
+# services_configuration_jrpc_views_rules.add_rule =\
+#  MagicMock(return_value = 'test')
 
-# operational.OperationalSlot.objects.get_simulator().set_debug() - TO-DO
-operational_OperationalSlot_objects_get_simulator = Mock()
-operational_OperationalSlot_objects_get_simulator.set_debug =\
- MagicMock(return_value = 'test')
+# # from services.configuration.jrpc.serializers import serialization as services_configuration_jrpc_serializers_serialization
+# # TO-DO How does it work?
+# services_configuration_jrpc_serializers_serialization = Mock()
+# services_configuration_jrpc_serializers_serialization.FREQUENCY_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.MODULATION_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.POLARIZATION_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.BITRATE_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.BANDWIDTH_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.BAND_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.AUTOMATED_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.MODULATIONS_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.BITRATES_K = 'testData'
+# services_configuration_jrpc_serializers_serialization.BANDWIDTHS_K = 'testData'
 
-# operational.OperationalSlot.objects.set_debug()
-operational_OperationalSlot_objects = Mock()
-operational_OperationalSlot_objects.set_debug =\
- MagicMock(return_value = 'test')
+# # from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
+# services_scheduling_jrpc_views_groundstations = Mock()
+# services_scheduling_jrpc_views_groundstations.get_operational_slots =\
+#  MagicMock(return_value = 'test')
 
-# from services.scheduling.models.operational.OperationalSlot import objects
-services_scheduling_models_operational_OperationalSlot_objects = Mock()
-services_scheduling_models_operational_OperationalSlot_objects.set_debug =\
- MagicMock(return_value = 'test')
+# services_scheduling_jrpc_views_groundstations.confirm_selections =\
+#  MagicMock(return_value = 'test')
 
-# from services.network.models.server.Server import objects
-services_network_models_server_Server_objects = Mock()
-services_network_models_server_Server_objects.load_local_server =\
- MagicMock(return_value = '>>> Local server NOT found, creating instance')
+# # from services.scheduling.jrpc.views import spacecraft
+# services_scheduling_jrpc_views_spacecraft = Mock()
+# # services_scheduling_jrpc_views_spacecraft.get_operational_slots =\
+# #  MagicMock(return_value = 'test')
+
+# services_scheduling_jrpc_views_spacecraft.select_slots =\
+#  MagicMock('test1', 'test2')
+# services_scheduling_jrpc_views_spacecraft.return_value = '2'
+
+# # from services.configuration.models import rules
+# services_configuration_models_rules = Mock()
+# services_configuration_models_rules.add_rule = MagicMock(return_value = 'test')
+
+# # from services.configuration.models import channels
+# services_configuration_models_channels = Mock()
+
+# services_configuration_models_channels.sc_channel_create =\
+#  MagicMock(return_value = 'test')
+
+# # operational.OperationalSlot.objects.get_simulator().set_debug() - TO-DO
+# operational_OperationalSlot_objects_get_simulator = Mock()
+# operational_OperationalSlot_objects_get_simulator.set_debug =\
+#  MagicMock(return_value = 'test')
+
+# # operational.OperationalSlot.objects.set_debug()
+# operational_OperationalSlot_objects = Mock()
+# operational_OperationalSlot_objects.set_debug =\
+#  MagicMock(return_value = 'test')
+
+# # from services.scheduling.models.operational.OperationalSlot import objects
+# services_scheduling_models_operational_OperationalSlot_objects = Mock()
+# services_scheduling_models_operational_OperationalSlot_objects.set_debug =\
+#  MagicMock(return_value = 'test')
+
+# # from services.network.models.server.Server import objects
+# services_network_models_server_Server_objects = Mock()
+# services_network_models_server_Server_objects.load_local_server =\
+#  MagicMock(return_value = '>>> Local server NOT found, creating instance')
 
 
 # Dependencies for the tests
@@ -127,7 +127,7 @@ from twisted.internet import reactor, ssl
 from twisted.manhole.service import Realm
 
 from ampauth.server import CredAMPServerFactory, CredReceiver
-from ampauth.commands import Login
+# from ampauth.commands import Login
 from client_amp import ClientProtocol
 from _commands import NotifyMsg, NotifyEvent
 from errors import *
@@ -200,165 +200,163 @@ class TestStartRemote(unittest.TestCase):
         if username == self.mockUser1.username:
             if password == self.mockUser1.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
 
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
-
         else:
             log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
 
     def mockStartRemote(self, iSlotId):
         # Sets the return value of the function for all cases.
         if iSlotId in self.iSlots_available:
-            self.flag_StartRemote = 'StartRemote.REMOTE_READY'
+            self.iSlots_available.append(iSlotId)
+            self.flag_StartRemote = True
+            return {'iResult': 'StartRemote.REMOTE_READY'}
         else:
-            self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
-
-        self.iSlots_available.append(iSlotId)
-
-        return self.flag_StartRemote
+            self.iSlots_available.append(iSlotId)
+            self.flag_StartRemote = True
+            return {'iResult': 'StartRemote.REMOTE_NOT_CONNECTED'}
 
     def mockSendMsg(self, sMsg, iTimestamp):
         try:
-            if self.flag_StartRemote != 0:
-                return True
+            if self.flag_StartRemote == True:
+                return {'bResult': True}
         except:
             raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
 
-    def load_local_server(self):
-        print "load_local_server"
+    # def load_local_server(self):
+    #     print "load_local_server"
 
-    def sc_channel_create(self, spacecraft_id, channel_id, configuration):
-        print "sc_channel_create"
-        print spacecraft_id
-        print channel_id
-        print configuration
+    # def sc_channel_create(self, spacecraft_id, channel_id, configuration):
+    #     print "sc_channel_create"
+    #     print spacecraft_id
+    #     print channel_id
+    #     print configuration
 
-    def create_gs(self, user_profile, identifier):
-        print "create_gs"
-        print user_profile
-        print identifier
+    # def create_gs(self, user_profile, identifier):
+    #     print "create_gs"
+    #     print user_profile
+    #     print identifier
 
-    def gs_channel_create(self, ground_station_id, channel_id, configuration):
-        print "create_gs_channel"
-        print ground_station_id
-        print channel_id
-        print configuration
+    # def gs_channel_create(self, ground_station_id, channel_id, configuration):
+    #     print "create_gs_channel"
+    #     print ground_station_id
+    #     print channel_id
+    #     print configuration
 
-    def get_simulator_set_debug(self):
-        print "get_simulator_set_debug"
+    # def get_simulator_set_debug(self):
+    #     print "get_simulator_set_debug"
 
-    def set_debug(self):
-        print "set_debug"
+    # def set_debug(self):
+    #     print "set_debug"
 
-    def init_available(self):
-        print "init_available"
+    # def init_available(self):
+    #     print "init_available"
 
-    def init_tles_database(self):
-        print "init_tles_database"
+    # def init_tles_database(self):
+    #     print "init_tles_database"
 
-    def create_band(self):
-        print "create_band"
+    # def create_band(self):
+    #     print "create_band"
 
-    def connect_availability_2_operational(self):
-        print "connect_availability_2_operational"
+    # def connect_availability_2_operational(self):
+    #     print "connect_availability_2_operational"
 
-    def connect_channels_2_compatibility(self):
-        print "connect_channels_2_compatibility"
+    # def connect_channels_2_compatibility(self):
+    #     print "connect_channels_2_compatibility"
 
-    def connect_compatibility_2_operational(self):
-        print "connect_compatibility_2_operational"
+    # def connect_compatibility_2_operational(self):
+    #     print "connect_compatibility_2_operational"
 
-    def connect_rules_2_availability(self):
-        print "connect_rules_2_availability"
+    # def connect_rules_2_availability(self):
+    #     print "connect_rules_2_availability"
 
-    def get_operational_slots(self, __sc_id):
-        print "get_operational_slots"
-        print __sc_id
+    # def get_operational_slots(self, __sc_id):
+    #     print "get_operational_slots"
+    #     print __sc_id
 
-        prueba_texto = "loleilo"
+    #     prueba_texto = "loleilo"
 
-        return prueba_texto
+    #     return prueba_texto
 
     def _setUp_mocks(self):
-        self.services_scheduling_jrpc_views_spacecraft_get_operational_slots =\
-         Mock()
-        self.services_scheduling_jrpc_views_spacecraft_get_operational_slots.side_effect =\
-         self.get_operational_slots
+        pass
+        # self.services_scheduling_jrpc_views_spacecraft_get_operational_slots =\
+        #  Mock()
+        # self.services_scheduling_jrpc_views_spacecraft_get_operational_slots.side_effect =\
+        #  self.get_operational_slots
 
-        self.services_configuration_signals_models_models_connect_availability_2_operational =\
-         Mock()
-        self.services_configuration_signals_models_models_connect_availability_2_operational.side_effect =\
-         self.connect_availability_2_operational      
+        # self.services_configuration_signals_models_models_connect_availability_2_operational =\
+        #  Mock()
+        # self.services_configuration_signals_models_models_connect_availability_2_operational.side_effect =\
+        #  self.connect_availability_2_operational      
 
-        self.services_configuration_signals_models_models_connect_channels_2_compatibility =\
-         Mock()
-        self.services_configuration_signals_models_models_connect_channels_2_compatibility.side_effect =\
-         self.connect_channels_2_compatibility
+        # self.services_configuration_signals_models_models_connect_channels_2_compatibility =\
+        #  Mock()
+        # self.services_configuration_signals_models_models_connect_channels_2_compatibility.side_effect =\
+        #  self.connect_channels_2_compatibility
 
-        self.services_configuration_signals_models_models_connect_compatibility_2_operational =\
-         Mock()
-        self.services_configuration_signals_models_models_connect_compatibility_2_operational.side_effect =\
-         self.connect_compatibility_2_operational
+        # self.services_configuration_signals_models_models_connect_compatibility_2_operational =\
+        #  Mock()
+        # self.services_configuration_signals_models_models_connect_compatibility_2_operational.side_effect =\
+        #  self.connect_compatibility_2_operational
 
-        self.services_configuration_signals_models_models_connect_rules_2_availability =\
-         Mock()
-        self.services_configuration_signals_models_models_connect_rules_2_availability.side_effect =\
-         self.connect_rules_2_availability
+        # self.services_configuration_signals_models_models_connect_rules_2_availability =\
+        #  Mock()
+        # self.services_configuration_signals_models_models_connect_rules_2_availability.side_effect =\
+        #  self.connect_rules_2_availability
 
-        self.services_network_models_server_Server_objects_load_local_server =\
-         Mock()
-        self.services_network_models_server_Server_objects_load_local_server.side_effect =\
-         self.load_local_server
+        # self.services_network_models_server_Server_objects_load_local_server =\
+        #  Mock()
+        # self.services_network_models_server_Server_objects_load_local_server.side_effect =\
+        #  self.load_local_server
 
-        self.services_common_testing_helpers_init_available = Mock()
-        self.services_common_testing_helpers_init_available.side_effect =\
-         self.init_available
+        # self.services_common_testing_helpers_init_available = Mock()
+        # self.services_common_testing_helpers_init_available.side_effect =\
+        #  self.init_available
 
-        self.services_common_testing_helpers_init_tles_database = Mock()
-        self.services_common_testing_helpers_init_tles_database.side_effect =\
-         self.init_tles_database
+        # self.services_common_testing_helpers_init_tles_database = Mock()
+        # self.services_common_testing_helpers_init_tles_database.side_effect =\
+        #  self.init_tles_database
         
-        self.services_common_testing_helpers_create_band = Mock()
-        self.services_common_testing_helpers_create_band.side_effect =\
-         self.create_band
+        # self.services_common_testing_helpers_create_band = Mock()
+        # self.services_common_testing_helpers_create_band.side_effect =\
+        #  self.create_band
 
-        self.services_common_testing_helpers_create_user_profile = Mock()
-        self.services_common_testing_helpers_create_user_profile.side_effect =\
-         self.create_user_profile
+        # self.services_common_testing_helpers_create_user_profile = Mock()
+        # self.services_common_testing_helpers_create_user_profile.side_effect =\
+        #  self.create_user_profile
 
-        self.services_common_testing_helpers_create_sc = Mock()
-        self.services_common_testing_helpers_create_sc.side_effect =\
-         self.create_sc
+        # self.services_common_testing_helpers_create_sc = Mock()
+        # self.services_common_testing_helpers_create_sc.side_effect =\
+        #  self.create_sc
 
-        self.services_common_testing_helpers_create_gs = Mock()
-        self.services_common_testing_helpers_create_gs.side_effect =\
-         self.create_gs
+        # self.services_common_testing_helpers_create_gs = Mock()
+        # self.services_common_testing_helpers_create_gs.side_effect =\
+        #  self.create_gs
 
-        self.services_configuration_models_channels_gs_channel_create = Mock()
-        self.services_configuration_models_channels_gs_channel_create.side_effect =\
-         self.gs_channel_create
+        # self.services_configuration_models_channels_gs_channel_create = Mock()
+        # self.services_configuration_models_channels_gs_channel_create.side_effect =\
+        #  self.gs_channel_create
 
-        self.services_configuration_models_channels_sc_channel_create = Mock()
-        self.services_configuration_models_channels_sc_channel_create.side_effect =\
-         self.sc_channel_create
+        # self.services_configuration_models_channels_sc_channel_create = Mock()
+        # self.services_configuration_models_channels_sc_channel_create.side_effect =\
+        #  self.sc_channel_create
 
-        self.operational_OperationalSlot_objects_get_simulator_set_debug = Mock()
-        self.operational_OperationalSlot_objects_get_simulator_set_debug.side_effect =\
-         self.get_simulator_set_debug
+        # self.operational_OperationalSlot_objects_get_simulator_set_debug = Mock()
+        # self.operational_OperationalSlot_objects_get_simulator_set_debug.side_effect =\
+        #  self.get_simulator_set_debug
 
-        self.operational_OperationalSlot_objects_set_debug = Mock()
-        self.operational_OperationalSlot_objects_set_debug.side_effect =\
-         self.set_debug
+        # self.operational_OperationalSlot_objects_set_debug = Mock()
+        # self.operational_OperationalSlot_objects_set_debug.side_effect =\
+        #  self.set_debug
 
     def _setUp_databases(self):
         """
@@ -382,7 +380,7 @@ class TestStartRemote(unittest.TestCase):
         # does not exist in the database, it creates the local server for the
         # very first time.
         # """
-        # self.services_network_models_server_Server_objects_load_local_server() 
+        # self.services.network.models.server.Server.objects_load_local_server() 
 
         # __sc_1_id = 'humsat-sc'
         # __sc_1_tle_id = 'HUMSAT-D'
@@ -634,30 +632,30 @@ class TestStartRemote(unittest.TestCase):
         #     __user1_name, __user1_pass))
         # self.assertTrue(res['bAuthenticated'])
 
-        d1 = self.pf.protocol.login(__user1_name, __user1_pass)
-        self.assertTrue(d1)
+        res = self.pf.protocol.login(__user1_name, __user1_pass)
+        self.assertTrue(res['bAuthenticated'])
 
         # res = yield self.factory1.protoInstance.callRemote(StartRemote,\
         #  iSlotId=__iSlotId)
         # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')
 
         # User 2 (login + start remote)
         # res = yield Login(self.factory2.protoInstance, UsernamePassword(
         #     __user2_name, __user2_pass))
         # self.assertTrue(res['bAuthenticated'])
 
-        d3 = self.pf.protocol.login(__user2_name, __user2_pass)
-        self.assertTrue(d3)
+        res = self.pf.protocol.login(__user2_name, __user2_pass)
+        self.assertTrue(res['bAuthenticated'])
 
         # res = yield self.factory2.protoInstance.callRemote(StartRemote,\
         #  iSlotId=__iSlotId)
         # self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
 
-        d4 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d4, 'StartRemote.REMOTE_READY')
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_READY')
 
         # Events notifying REMOTE_CONNECTED to both clients
         # ev = yield self.factory1.onEventReceived
@@ -682,9 +680,9 @@ class TestStartRemote(unittest.TestCase):
         # self.assertTrue(res['bResult'])
 
         get_utc_timestamp = Mock(return_value='return')
-        d5 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
+        res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d5)
+        self.assertTrue(res['bResult'])
 
         # msg = yield self.factory1.onMessageReceived
         # self.assertEqual(msg, __sMessageA2B)
@@ -699,9 +697,9 @@ class TestStartRemote(unittest.TestCase):
         #   iTimestamp=services_common_misc.get_utc_timestamp())
         # self.assertTrue(res['bResult'])
 
-        d6 = self.pf.protocol.sendmsg(sMsg=__sMessageB2A,\
+        res = self.pf.protocol.sendmsg(sMsg=__sMessageB2A,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d6)
+        self.assertTrue(res['bResult'])
 
         # msg = yield self.factory2.onMessageReceived
         # self.assertEqual(msg, __sMessageB2A)

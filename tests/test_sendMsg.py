@@ -63,7 +63,7 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
-from twisted.cred.portal import Portal
+# from twisted.cred.portal import Portal
 from twisted.python import log
 
 from ampauth.errors import BadCredentials, UnauthorizedLogin
@@ -134,39 +134,42 @@ class TestPassiveMessage(unittest.TestCase):
     def mockLoginMethod(self, username, password):
         if username == self.mockUser1.username:
             if password == self.mockUser1.password:
-                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User1 logged")             
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
 
         elif username == self.mockUser2.username:
             if password == self.mockUser2.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> User2 logged")
-                bAuthenticated = True
-                return bAuthenticated
+                return {'bAuthenticated': True}
             else:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
-
         else:
             log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Error")
 
     def mockStartRemote(self, iSlotId):
         # Sets the return value of the function for all cases.
         if iSlotId in self.iSlots_available:
-            self.flag_StartRemote = 'StartRemote.REMOTE_READY'
+            self.iSlots_available.append(iSlotId)
+            # self.flag_StartRemote = 'StartRemote.REMOTE_READY'
+            self.flag_StartRemote = True
+            return {'iResult': 'StartRemote.REMOTE_READY'}
         else:
-            self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
+            self.iSlots_available.append(iSlotId)
+            self.flag_StartRemote = True
+            # self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
+            return {'iResult': 'StartRemote.REMOTE_NOT_CONNECTED'}
 
-        self.iSlots_available.append(iSlotId)
+        # self.iSlots_available.append(iSlotId)
 
-        return self.flag_StartRemote
+        # return self.flag_StartRemote
 
     def mockSendMsg(self, sMsg, iTimestamp):
 
         try:
-            if self.flag_StartRemote != 0:
-                return True
+            if self.flag_StartRemote == True:
+                return {'bResult': True}
         except:
             raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
 
@@ -418,17 +421,19 @@ class TestPassiveMessage(unittest.TestCase):
         #     SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
         # self.assertTrue(res['bResult'])
 
-        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(d1)
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated'])
 
-        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')
 
         get_utc_timestamp = Mock(return_value='return')
 
-        d3 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
+        res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d3)
+        # self.assertTrue(d3)
+        self.assertTrue(res['bResult'])
+
 
 
     """
@@ -455,8 +460,8 @@ class TestPassiveMessage(unittest.TestCase):
     #             result.message, 'Connection not available. Call StartRemote command first.')
     #     return self.assertFailure(d1, SlotErrorNotification).addCallback(checkError)
 
-        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(d1)
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated']) 
 
         # misc.get_utc_timestamp, Mock object
         get_utc_timestamp = Mock(return_value='return')
@@ -501,17 +506,17 @@ class TestPassiveMessage(unittest.TestCase):
         # ev = yield self.factory1.onEventReceived
         # self.assertEqual(ev, NotifyEvent.REMOTE_DISCONNECTED)
 
-        d1 = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(d1)
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated']) 
 
-        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')
 
         get_utc_timestamp = Mock(return_value='return')
 
-        d3 = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
+        res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d3)
+        self.assertTrue(res['bResult'])
 
 
     """
@@ -553,30 +558,30 @@ class TestPassiveMessage(unittest.TestCase):
         #     __user1_name, __user1_pass))
         # self.assertTrue(res['bAuthenticated'])
 
-        d1 = self.pf.protocol.login(__user1_name, __user1_pass)
-        self.assertTrue(d1)  
+        res = self.pf.protocol.login(__user1_name, __user1_pass)
+        self.assertTrue(res['bAuthenticated']) 
 
         # res = yield self.factory1.protoInstance.callRemote(StartRemote,\
         #  iSlotId=__iSlotId)
         # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
 
-        d2 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d2, 'StartRemote.REMOTE_NOT_CONNECTED')   
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')   
 
         # User 2 (login + start remote)
         # res = yield login(self.factory2.protoInstance, UsernamePassword(
         #     __user2_name, __user2_pass))
         # self.assertTrue(res['bAuthenticated'])
 
-        d3 = self.pf.protocol.login(__user2_name, __user2_pass)
-        self.assertTrue(d3) 
+        res = self.pf.protocol.login(__user2_name, __user2_pass)
+        self.assertTrue(res['bAuthenticated']) 
 
         # res = yield self.factory2.protoInstance.callRemote(StartRemote,\
         #  iSlotId=__iSlotId)
         # self.assertEqual(res['iResult'], StartRemote.REMOTE_READY)
 
-        d4 = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(d4, 'StartRemote.REMOTE_READY')
+        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_READY')
 
 
         # # Events notifying REMOTE_CONNECTED to both clients
@@ -601,9 +606,9 @@ class TestPassiveMessage(unittest.TestCase):
         # self.assertTrue(res['bResult'])
 
         get_utc_timestamp = Mock(return_value='return')
-        d5 = self.pf.protocol.sendmsg(sMsg=__sMessage1_A2B,\
+        res = self.pf.protocol.sendmsg(sMsg=__sMessage1_A2B,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d5)
+        self.assertTrue(res['bResult'])
 
         # msg = yield self.factory1.onMessageReceived
         # self.assertEqual(msg, __sMessage1_A2B)
@@ -619,7 +624,7 @@ class TestPassiveMessage(unittest.TestCase):
 
         d7 = self.pf.protocol.sendmsg(sMsg=__sMessage2_A2B,\
          iTimestamp=get_utc_timestamp())
-        self.assertTrue(d7)
+        self.assertTrue(res['bResult'])
 
         # msg = yield self.factory1.onMessageReceived
         # self.assertEqual(msg, __sMessage2_A2B)
