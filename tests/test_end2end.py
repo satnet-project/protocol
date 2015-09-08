@@ -24,9 +24,7 @@ import os
 import sys
 import logging
 import datetime
-# import django
 import pytz
-# from django.core import management
 from mock import Mock, MagicMock
 import unittest
 
