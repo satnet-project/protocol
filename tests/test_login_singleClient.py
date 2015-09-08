@@ -77,7 +77,7 @@ class TestSingleClient(unittest.TestCase):
         if username == self.mockUserGoodCredentials.username:
             if password == self.mockUserGoodCredentials.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> GoodCredentials")
-                return True
+                return {'bAuthenticated': True}
             elif password != self.mockUserGoodCredentials.password:
                 log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Wrong password test ok!")
                 raise BadCredentials("Incorrect username and/or password")
@@ -165,9 +165,10 @@ class TestSingleClient(unittest.TestCase):
     def test_validLogin(self):
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Valid credentials test starts!")
 
-        return self.assertTrue(self.pf.protocol.login(\
-            self.mockUserGoodCredentials.username,\
-         self.mockUserGoodCredentials.password)) 
+        res = self.pf.protocol.login(self.mockUserGoodCredentials.username,\
+         self.mockUserGoodCredentials.password)
+
+        self.assertTrue(res['bAuthenticated']) 
 
     """
     Log in with wrong username. The server should raise UnauthorizedLogin
