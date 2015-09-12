@@ -20,19 +20,29 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
-from twisted.protocols.amp import AMP
 from twisted.cred.credentials import UsernamePassword
-from twisted.protocols.amp import IBoxReceiver
+from twisted.protocols.amp import AMP, IBoxReceiver
 from twisted.python import log
 from twisted.protocols.policies import TimeoutMixin
 
 from commands import Login
+from _commands import StartRemote
 from twisted.cred.error import UnauthorizedLogin
 from errors import BadCredentials
 from rpcrequests import Satnet_RPC
 
 from server_amp import SATNETServer
+
+import misc
+from datetime import datetime
+import pytz
 
 class CredReceiver(AMP, TimeoutMixin):
 
@@ -91,15 +101,22 @@ class CredReceiver(AMP, TimeoutMixin):
         self.transport.abortConnection()
 
     def connectionLost(self, reason):
-        # Remove the client from active_protocols and/or active_connections
-        if self.sUsername != '':
+        # Remove the client from active_protocols and/or 
+        # active_connections
+        # if self.sUsername != '':
+        # Firstly checks if there is an user in the active_protocols.
+        # dictionary.
+        # To-do. Check active_protocols structure.
+        if self.factory.active_protocols.has_key(self.sUsername):
             self.factory.active_protocols.pop(self.sUsername)
             if self.session is not None:
                 self.session.cancel()
+
         log.err(reason.getErrorMessage())
         log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
         # divided by 2 because the dictionary is doubly linked
-        log.msg('Active connections: ' + str(len(self.factory.active_connections)/2))
+        log.msg('Active connections: ' +\
+         str(len(self.factory.active_connections)/2))
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
         super(CredReceiver, self).connectionLost(reason)
@@ -137,6 +154,53 @@ class CredReceiver(AMP, TimeoutMixin):
             raise BadCredentials("Incorrect username and/or password")
 
     Login.responder(login)
+
+    def CreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
+        # Temporal solution.
+        iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
+
+        slot_remaining_time = int((iSlotEnd -\
+         misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
+        log.msg('Slot remaining time: ' + str(slot_remaining_time))
+
+        if (slot_remaining_time <= 0):
+            log.err('This slot (' + str(iSlotId) + ') has expired')
+            raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
+     
+        # To-do. What happens?   
+        #self.credProto.session = reactor.callLater(slot_remaining_time,\
+        # self.vSlotEnd, iSlotId)
+
+        if remoteUsr not in self.factory.active_protocols:
+            log.msg('Remote user ' + remoteUsr + ' not connected yet')
+            self.factory.active_connections[localUsr] = None          
+            return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
+        else:
+            log.msg('Remote user is ' + remoteUsr)
+            self.factory.active_connections[remoteUsr] = localUsr
+            self.factory.active_connections[localUsr] = remoteUsr
+            self.factory.active_protocols[remoteUsr].callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+                 sDetails=str(localUsr))
+            self.callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+                 sDetails=str(remoteUsr))
+            # divided by 2 because the dictionary is doubly linked
+            log.msg('Active connections: ' +\
+             str(len(self.factory.active_connections) / 2))
+            return {'iResult': StartRemote.REMOTE_READY}
+
+
+    def vSlotEnd(self, iSlotId):
+        log.msg(
+            "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
+        self.callRemote(
+            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
+        # Remove the timer ID reference to avoid it to be canceled
+        # a second time when the client disconnects
+        
+        # To-do. What happens?
+        # self.credProto.session = None
 
 
 class CredAMPServerFactory(ServerFactory):

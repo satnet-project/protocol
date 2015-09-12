@@ -79,37 +79,88 @@ class SATNETServer(protocol.Protocol):
         self.resetTimeout()
         super(SATNETServer, self).dataReceived(data)
 
-    def iCreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
-        slot_remaining_time = int(
-            (iSlotEnd - misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
-        log.msg('Slot remaining time: ' + str(slot_remaining_time))
-        if (slot_remaining_time <= 0):
-            log.err('This slot (' + str(iSlotId) + ') has expired')
-            raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
-        self.credProto.session = reactor.callLater(
-            slot_remaining_time, self.vSlotEnd, iSlotId)
-        if remoteUsr not in self.factory.active_protocols:
-            log.msg('Remote user ' + remoteUsr + ' not connected yet')
-            self.factory.active_connections[localUsr] = None            
-            return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
-        else:
-            log.msg('Remote user is ' + remoteUsr)
-            self.factory.active_connections[remoteUsr] = localUsr
-            self.factory.active_connections[localUsr] = remoteUsr
-            self.factory.active_protocols[remoteUsr].callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(localUsr))
-            self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(remoteUsr))
-            # divided by 2 because the dictionary is doubly linked
-            log.msg('Active connections: ' + str(len(self.factory.active_connections) / 2))
-            return {'iResult': StartRemote.REMOTE_READY}
+    # def iCreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
+    #     slot_remaining_time = int(
+    #         (iSlotEnd - misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
+    #     log.msg('Slot remaining time: ' + str(slot_remaining_time))
+    #     if (slot_remaining_time <= 0):
+    #         log.err('This slot (' + str(iSlotId) + ') has expired')
+    #         raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
+    #     self.credProto.session = reactor.callLater(
+    #         slot_remaining_time, self.vSlotEnd, iSlotId)
+    #     if remoteUsr not in self.factory.active_protocols:
+    #         log.msg('Remote user ' + remoteUsr + ' not connected yet')
+    #         self.factory.active_connections[localUsr] = None            
+    #         return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
+    #     else:
+    #         log.msg('Remote user is ' + remoteUsr)
+    #         self.factory.active_connections[remoteUsr] = localUsr
+    #         self.factory.active_connections[localUsr] = remoteUsr
+    #         self.factory.active_protocols[remoteUsr].callRemote(
+    #             NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+    #              sDetails=str(localUsr))
+    #         self.callRemote(
+    #             NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+    #              sDetails=str(remoteUsr))
+    #         # divided by 2 because the dictionary is doubly linked
+    #         log.msg('Active connections: ' + str(len(self.factory.active_connections) / 2))
+    #         return {'iResult': StartRemote.REMOTE_READY}
 
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
         #self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
 
         # To-do. Satnet_slot?
-        self.slot = Satnet_Slot(str(iSlotId))
+        # JRPC-call.
+        """
+        https://github.com/satnet-project/server/issues/29
+
+        Para completar los valores necesarios tendremos que realizar la
+        llamada JRPC.
+        Las llamadas ya están puestas.
+
+        state = self.slot[0].state
+        gs_username = self.slot[0].groundstation_channel.groundstation_set.\
+        all()[0].user.username
+        sc_username = self.slot[0].spacecraft_channel.spacecraft_set.all()[0].\
+        user.username
+        end = self.slot[0].end
+
+        server/services/scheduling/jrpc/operational.py
+
+        Como mi llamada no puede tener acceso a la base de datos, tiene que
+        tener acceso a las llamadas JSON. Asi que tengo que substituir toda
+        la moralla por una llamada a una funcion JSON que devuelva los campos
+        requeridos.
+
+        Ya tengo un metodo login. En mis tests he metido en la misma clase
+        esta llamada, deberia hacerlo?
+
+        Cambiar los tests y llamar a esta clase <-> Crear llamadas en la otra
+        clase.
+
+
+
+        # Possible states for the slots.
+        STATE_FREE = str('FREE')
+        STATE_SELECTED = str('SELECTED')
+        STATE_RESERVED = str('RESERVED')
+        STATE_DENIED = str('DENIED')
+        STATE_CANCELED = str('CANCELED')
+        STATE_REMOVED = str('REMOVED')
+
+
+        """
+
+        # self.slot = Satnet_Slot(str(iSlotId))
+
+        """
+        end viene en un un formato datetime.datetime
+        """
+
+        self.slot = {'state': 'RESERVED',\
+         'gs_user': 's.gongoragarcia@gmail.com', 'sc_user': 'spacecraft',\
+          'end': 1577836800 }
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -117,19 +168,26 @@ class SATNETServer(protocol.Protocol):
             raise SlotErrorNotification(
                 'Slot ' + str(iSlotId) + ' is not yet operational')
         # ... if multiple slots have the same ID (never should happen)...
-        elif len(self.slot) > 1:
-            log.err('Multiple slots with the same id: ' + str(iSlotId))
-            raise SlotErrorNotification('Incorrect slot number')
+        # elif len(self.slot) > 1:
+        #     log.err('Multiple slots with the same id: ' + str(iSlotId))
+        #     raise SlotErrorNotification('Incorrect slot number')
         # ... if the ID is correct
         else:
             # If it is too soon to connect to this slot...
-            if self.slot[0].state != operational.STATE_RESERVED:
+            # if self.slot[0].state != 'RESERVED':
+            if self.slot['state'] != 'RESERVED':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
-                raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
-            gs_user = self.slot[
-                0].groundstation_channel.groundstation_set.all()[0].user.username
-            sc_user = self.slot[
-                0].spacecraft_channel.spacecraft_set.all()[0].user.username
+                raise SlotErrorNotification('Slot ' + str(iSlotId) +\
+                 ' has not yet been reserved')
+
+            gs_user = self.slot['gs_user']
+            # gs_user = self.slot[0].\
+            # groundstation_channel.groundstation_set.all()[0].user.username
+            
+            sc_user = self.slot['sc_user']
+            # sc_user = self.slot[0].\
+            # spacecraft_channel.spacecraft_set.all()[0].user.username
+            
             # If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
                 log.err('This slot has not been assigned to this user')
@@ -142,11 +200,17 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
-                return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
+                return self.CreateConnection(self.slot['end'], iSlotId,\
+                 sc_user, gs_user)
+                # return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
+
             #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
-                return self.iCreateConnection(self.slot[0].end, iSlotId, gs_user, sc_user)
+                return self.CreateConnection(self.slot['end'], iSlotId,\
+                 gs_user, sc_user)
+                # return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
+
 
     StartRemote.responder(iStartRemote)
 
@@ -159,10 +223,11 @@ class SATNETServer(protocol.Protocol):
         # was in a remote connection and he was disconnected in the first
         # place)
         if self.factory.active_connections[self.sUsername]:
-            # Notify the remote client about this disconnection. The notification is
-            # sent through the SATNETServer instance
+            # Notify the remote client about this disconnection. The
+            # notification is sent through the SATNETServer instance
             self.factory.active_protocols[self.factory.active_connections[
-                self.sUsername]].callRemote(NotifyEvent, iEvent=NotifyEvent.END_REMOTE, sDetails=None)
+                self.sUsername]].callRemote(NotifyEvent,\
+                 iEvent=NotifyEvent.END_REMOTE, sDetails=None)
             # Close connection
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].credProto.transport.loseConnection()
@@ -186,16 +251,18 @@ class SATNETServer(protocol.Protocol):
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
             gs_channel = self.slot[0].groundstation_channel
             sc_channel = self.slot[0].spacecraft_channel
-            Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
-                                                    sc_channel=sc_channel, upwards=self.bGSuser, forwarded=False,
-                                                    tx_timestamp=iTimestamp, message=sMsg)
+            Message.objects.create(operational_slot=self.slot[0],\
+             gs_channel=gs_channel, sc_channel=sc_channel,\
+              upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
+               message=sMsg)
             log.msg('Message saved on server')
 
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
             self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_DISCONNECTED,\
+                 sDetails=None)
         # ... else, send the message to the remote and store it in the DB
         else:
             # send message to remote client
@@ -204,21 +271,22 @@ class SATNETServer(protocol.Protocol):
             # store messages in the DB (as already forwarded)
             gs_channel = self.slot[0].groundstation_channel
             sc_channel = self.slot[0].spacecraft_channel
-            Message.objects.create(operational_slot=self.slot[0], gs_channel=gs_channel, 
-                                                    sc_channel=sc_channel, upwards=self.bGSuser, forwarded=True,
-                                                    tx_timestamp=iTimestamp, message=sMsg)
+            Message.objects.create(operational_slot=self.slot[0],\
+             gs_channel=gs_channel, sc_channel=sc_channel,\
+              upwards=self.bGSuser, forwarded=True, tx_timestamp=iTimestamp,\
+               message=sMsg)
 
         return {'bResult': True}
     SendMsg.responder(vSendMsg)
 
-    def vSlotEnd(self, iSlotId):
-        log.msg(
-            "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
-        self.callRemote(
-            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
-        # Remove the timer ID reference to avoid it to be canceled
-        # a second time when the client disconnects
-        self.credProto.session = None
+    # def vSlotEnd(self, iSlotId):
+    #     log.msg(
+    #         "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
+    #     self.callRemote(
+    #         NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
+    #     # Remove the timer ID reference to avoid it to be canceled
+    #     # a second time when the client disconnects
+    #     self.credProto.session = None
 
 
 def main():
