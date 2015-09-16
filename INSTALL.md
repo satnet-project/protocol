@@ -1,9 +1,20 @@
-## Install server
-```shell
-git clone git@github.com:satnet-project/protocol.git
+
+
+### Installation
+
+Steps to install the protocol for client-server communications.
+
+1) Create a virtualenv enviroment and activate it.
+```
 virtualenv .venv
 source .venv/bin/activate
+```
+2) Install the required packages
+```
 pip install -r scripts/requirements.txt
-# The last step will create a self-signed certificate/key
-/scripts/protocol-setup.sh
+```
+3) Create a self-signed certicate/key.
+```
+cd scripts/
+bash ./protocol-setup.sh
 ```
