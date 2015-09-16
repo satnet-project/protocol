@@ -14,6 +14,6 @@ Before starting the script should be activate the corresponding virtualenv to sa
 
 #### Normal operation
 
-To run the procotol communications you must run: 
+To run the procotol communications you must execute: 
 
 ```python server_amp.py```
