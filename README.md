@@ -1,24 +1,10 @@
-# protocol
+
+
+Protocol communications for SATNet project.
+===========================================
+
 This repository contains the communications real time protocol based on Twisted for the SatNet network.
 
-## Install server
-```shell
-git clone git@github.com:satnet-project/protocol.git
-virtualenv .venv
-source .venv/bin/activate
-pip install -r scripts/requirements.txt
-# The last step will create a self-signed certificate/key
-/scripts/protocol-setup.sh
-```
+In the file INSTALL you will find detailed installation instructions.
 
-## Run server
-```shell
-cd {PROJECT_PATH}
-python server_amp.py
-```
-
-## Execute tests
-```shell
-cd {PROJECT_PATH}
-trial tests/*
-```
+To run the procotol communications you must run: ```python server_amp.py```
