@@ -34,7 +34,7 @@ from twisted.protocols.policies import TimeoutMixin
 
 from commands import Login
 # from _commands import StartRemote
-from commands import StartRemote
+from ampCommands import StartRemote
 
 from twisted.cred.error import UnauthorizedLogin
 from errors import BadCredentials

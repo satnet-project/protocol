@@ -36,7 +36,7 @@ from errors import *
 from rpcrequests import *
 
 # from _commands import StartRemote, EndRemote, SendMsg
-from commands import StartRemote, EndRemote, SendMsg
+from ampCommands import StartRemote, EndRemote, SendMsg
 
 
 class SATNETServer(protocol.Protocol):
