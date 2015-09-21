@@ -35,7 +35,9 @@ from errors import *
 
 from rpcrequests import *
 
-from _commands import StartRemote, EndRemote, SendMsg
+# from _commands import StartRemote, EndRemote, SendMsg
+from commands import StartRemote, EndRemote, SendMsg
+
 
 class SATNETServer(protocol.Protocol):
 
@@ -115,10 +117,6 @@ class SATNETServer(protocol.Protocol):
         """
         https://github.com/satnet-project/server/issues/29
 
-        Para completar los valores necesarios tendremos que realizar la
-        llamada JRPC.
-        Las llamadas ya están puestas.
-
         state = self.slot[0].state
         gs_username = self.slot[0].groundstation_channel.groundstation_set.\
         all()[0].user.username
@@ -127,19 +125,6 @@ class SATNETServer(protocol.Protocol):
         end = self.slot[0].end
 
         server/services/scheduling/jrpc/operational.py
-
-        Como mi llamada no puede tener acceso a la base de datos, tiene que
-        tener acceso a las llamadas JSON. Asi que tengo que substituir toda
-        la moralla por una llamada a una funcion JSON que devuelva los campos
-        requeridos.
-
-        Ya tengo un metodo login. En mis tests he metido en la misma clase
-        esta llamada, deberia hacerlo?
-
-        Cambiar los tests y llamar a esta clase <-> Crear llamadas en la otra
-        clase.
-
-
 
         # Possible states for the slots.
         STATE_FREE = str('FREE')
@@ -155,7 +140,7 @@ class SATNETServer(protocol.Protocol):
         # self.slot = Satnet_Slot(str(iSlotId))
 
         """
-        end viene en un un formato datetime.datetime
+        end datetime.datetime
         """
 
         self.slot = {'state': 'RESERVED',\

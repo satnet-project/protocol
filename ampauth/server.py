@@ -33,7 +33,9 @@ from twisted.python import log
 from twisted.protocols.policies import TimeoutMixin
 
 from commands import Login
-from _commands import StartRemote
+# from _commands import StartRemote
+from commands import StartRemote
+
 from twisted.cred.error import UnauthorizedLogin
 from errors import BadCredentials
 from rpcrequests import Satnet_RPC
@@ -148,9 +150,8 @@ class CredReceiver(AMP, TimeoutMixin):
 
             return {'bAuthenticated': True}
 
-        except BadCredentials as e:
+        except BadCredentials:
             log.err('Incorrect username and/or password')
-            # log.err(e)
             raise BadCredentials("Incorrect username and/or password")
 
     Login.responder(login)
