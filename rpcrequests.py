@@ -103,15 +103,47 @@ class Satnet_RPC():
                 HttpSessionTransport('http://localhost:8000/jrpc/')
             )
 
-        if not self.call('system.login', user, pwd):
-            raise BadCredentials()
-        else:
-            self.call('network.keepAlive')
+        # if not self.call('system.login', user, pwd):
+        #     raise BadCredentials()
+        # else:
+        #     self.call('network.keepAlive')
+
+        self.call('system.login', user, pwd)
 
 
     def _keepAlive(self):
         threading.Timer(300, self._keepAlive).start() # set daemon to false
         self.call('network.keepAlive')
+
+    def call(self, call, *args):
+        """
+        Make an RPC call to the SatNet server.
+
+        :param call:
+            Name of the methods
+        :type call:
+            L{String}
+
+        :param args:
+            Arguments required by the method to be invocked.
+        """
+
+        return self._rpc_client.call(call, args, None)
+
+class Satnet_GetSlot():
+
+    def __init__(self, slot_id, debug=False):
+        if not debug:
+            self._rpc_client = RPCClient(
+                JSONRPCProtocolFix(),
+                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
+            )
+        else:
+            self._rpc_client = RPCClient(
+                JSONRPCProtocolFix(),
+                HttpSessionTransport('http://localhost:8000/jrpc/')
+            )
+        self.call('scheduling.slot.get', slot_id)
 
     def call(self, call, *args):
         """
