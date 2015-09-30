@@ -44,7 +44,8 @@ class HttpSessionTransport(HttpPostClientTransport):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        r = self.s.post(self.endpoint, data=message, headers={'content-type':'application/json'})
+        r = self.s.post(self.endpoint, data=message,\
+         headers={'content-type':'application/json'})
 
         if expect_reply:
             return r.content
@@ -134,15 +135,11 @@ class Satnet_GetSlot():
 
     def __init__(self, slot_id, debug=False):
         if not debug:
-            self._rpc_client = RPCClient(
-                JSONRPCProtocolFix(),
-                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
-            )
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
         else:
-            self._rpc_client = RPCClient(
-                JSONRPCProtocolFix(),
-                HttpSessionTransport('http://localhost:8000/jrpc/')
-            )
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('http://localhost:8000/jrpc/'))
         self.call('scheduling.slot.get', slot_id)
 
     def call(self, call, *args):
@@ -159,3 +156,91 @@ class Satnet_GetSlot():
         """
 
         return self._rpc_client.call(call, args, None)
+
+
+class Satnet_StoreMessage():
+
+    def __init__(self, slot_id, upwards, forwarded, timestamp, message,\
+     debug = False):
+        if not debug:
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
+        else:
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('http://localhost:8000/jrpc/'))
+        self.call('communications.storeMessage', slot_id, upwards, forwarded,\
+         timestamp, message)
+
+    def call(self, call, *args):
+        """
+        Make an RPC call to the SatNet server.
+
+        :param call:
+            Name of the methods
+        :type call:
+            L{String}
+
+        :param args:
+            Arguments required by the method to be invocked.
+        """
+
+        return self._rpc_client.call(call, args, None)
+
+
+class Satnet_StorePassiveMessage():
+    """
+    @rpc4django.rpcmethod(
+        name='communications.gs.storePassiveMessage')
+    
+    This method stores a mesage obtained in a passive manner (this is,
+    without requiring from any remote operation to be scheduled) by a
+    given groundstation in the database
+
+    :ivar groundstation_id:
+        Identifier of the Groundstation
+    :type groundstation_id:
+        L{String}
+
+    :ivar timestamp:
+        Moment of the reception of the message at the remote 
+        Groundstation
+    :type timestamp:
+        L{int}
+
+    :ivar doppler_shift:
+        Doppler shif during the reception fo the message
+    :type doppler_shift:
+        L{float}
+
+    :ivar message:
+        The message to be stored
+    :type message:
+        L{String}
+
+    """
+
+    def __init__(self, groundstation_id, timestamp, doppler_shift, message,\
+     debug = False):
+        if not debug:
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
+        else:
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+             HttpSessionTransport('http://localhost:8000/jrpc/'))
+        self.call('communications.storePassiveMessage', slot_id, upwards,\
+         forwarded, timestamp, message)
+
+    def call(self, call, *args):
+        """
+        Make an RPC call to the SatNet server.
+
+        :param call:
+            Name of the methods
+        :type call:
+            L{String}
+
+        :param args:
+            Arguments required by the method to be invocked.
+        """
+
+        return self._rpc_client.call(call, args, None)            

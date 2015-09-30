@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-     Copyright 2014 Xabier Crespo Álvarez
+     Copyright 2014, 2015 Xabier Crespo Álvarez
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-import os, sys, logging
+import os
+import sys
+import logging
 from datetime import datetime
 
 from twisted.python import log
@@ -29,14 +31,16 @@ from twisted.internet import reactor, ssl
 from twisted.internet import protocol
 from twisted.cred.portal import Portal
 
-# from commands import *
 from ampauth.server import *
 from errors import *
 
-from rpcrequests import *
-
-# from _commands import StartRemote, EndRemote, SendMsg
+from rpcrequests import Satnet_GetSlot 
+from rpcrequests import Satnet_StoreMessage 
+from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote, EndRemote, SendMsg
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from client_amp import NotifyMsg
 
 
 class SATNETServer(protocol.Protocol):
@@ -110,68 +114,77 @@ class SATNETServer(protocol.Protocol):
 
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
-        #self.slot = operational.OperationalSlot.objects.filter(id=iSlotId)
 
-        # To-do. Satnet_slot?
-        # JRPC-call.
-        """
-        https://github.com/satnet-project/server/issues/29
+        # """
+        # @rpc4django.rpcmethod(
+        #     name='scheduling.slot.get',
+        #     signature=['String'],
+        #     login_required=satnet_settings.JRPC_LOGIN_REQUIRED
+        # )
+        # def get_slot(slot_id):
+        #     """
+        #     """
+        #     JRPC method: services.scheduling.getSlot
+        #     JRPC method that allows remote users to retrieve the information about a
+        #     given operational slot
+        #     :param slot_id: Identifier of the slot
+        #     :return: JSON-like structure with the information serialized
+        #     """
+        #     """
+        #     return schedule_serializers.serialize_slot_information(
+        #         operational_models.OperationalSlot.objects.get(
+        #             identifier=slot_id
+        #         )
+        #     )
+        #
+        # # Possible states for the slots.
+        # STATE_FREE = str('FREE')
+        # STATE_SELECTED = str('SELECTED')
+        # STATE_RESERVED = str('RESERVED')
+        # STATE_DENIED = str('DENIED')
+        # STATE_CANCELED = str('CANCELED')
+        # STATE_REMOVED = str('REMOVED')
+        #
+        # return {
+        #     'state': slot.state,
+        #     'gs_username':
+        #         slot.groundstation_channel.groundstation_set.all()[0].user
+        #         .username,
+        #     'sc_username':
+        #         slot.spacecraft_channel.spacecraft_set.all()[0].user.username,
+        #     'starting_time':
+        #         common_serializers.serialize_iso8601_date(
+        #             slot.availability_slot.start
+        #         ),
+        #     'ending_time':
+        #         common_serializers.serialize_iso8601_date(
+        #             slot.availability_slot.end
+        #         ),
+        # """
 
-        state = self.slot[0].state
-        gs_username = self.slot[0].groundstation_channel.groundstation_set.\
-        all()[0].user.username
-        sc_username = self.slot[0].spacecraft_channel.spacecraft_set.all()[0].\
-        user.username
-        end = self.slot[0].end
 
-        server/services/scheduling/jrpc/operational.py
+        # self.slot = Satnet_GetSlot(str(iSlotId), debug = True)
 
-        # Possible states for the slots.
-        STATE_FREE = str('FREE')
-        STATE_SELECTED = str('SELECTED')
-        STATE_RESERVED = str('RESERVED')
-        STATE_DENIED = str('DENIED')
-        STATE_CANCELED = str('CANCELED')
-        STATE_REMOVED = str('REMOVED')
-
-
-        """
-
-        # self.slot = Satnet_Slot(str(iSlotId))
-
-        """
-        end datetime.datetime
-        """
-
+        # For tests only.
         self.slot = {'state': 'RESERVED',\
-         'gs_user': 's.gongoragarcia@gmail.com', 'sc_user': 'spacecraft',\
-          'end': 1577836800 }
+         'gs_username': 's.gongoragarcia@gmail.com',\
+          'sc_username': 'spacecraft', 'starting_time': 1576836800,\
+           'ending_time': 1577836800 }
 
         # If slot NOT operational yet...
         if not self.slot:
             log.err('Slot ' + str(iSlotId) + ' is not yet operational')
             raise SlotErrorNotification(
                 'Slot ' + str(iSlotId) + ' is not yet operational')
-        # ... if multiple slots have the same ID (never should happen)...
-        # elif len(self.slot) > 1:
-        #     log.err('Multiple slots with the same id: ' + str(iSlotId))
-        #     raise SlotErrorNotification('Incorrect slot number')
-        # ... if the ID is correct
         else:
             # If it is too soon to connect to this slot...
-            # if self.slot[0].state != 'RESERVED':
             if self.slot['state'] != 'RESERVED':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
                 raise SlotErrorNotification('Slot ' + str(iSlotId) +\
                  ' has not yet been reserved')
 
-            gs_user = self.slot['gs_user']
-            # gs_user = self.slot[0].\
-            # groundstation_channel.groundstation_set.all()[0].user.username
-            
-            sc_user = self.slot['sc_user']
-            # sc_user = self.slot[0].\
-            # spacecraft_channel.spacecraft_set.all()[0].user.username
+            gs_user = self.slot['gs_username']            
+            sc_user = self.slot['sc_username']
             
             # If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
@@ -185,18 +198,15 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
-                return self.CreateConnection(self.slot['end'], iSlotId,\
-                 sc_user, gs_user)
-                # return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
+                return self.CreateConnection(self.slot['ending_time'],\
+                 iSlotId, sc_user, gs_user)
 
             #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
-                return self.CreateConnection(self.slot['end'], iSlotId,\
-                 gs_user, sc_user)
-                # return self.iCreateConnection(self.slot[0].end, iSlotId, sc_user, gs_user)
 
-
+                return self.CreateConnection(self.slot['ending_time'],\
+                 iSlotId, gs_user, sc_user)
     StartRemote.responder(iStartRemote)
 
     def vEndRemote(self):
@@ -224,6 +234,14 @@ class SATNETServer(protocol.Protocol):
     EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):
+
+        # For tests only, where can I get the current channel?
+        slot_id = 2
+        slot = {'state': 'RESERVED',\
+         'gs_channel': 'groundstation_channel',\
+          'sc_channel': 'spacecraft_channel',\
+           'starting_time': 1576836800, 'ending_time': 1577836800 }
+
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
         # TODO. Never enters because the clients are in active_protocols as soon as they log in
@@ -234,12 +252,17 @@ class SATNETServer(protocol.Protocol):
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
-            gs_channel = self.slot[0].groundstation_channel
-            sc_channel = self.slot[0].spacecraft_channel
-            Message.objects.create(operational_slot=self.slot[0],\
-             gs_channel=gs_channel, sc_channel=sc_channel,\
-              upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
-               message=sMsg)
+            PassiveMessage = Satnet_StorePassiveMessage(groundstation_id =\
+             'groundstation_id', timestamp = 'timestamp', doppler_shift =\
+              'doppler_shift', message = sMsg)
+
+            """
+            Old method. Should be maintained until the system runs without problems.
+            """
+            # Message.objects.create(operational_slot=self.slot[0],\
+            #  gs_channel=gs_channel, sc_channel=sc_channel,\
+            #   upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
+            #    message=sMsg)
             log.msg('Message saved on server')
 
         # ... if the GS operator is not connected, the remote SC client will be
@@ -250,16 +273,31 @@ class SATNETServer(protocol.Protocol):
                  sDetails=None)
         # ... else, send the message to the remote and store it in the DB
         else:
+            # NotifyMsg is a class from client_amp
+            #
             # send message to remote client
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
+
             # store messages in the DB (as already forwarded)
-            gs_channel = self.slot[0].groundstation_channel
-            sc_channel = self.slot[0].spacecraft_channel
-            Message.objects.create(operational_slot=self.slot[0],\
-             gs_channel=gs_channel, sc_channel=sc_channel,\
-              upwards=self.bGSuser, forwarded=True, tx_timestamp=iTimestamp,\
-               message=sMsg)
+            gs_channel = slot['gs_channel']
+            sc_channel = slot['sc_channel']
+
+            Message = Satnet_StoreMessage(operational_slot = slot_id,\
+             gs_channel = gs_channel, sc_channel = sc_channel,\
+              upwards = self.bGSuser, forwarded = True,\
+               tx_timestamp = iTimestamp, message = sMsg)
+
+            """
+            Old method. Should be maintained until the system runs without problems.
+            """
+            # gs_channel = self.slot[0].groundstation_channel
+            # sc_channel = self.slot[0].spacecraft_channel
+
+            # Message.objects.create(operational_slot=self.slot[0],\
+            #  gs_channel=gs_channel, sc_channel=sc_channel,\
+            #   upwards=self.bGSuser, forwarded=True, tx_timestamp=iTimestamp,\
+            #    message=sMsg)
 
         return {'bResult': True}
     SendMsg.responder(vSendMsg)

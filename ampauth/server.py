@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-   Copyright 2014 Xabier Crespo Álvarez
+   Copyright 2014, 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ from ampCommands import StartRemote
 
 from twisted.cred.error import UnauthorizedLogin
 from errors import BadCredentials
-from rpcrequests import Satnet_RPC
+from rpcrequests import Satnet_RPC, Satnet_StoreMessage
 
 from server_amp import SATNETServer
 
@@ -137,10 +137,18 @@ class CredReceiver(AMP, TimeoutMixin):
             self.sUsername = sUsername
             self.active_protocols[sUsername] = None
 
+
+        """
+        Por aqui tengo que meter que el usuario remoto este conectado
+        para ver que pasaria
+        """
+
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
             self.protocol = SATNETServer
+
             #avatar.factory = self.factory
+            
             #avatar.credProto = self
             #avatar.sUsername = sUsername
             self.active_protocols[sUsername] = self
