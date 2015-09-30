@@ -152,13 +152,9 @@ class TestPassiveMessage(unittest.TestCase):
         # Sets the return value of the function for all cases.
         if iSlotId in self.iSlots_available:
             self.iSlots_available.append(iSlotId)
-            # self.flag_StartRemote = 'StartRemote.REMOTE_READY'
-            self.flag_StartRemote = True
             return {'iResult': 'StartRemote.REMOTE_READY'}
         else:
             self.iSlots_available.append(iSlotId)
-            self.flag_StartRemote = True
-            # self.flag_StartRemote = 'StartRemote.REMOTE_NOT_CONNECTED'
             return {'iResult': 'StartRemote.REMOTE_NOT_CONNECTED'}
 
         # self.iSlots_available.append(iSlotId)
@@ -431,23 +427,23 @@ class TestPassiveMessage(unittest.TestCase):
 
         res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
          iTimestamp=get_utc_timestamp())
-        # self.assertTrue(d3)
         self.assertTrue(res['bResult'])
 
 
 
     """
-    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
+    Wrong procedure. The client tries to send a message before invoking 
+    StartRemote command. 
     The procedure goes:
         1. Client A -> login
-        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
-                'Connection not available. Call StartRemote command first.'))
+        2. Client A -> sendMsg(__sMessageA2B) (should raise 
+            SlotErrorNotification('Connection not available. 
+            Call StartRemote command first.'))
     """
 
     # get_utc_timestamp use?
     def test_wrongMessageProcedure(self):
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_wrongMessageProcedure starts")
-        # __iSlotId = 1
         __sMessageA2B = "Adiós, ríos; adios, fontes; adios, regatos pequenos;"
 
     #     d1 = login(self.factory1.protoInstance, UsernamePassword(
@@ -473,11 +469,13 @@ class TestPassiveMessage(unittest.TestCase):
 
 
     """
-    Wrong procedure. The client tries to send a message before invoking StartRemote command. 
+    Wrong procedure. The client tries to send a message before invoking 
+    StartRemote command. 
     The procedure goes:
         1. Client A -> login
-        2. Client A -> sendMsg(__sMessageA2B) (should raise SlotErrorNotification(
-                'Connection not available. Call StartRemote command first.'))
+        2. Client A -> sendMsg(__sMessageA2B) (should raise 
+            SlotErrorNotification('Connection not available. 
+            Call StartRemote command first.'))
     """
 
     # @defer.inlineCallbacks // Why?
