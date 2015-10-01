@@ -176,16 +176,11 @@ class CredReceiver(AMP, TimeoutMixin):
          misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
-        # if (slot_remaining_time <= 0):
-        #     log.err('This slot (' + str(iSlotId) + ') has expired')
+        if (slot_remaining_time <= 0):
+            log.err('This slot (' + str(iSlotId) + ') has expired')
 
-            # raise SlotErrorNotification('This slot (' + str(iSlotId) +\
-            #  ') has expired')
-
-        try:
-            a = b
-        except:
-            raise SlotErrorNotification('This slot')
+            raise SlotErrorNotification('This slot (' + str(iSlotId) +\
+             ') has expired')
      
         # To-do. What happens?   
         #self.credProto.session = reactor.callLater(slot_remaining_time,\

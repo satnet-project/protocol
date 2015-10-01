@@ -21,7 +21,8 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 from twisted.protocols import amp
-from errors import *
+from clientErrors import SlotErrorNotification
+from clientErrors import RemoteClientNotification
 
 """
 Commandes implemented by the N-server which will be invoked by a
