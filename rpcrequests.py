@@ -104,17 +104,15 @@ class Satnet_RPC():
                 HttpSessionTransport('http://localhost:8000/jrpc/')
             )
 
-        # if not self.call('system.login', user, pwd):
-        #     raise BadCredentials()
-        # else:
+        if not self.call('system.login', user, pwd):
+            raise BadCredentials()
+        else:
+            print "keepalive"
         #     self.call('network.keepAlive')
 
-        self.call('system.login', user, pwd)
-
-
-    def _keepAlive(self):
-        threading.Timer(300, self._keepAlive).start() # set daemon to false
-        self.call('network.keepAlive')
+    # def _keepAlive(self):
+    #     threading.Timer(300, self._keepAlive).start() # set daemon to false
+    #     self.call('network.keepAlive')
 
     def call(self, call, *args):
         """
@@ -128,8 +126,8 @@ class Satnet_RPC():
         :param args:
             Arguments required by the method to be invocked.
         """
-
         return self._rpc_client.call(call, args, None)
+
 
 class Satnet_GetSlot():
 
