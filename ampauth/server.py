@@ -23,22 +23,24 @@ __author__ = 'xabicrespog@gmail.com'
 import os
 import sys
 
+from errors import BadCredentials
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from clientErrors import SlotErrorNotification
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
 from twisted.cred.credentials import UsernamePassword
-from twisted.protocols.amp import AMP, IBoxReceiver
-from twisted.python import log
-from twisted.protocols.policies import TimeoutMixin
-
-from commands import Login
-# from _commands import StartRemote
-from ampCommands import StartRemote
-
 from twisted.cred.error import UnauthorizedLogin
-from errors import BadCredentials
-from rpcrequests import Satnet_RPC, Satnet_StoreMessage
+from twisted.protocols.amp import AMP, IBoxReceiver
+from twisted.protocols.policies import TimeoutMixin
+from twisted.python import log
+
+from ampCommands import StartRemote, NotifyEvent
+from commands import Login
+
+from rpcrequests import Satnet_RPC
 
 from server_amp import SATNETServer
 
@@ -107,8 +109,10 @@ class CredReceiver(AMP, TimeoutMixin):
         # active_connections
         # if self.sUsername != '':
         # Firstly checks if there is an user in the active_protocols.
-        # dictionary.
+        # dictionary
+
         # To-do. Check active_protocols structure.
+        
         if self.factory.active_protocols.has_key(self.sUsername):
             self.factory.active_protocols.pop(self.sUsername)
             if self.session is not None:
@@ -172,13 +176,27 @@ class CredReceiver(AMP, TimeoutMixin):
          misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
-        if (slot_remaining_time <= 0):
-            log.err('This slot (' + str(iSlotId) + ') has expired')
-            raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
+        # if (slot_remaining_time <= 0):
+        #     log.err('This slot (' + str(iSlotId) + ') has expired')
+
+            # raise SlotErrorNotification('This slot (' + str(iSlotId) +\
+            #  ') has expired')
+
+        try:
+            a = b
+        except:
+            raise SlotErrorNotification('This slot')
      
         # To-do. What happens?   
         #self.credProto.session = reactor.callLater(slot_remaining_time,\
         # self.vSlotEnd, iSlotId)
+
+        log.msg('antes')
+        print self.factory.active_protocols
+        log.msg('despues')
+
+        self.factory.active_protocols = []
+        self.factory.active_protocols.append('spacecraft')
 
         if remoteUsr not in self.factory.active_protocols:
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
@@ -188,12 +206,25 @@ class CredReceiver(AMP, TimeoutMixin):
             log.msg('Remote user is ' + remoteUsr)
             self.factory.active_connections[remoteUsr] = localUsr
             self.factory.active_connections[localUsr] = remoteUsr
-            self.factory.active_protocols[remoteUsr].callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-                 sDetails=str(localUsr))
-            self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-                 sDetails=str(remoteUsr))
+
+            log.msg('antes del remoteusr')
+            print self.factory.active_connections[remoteUsr]
+            log.msg('despues del remoteusr')
+
+            # Avisa a ambos mediante el uso de NotifyEvent de que estan
+            # conectados.
+            # self.factory.active_protocols[remoteUsr].callRemote(
+            #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+            #      sDetails=str(localUsr))
+            # self.callRemote(
+            #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+            #      sDetails=str(remoteUsr))
+
+            NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
+             sDetails = str(localUsr))
+            NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
+             sDetails = str(remoteUsr))
+
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))

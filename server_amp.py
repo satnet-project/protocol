@@ -32,7 +32,8 @@ from twisted.internet import protocol
 from twisted.cred.portal import Portal
 
 from ampauth.server import *
-from errors import *
+from clientErrors import SlotErrorNotification
+from clientErrors import RemoteClientNotification
 
 from rpcrequests import Satnet_GetSlot 
 from rpcrequests import Satnet_StoreMessage 
@@ -169,7 +170,7 @@ class SATNETServer(protocol.Protocol):
         self.slot = {'state': 'RESERVED',\
          'gs_username': 's.gongoragarcia@gmail.com',\
           'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': 1577836800 }
+           'ending_time': 1443688966 }
 
         # If slot NOT operational yet...
         if not self.slot:

@@ -159,6 +159,40 @@ class Satnet_GetSlot():
 
 
 class Satnet_StoreMessage():
+    """
+    @rpc4django.rpcmethod(
+        name='communications.storeMessage')
+
+    This method stores a message that just been received by the protocol.
+
+    :ivar slot_id:
+        Identifier of the ongoing slot
+    :type slot_id:
+        L{String}
+
+    :ivar upwards:
+        Flag that indicates the direction of the message
+    :type upwards:
+        L{boolean}
+
+    :ivar forwarded:
+        Flag that indicates whether whis message has already been
+        successfully forwarded to the other end of the communication or not
+    :type forwarded:
+        L{boolean}
+
+    :ivar timestamp:
+        Timestamp to log the time at which the message was received
+    :type timestamp:
+        L{int}
+
+    :ivar message:
+        Message received as a BASE64 string
+    :type message:
+        L{String}
+
+    Return the identifier of the message within the system.
+    """
 
     def __init__(self, slot_id, upwards, forwarded, timestamp, message,\
      debug = False):
@@ -194,7 +228,7 @@ class Satnet_StorePassiveMessage():
     
     This method stores a mesage obtained in a passive manner (this is,
     without requiring from any remote operation to be scheduled) by a
-    given groundstation in the database
+    given groundstation in the database.
 
     :ivar groundstation_id:
         Identifier of the Groundstation
@@ -217,6 +251,7 @@ class Satnet_StorePassiveMessage():
     :type message:
         L{String}
 
+    Return 'true' if the message was correctly stored.
     """
 
     def __init__(self, groundstation_id, timestamp, doppler_shift, message,\
