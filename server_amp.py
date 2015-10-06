@@ -27,7 +27,8 @@ from datetime import datetime
 
 from twisted.python import log
 from twisted.protocols.amp import AMP
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor
+from twisted.internet import ssl
 from twisted.internet import protocol
 from twisted.cred.portal import Portal
 
@@ -170,7 +171,7 @@ class SATNETServer(protocol.Protocol):
         self.slot = {'state': 'RESERVED',\
          'gs_username': 's.gongoragarcia@gmail.com',\
           'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': 1443688966 }
+           'ending_time': 1677836800 }
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -199,13 +200,14 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
+                print "estoy en el primer if"
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, sc_user, gs_user)
 
             #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
-
+                print "estoy en el segundo if"
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, gs_user, sc_user)
     StartRemote.responder(iStartRemote)
@@ -241,7 +243,7 @@ class SATNETServer(protocol.Protocol):
         slot = {'state': 'RESERVED',\
          'gs_channel': 'groundstation_channel',\
           'sc_channel': 'spacecraft_channel',\
-           'starting_time': 1576836800, 'ending_time': 1577836800 }
+           'starting_time': 1576836800, 'ending_time': 1677836800 }
 
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...

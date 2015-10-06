@@ -23,11 +23,8 @@ __author__ = 'xabicrespog@gmail.com'
 import os
 import sys
 
+from login import Login
 from errors import BadCredentials
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from clientErrors import SlotErrorNotification
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
@@ -37,16 +34,18 @@ from twisted.protocols.amp import AMP, IBoxReceiver
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
-from ampCommands import StartRemote, NotifyEvent
-from commands import Login
-
-from rpcrequests import Satnet_RPC
-
-from server_amp import SATNETServer
-
 import misc
 from datetime import datetime
 import pytz
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from ampCommands import StartRemote
+from ampCommands import NotifyEvent
+from clientErrors import SlotErrorNotification
+from rpcrequests import Satnet_RPC
+from server_amp import SATNETServer
+
 
 class CredReceiver(AMP, TimeoutMixin):
 
@@ -111,9 +110,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Firstly checks if there is an user in the active_protocols.
         # dictionary
 
-        # To-do. Check active_protocols structure.
-        
-        if self.factory.active_protocols.has_key(self.sUsername):
+        if self.sUsername in self.factory.active_protocols:
             self.factory.active_protocols.pop(self.sUsername)
             if self.session is not None:
                 self.session.cancel()
@@ -131,16 +128,31 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         Generate a new challenge for the given username.
         """
-        self.active_protocols = {}
-        self.active_connections = {}
+        self.factory.active_protocols = {}
+        self.factory.active_protocols.setdefault('localUsr', [])
+        self.factory.active_protocols.setdefault('remoteUsr', [])
+        self.factory.active_connections = {}
+        self.factory.active_connections.setdefault('localUsr'. [])
+        self.factory.active_connections.setdefault('remoteUsr'. [])
 
-        if sUsername in self.active_protocols:
+        # if sUsername in self.active_protocols:
+        #     log.err('Client already logged in')
+        #     raise UnauthorizedLogin('Client already logged in')
+        # else:
+        #     self.sUsername = sUsername
+        #     self.active_protocols[sUsername] = None
+
+
+        if sUsername in self.factory.active_protocols['localUsr']:
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
             self.sUsername = sUsername
-            self.active_protocols[sUsername] = None
+            self.factory.active_protocols['localUsr'].append(self.sUsername)
 
+        print "nueva prueba"
+        print self.factory.active_protocols['localUsr']
+        print "final del final de la prueba"
 
         """
         Por aqui tengo que meter que el usuario remoto este conectado
@@ -149,16 +161,16 @@ class CredReceiver(AMP, TimeoutMixin):
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
-            self.protocol = SATNETServer
+            # self.protocol = SATNETServer
 
             #avatar.factory = self.factory
             
             #avatar.credProto = self
             #avatar.sUsername = sUsername
-            self.active_protocols[sUsername] = self
+            # self.active_protocols[sUsername] = self
             log.msg('Connection made')
-            log.msg('Active clients: ' + str(len(self.active_protocols)))
-            log.msg('Active connections: ' + str(len(self.active_connections)))
+            log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
+            log.msg('Active connections: ' + str(len(self.factory.active_connections)))
 
             return {'bAuthenticated': True}
 
@@ -190,14 +202,19 @@ class CredReceiver(AMP, TimeoutMixin):
         print self.factory.active_protocols
         log.msg('despues')
 
-        self.factory.active_protocols = []
-        self.factory.active_protocols.append('spacecraft')
+        print "factory"
+        print type(self.factory.active_protocols)
 
-        if remoteUsr not in self.factory.active_protocols:
+        if remoteUsr not in self.factory.active_protocols['remoteUsr']:
+            """
+            If remoteUsr is not available remove localUsr from active_protocols
+            dictionary.
+            """
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
             self.factory.active_connections[localUsr] = None          
             return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
-        else:
+
+        elif remoteUsr in self.factory.active_protocols['remoteUsr']:
             log.msg('Remote user is ' + remoteUsr)
             self.factory.active_connections[remoteUsr] = localUsr
             self.factory.active_connections[localUsr] = remoteUsr
@@ -206,19 +223,18 @@ class CredReceiver(AMP, TimeoutMixin):
             print self.factory.active_connections[remoteUsr]
             log.msg('despues del remoteusr')
 
-            # Avisa a ambos mediante el uso de NotifyEvent de que estan
-            # conectados.
-            # self.factory.active_protocols[remoteUsr].callRemote(
-            #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-            #      sDetails=str(localUsr))
+            # Warns both users using NotifyEvent that are connected.
+            self.factory.active_protocols[remoteUsr].callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+                 sDetails=str(localUsr))
             # self.callRemote(
             #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
             #      sDetails=str(remoteUsr))
 
-            NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
-             sDetails = str(localUsr))
-            NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
-             sDetails = str(remoteUsr))
+            # NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
+            #  sDetails = str(localUsr))
+            # NotifyEvent(iEvent = NotifyEvent.REMOTE_CONNECTED,\
+            #  sDetails = str(remoteUsr))
 
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
