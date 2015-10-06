@@ -30,6 +30,7 @@ from twisted.protocols.amp import AMP
 from twisted.internet import reactor
 from twisted.internet import ssl
 from twisted.internet import protocol
+from twisted.internet.task import LoopingCall
 from twisted.cred.portal import Portal
 
 from ampauth.server import *
@@ -201,6 +202,9 @@ class SATNETServer(protocol.Protocol):
             elif gs_user == self.sUsername:
                 self.bGSuser = True
                 print "estoy en el primer if"
+                
+                self.factory.active_protocols['remoteUsr'].append(self.sUsername)
+
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, sc_user, gs_user)
 
