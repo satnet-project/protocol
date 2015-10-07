@@ -161,11 +161,9 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
             # self.protocol = SATNETServer
-
-            #avatar.factory = self.factory
-            
-            #avatar.credProto = self
-            #avatar.sUsername = sUsername
+            # avatar.factory = self.factory
+            # avatar.credProto = self
+            # avatar.sUsername = sUsername
             # self.active_protocols[sUsername] = self
             log.msg('Connection made')
             log.msg('Active clients: ' +\
@@ -213,26 +211,26 @@ class CredReceiver(AMP, TimeoutMixin):
 
         elif remoteUsr in self.factory.active_protocols['remoteUsr']:
             log.msg('Remote user is ' + remoteUsr)
-            self.factory.active_connections[remoteUsr] = localUsr
-            self.factory.active_connections[localUsr] = remoteUsr
-
-            log.msg('antes del remoteusr')
-            print self.factory.active_connections[remoteUsr]
-            log.msg('despues del remoteusr')
+            log.msg('Local user is ' + localUsr)
+            self.factory.active_connections[remoteUsr] = remoteUsr
+            self.factory.active_connections[localUsr] = localUsr
 
             # Warns both users using NotifyEvent that are connected.
-            lc1 = self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-                 sDetails=str(localUsr))
+            # lc1 = self.callRemote(
+            #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+            #      sDetails=str(localUsr))
 
             lc2 = self.callRemote(
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
                  sDetails=str(remoteUsr))
 
-
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))
+
+            """
+            StartRemote instance needs a return value.
+            """
             return {'iResult': StartRemote.REMOTE_READY}
 
 

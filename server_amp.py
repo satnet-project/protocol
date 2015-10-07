@@ -88,33 +88,6 @@ class SATNETServer(protocol.Protocol):
         self.resetTimeout()
         super(SATNETServer, self).dataReceived(data)
 
-    # def iCreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
-    #     slot_remaining_time = int(
-    #         (iSlotEnd - misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
-    #     log.msg('Slot remaining time: ' + str(slot_remaining_time))
-    #     if (slot_remaining_time <= 0):
-    #         log.err('This slot (' + str(iSlotId) + ') has expired')
-    #         raise SlotErrorNotification('This slot (' + str(iSlotId) + ') has expired')
-    #     self.credProto.session = reactor.callLater(
-    #         slot_remaining_time, self.vSlotEnd, iSlotId)
-    #     if remoteUsr not in self.factory.active_protocols:
-    #         log.msg('Remote user ' + remoteUsr + ' not connected yet')
-    #         self.factory.active_connections[localUsr] = None            
-    #         return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
-    #     else:
-    #         log.msg('Remote user is ' + remoteUsr)
-    #         self.factory.active_connections[remoteUsr] = localUsr
-    #         self.factory.active_connections[localUsr] = remoteUsr
-    #         self.factory.active_protocols[remoteUsr].callRemote(
-    #             NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-    #              sDetails=str(localUsr))
-    #         self.callRemote(
-    #             NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-    #              sDetails=str(remoteUsr))
-    #         # divided by 2 because the dictionary is doubly linked
-    #         log.msg('Active connections: ' + str(len(self.factory.active_connections) / 2))
-    #         return {'iResult': StartRemote.REMOTE_READY}
-
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
 
@@ -201,7 +174,6 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
-                print "estoy en el primer if"
                 
                 self.factory.active_protocols['remoteUsr'].append(self.sUsername)
 
@@ -211,7 +183,7 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
-                print "estoy en el segundo if"
+
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, gs_user, sc_user)
     StartRemote.responder(iStartRemote)
@@ -237,7 +209,7 @@ class SATNETServer(protocol.Protocol):
             self.factory.active_connections.pop(
                 self.factory.active_connections[self.sUsername])
 
-        return {}
+        return {'bResult': True}
     EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):

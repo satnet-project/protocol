@@ -67,7 +67,7 @@ class StartRemote(amp.Command):
 
 class EndRemote(amp.Command):
     arguments = []
-    requiresAnswer = False
+    response = [('bResult', amp.Boolean())]
     """
     Invoked by a client whenever this one wants to finalize the remote operation.
     """
