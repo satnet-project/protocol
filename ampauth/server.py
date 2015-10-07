@@ -114,16 +114,33 @@ class CredReceiver(AMP, TimeoutMixin):
 
 
         # TO-DO Remove localUsr from list.
-        if self.sUsername in self.factory.active_protocols:
-            self.factory.active_protocols.pop(self.sUsername)
-            if self.session is not None:
-                self.session.cancel()
+        # if self.sUsername in self.factory.active_protocols:
+        #     self.factory.active_protocols.pop(self.sUsername)
+        #     if self.session is not None:
+        #         self.session.cancel()
+
+        if self.sUsername in self.factory.active_protocols['localUsr']:
+            del self.factory.active_protocols['localUsr']
+
+        if self.remoteUsr in self.factory.active_protocols['remoteUsr']:
+            del self.factory.active_protocols['remoteUsr']
+
+        if self.sUsername in self.factory.active_connections['localUsr']:
+            del self.factory.active_connections['localUsr']
+
+        if self.remoteUsr in self.factory.active_connections['remoteUsr']:
+            del self.factory.active_connections['remoteUsr']
+
+        if self.session is not None:
+            self.session.cancel()
+
 
         log.err(reason.getErrorMessage())
         log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
         # divided by 2 because the dictionary is doubly linked
         log.msg('Active connections: ' +\
          str(len(self.factory.active_connections)/2))
+
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
         super(CredReceiver, self).connectionLost(reason)
@@ -180,6 +197,8 @@ class CredReceiver(AMP, TimeoutMixin):
     Login.responder(login)
 
     def CreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
+        self.remoteUsr = remoteUsr
+
         # Temporal solution.
         iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
 
@@ -212,8 +231,8 @@ class CredReceiver(AMP, TimeoutMixin):
         elif remoteUsr in self.factory.active_protocols['remoteUsr']:
             log.msg('Remote user is ' + remoteUsr)
             log.msg('Local user is ' + localUsr)
-            self.factory.active_connections[remoteUsr] = remoteUsr
-            self.factory.active_connections[localUsr] = localUsr
+            self.factory.active_connections['remoteUsr'].append(remoteUsr)
+            self.factory.active_connections['localUsr'].append(localUsr)
 
             # Warns both users using NotifyEvent that are connected.
             # lc1 = self.callRemote(
@@ -227,7 +246,6 @@ class CredReceiver(AMP, TimeoutMixin):
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))
-
             """
             StartRemote instance needs a return value.
             """

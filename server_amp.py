@@ -174,7 +174,7 @@ class SATNETServer(protocol.Protocol):
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
-                
+
                 self.factory.active_protocols['remoteUsr'].append(self.sUsername)
 
                 return self.CreateConnection(self.slot['ending_time'],\
@@ -223,7 +223,8 @@ class SATNETServer(protocol.Protocol):
 
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
-        # TODO. Never enters because the clients are in active_protocols as soon as they log in
+        # TODO. Never enters because the clients are in active_protocols as 
+        # soon as they log in
         if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
