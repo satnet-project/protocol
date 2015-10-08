@@ -97,7 +97,7 @@ class SATNETServer(protocol.Protocol):
         self.slot = {'state': 'RESERVED',\
          'gs_username': 's.gongoragarcia@gmail.com',\
           'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': 1677836800 }
+           'ending_time': 1444327000 }
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -117,17 +117,17 @@ class SATNETServer(protocol.Protocol):
             # If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
                 log.err('This slot has not been assigned to this user')
+                
                 raise SlotErrorNotification(
                     'This user is not assigned to this slot')
             #... if the GS user and the SC user belong to the same client...
             elif gs_user == self.sUsername and sc_user == self.sUsername:
                 log.msg('Both MCC and GSS belong to the same client')
+                
                 return {'iResult': StartRemote.CLIENTS_COINCIDE}
             #... if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
-
-                self.factory.active_protocols['remoteUsr'].append(self.sUsername)
 
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, sc_user, gs_user)

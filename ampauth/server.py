@@ -108,34 +108,21 @@ class CredReceiver(AMP, TimeoutMixin):
         self.transport.abortConnection()
 
     def connectionLost(self, reason):
-        # Remove the client from active_protocols and/or 
-        # active_connections
-        # if self.sUsername != '':
-        # Firstly checks if there is an user in the active_protocols.
-        # dictionary
-
-
-        # TO-DO Remove localUsr from list.
-        # if self.sUsername in self.factory.active_protocols:
-        #     self.factory.active_protocols.pop(self.sUsername)
-        #     if self.session is not None:
-        #         self.session.cancel()
 
         if self.sUsername in self.factory.active_protocols['localUsr']:
-            del self.factory.active_protocols['localUsr']
+            self.factory.active_protocols['localUsr'] = []
 
         if self.remoteUsr in self.factory.active_protocols['remoteUsr']:
-            del self.factory.active_protocols['remoteUsr']
+            self.factory.active_protocols['remoteUsr'] = []
 
         if self.sUsername in self.factory.active_connections['localUsr']:
-            del self.factory.active_connections['localUsr']
+            self.factory.active_connections['localUsr'] = []
 
         if self.remoteUsr in self.factory.active_connections['remoteUsr']:
-            del self.factory.active_connections['remoteUsr']
+            self.factory.active_connections['remoteUsr'] = []
 
         if self.session is not None:
             self.session.cancel()
-
 
         log.err(reason.getErrorMessage())
         log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
@@ -151,22 +138,40 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         Generate a new challenge for the given username.
         """
-        self.factory.active_protocols = {}
-        self.factory.active_protocols.setdefault('localUsr', [])
-        self.factory.active_protocols.setdefault('remoteUsr', [])
-        self.factory.active_connections = {}
 
-        # if sUsername in self.active_protocols:
-        #     log.err('Client already logged in')
-        #     raise UnauthorizedLogin('Client already logged in')
-        # else:
-        #     self.sUsername = sUsername
-        #     self.active_protocols[sUsername] = None
+        try:
+            if self.factory.active_connections:
+                log.msg('Active connections dictionary already created')
+                # print "connections dentro del if"
+                # print type(self.factory.active_connections)
+                # print self.factory.active_connections
+                # self.factory.active_connections.setdefault('localUsr', [])
+                # self.factory.active_connections.setdefault('remoteUsr', [])
+                # print self.factory.active_connections
+        except:
+            self.factory.active_connections = {}
+            self.factory.active_connections.setdefault('localUsr', [])
+            self.factory.active_connections.setdefault('remoteUsr', [])
+
+        try:
+            if self.factory.active_protocols:
+                log.msg('Active protocols dictionary already created')
+                # print "connections dentro del if"
+                # print type(self.factory.active_protocols)
+                # self.factory.active_protocols.setdefault('localUsr', [])
+                # self.factory.active_protocols.setdefault('remoteUsr', [])
+        except:
+            self.factory.active_protocols = {}
+            self.factory.active_protocols.setdefault('localUsr', [])
+            self.factory.active_protocols.setdefault('remoteUsr', [])
 
         if sUsername in self.factory.active_protocols['localUsr']:
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
+            """
+            Attach local user to active protocols list.
+            """
             self.sUsername = sUsername
             self.factory.active_protocols['localUsr'].append(self.sUsername)
 
@@ -197,11 +202,9 @@ class CredReceiver(AMP, TimeoutMixin):
     Login.responder(login)
 
     def CreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
-        self.remoteUsr = remoteUsr
-        self.factory.active_connections.setdefault('localUsr', [])
-        self.factory.active_connections.setdefault('remoteUsr', [])
 
-        # Temporal solution.
+        self.remoteUsr = remoteUsr
+
         iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
 
         slot_remaining_time = int((iSlotEnd -\
@@ -214,12 +217,16 @@ class CredReceiver(AMP, TimeoutMixin):
             raise SlotErrorNotification('This slot (' + str(iSlotId) +\
              ') has expired')
         elif (slot_remaining_time > 0):
-            self.factory.active_protocols['localUsr'].append(localUsr)
+            """
+            If time is correct, attach remote user to active_protocols
+            """
             self.factory.active_protocols['remoteUsr'].append(remoteUsr)
      
-        # To-do. What happens?   
-        # self.credProto.session = reactor.callLater(slot_remaining_time,\
-        #  self.vSlotEnd, iSlotId)
+        """
+        Create an instante for finish the slot at correct time.
+        """  
+        self.session = reactor.callLater(slot_remaining_time,\
+         self.vSlotEnd, iSlotId)
 
         if remoteUsr not in self.factory.active_protocols['remoteUsr']:
             """
@@ -236,12 +243,7 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections['remoteUsr'].append(remoteUsr)
             self.factory.active_connections['localUsr'].append(localUsr)
 
-            # Warns both users using NotifyEvent that are connected.
-            # lc1 = self.callRemote(
-            #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-            #      sDetails=str(localUsr))
-
-            lc2 = self.callRemote(
+            notification = self.callRemote(
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
                  sDetails=str(remoteUsr))
 
@@ -265,7 +267,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # a second time when the client disconnects
         
         # To-do. What happens?
-        # self.credProto.session = None
+        self.session = None
 
 
 class CredAMPServerFactory(ServerFactory):
@@ -278,30 +280,3 @@ class CredAMPServerFactory(ServerFactory):
     instance is also created.
     """
     protocol = CredReceiver
-
-
-    # :ivar active_protocols:
-    #     A dictionary containing a reference to all active protocols (clients).
-    #     The dictionary keys are the client usernames and the corresponding values
-    #     are the protocol instances
-    # :type active_protocols:
-    #     L{Dictionary}
-
-    # :ivar active_connections:
-    #     A dictionary containing a reference to all active protocols (clients).
-    #     The dictionary is doubly linked so the keys are whether the GS clients 
-    #     or the SC clients and the values are the remote client usernames
-    # :type active_connections:
-    #     L{Dictionary}        
-    # """
-
-
-
-    # protocol.active_protocols = {}
-
-    # active_protocols = {}
-    # active_connections = {}
-
-    # def __init__(self):
-    #     self.active_protocols = {}
-    #     self.active_connections = {}
