@@ -92,6 +92,8 @@ class CredReceiver(AMP, TimeoutMixin):
     session = None
     factory = None
 
+    avatar = None
+
     def connectionMade(self):
         self.setTimeout(self.iTimeOut)
         super(CredReceiver, self).connectionMade()
@@ -153,8 +155,6 @@ class CredReceiver(AMP, TimeoutMixin):
         self.factory.active_protocols.setdefault('localUsr', [])
         self.factory.active_protocols.setdefault('remoteUsr', [])
         self.factory.active_connections = {}
-        self.factory.active_connections.setdefault('localUsr', [])
-        self.factory.active_connections.setdefault('remoteUsr', [])
 
         # if sUsername in self.active_protocols:
         #     log.err('Client already logged in')
@@ -177,7 +177,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
-            # self.protocol = SATNETServer
+            self.protocol = SATNETServer
             # avatar.factory = self.factory
             # avatar.credProto = self
             # avatar.sUsername = sUsername
@@ -198,6 +198,8 @@ class CredReceiver(AMP, TimeoutMixin):
 
     def CreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
         self.remoteUsr = remoteUsr
+        self.factory.active_connections.setdefault('localUsr', [])
+        self.factory.active_connections.setdefault('remoteUsr', [])
 
         # Temporal solution.
         iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
@@ -216,8 +218,8 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_protocols['remoteUsr'].append(remoteUsr)
      
         # To-do. What happens?   
-        #self.credProto.session = reactor.callLater(slot_remaining_time,\
-        # self.vSlotEnd, iSlotId)
+        # self.credProto.session = reactor.callLater(slot_remaining_time,\
+        #  self.vSlotEnd, iSlotId)
 
         if remoteUsr not in self.factory.active_protocols['remoteUsr']:
             """
@@ -243,6 +245,8 @@ class CredReceiver(AMP, TimeoutMixin):
                 NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
                  sDetails=str(remoteUsr))
 
+            log.msg('Active clients: ' +\
+             str(len(self.factory.active_protocols)))           
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))
@@ -272,26 +276,32 @@ class CredAMPServerFactory(ServerFactory):
     This factory takes care of associating a L{Portal} with the L{CredReceiver}
     instances it creates. If the login is succesfully achieved, a L{SATNETServer}
     instance is also created.
-
-    :ivar active_protocols:
-        A dictionary containing a reference to all active protocols (clients).
-        The dictionary keys are the client usernames and the corresponding values
-        are the protocol instances
-    :type active_protocols:
-        L{Dictionary}
-
-    :ivar active_connections:
-        A dictionary containing a reference to all active protocols (clients).
-        The dictionary is doubly linked so the keys are whether the GS clients 
-        or the SC clients and the values are the remote client usernames
-    :type active_connections:
-        L{Dictionary}        
     """
-
     protocol = CredReceiver
-    active_protocols = {}
-    active_connections = {}
 
-    def __init__(self):
-        self.active_protocols = {}
-        self.active_connections = {}
+
+    # :ivar active_protocols:
+    #     A dictionary containing a reference to all active protocols (clients).
+    #     The dictionary keys are the client usernames and the corresponding values
+    #     are the protocol instances
+    # :type active_protocols:
+    #     L{Dictionary}
+
+    # :ivar active_connections:
+    #     A dictionary containing a reference to all active protocols (clients).
+    #     The dictionary is doubly linked so the keys are whether the GS clients 
+    #     or the SC clients and the values are the remote client usernames
+    # :type active_connections:
+    #     L{Dictionary}        
+    # """
+
+
+
+    # protocol.active_protocols = {}
+
+    # active_protocols = {}
+    # active_connections = {}
+
+    # def __init__(self):
+    #     self.active_protocols = {}
+    #     self.active_connections = {}

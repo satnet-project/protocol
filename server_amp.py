@@ -91,54 +91,6 @@ class SATNETServer(protocol.Protocol):
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
 
-        # """
-        # @rpc4django.rpcmethod(
-        #     name='scheduling.slot.get',
-        #     signature=['String'],
-        #     login_required=satnet_settings.JRPC_LOGIN_REQUIRED
-        # )
-        # def get_slot(slot_id):
-        #     """
-        #     """
-        #     JRPC method: services.scheduling.getSlot
-        #     JRPC method that allows remote users to retrieve the information about a
-        #     given operational slot
-        #     :param slot_id: Identifier of the slot
-        #     :return: JSON-like structure with the information serialized
-        #     """
-        #     """
-        #     return schedule_serializers.serialize_slot_information(
-        #         operational_models.OperationalSlot.objects.get(
-        #             identifier=slot_id
-        #         )
-        #     )
-        #
-        # # Possible states for the slots.
-        # STATE_FREE = str('FREE')
-        # STATE_SELECTED = str('SELECTED')
-        # STATE_RESERVED = str('RESERVED')
-        # STATE_DENIED = str('DENIED')
-        # STATE_CANCELED = str('CANCELED')
-        # STATE_REMOVED = str('REMOVED')
-        #
-        # return {
-        #     'state': slot.state,
-        #     'gs_username':
-        #         slot.groundstation_channel.groundstation_set.all()[0].user
-        #         .username,
-        #     'sc_username':
-        #         slot.spacecraft_channel.spacecraft_set.all()[0].user.username,
-        #     'starting_time':
-        #         common_serializers.serialize_iso8601_date(
-        #             slot.availability_slot.start
-        #         ),
-        #     'ending_time':
-        #         common_serializers.serialize_iso8601_date(
-        #             slot.availability_slot.end
-        #         ),
-        # """
-
-
         # self.slot = Satnet_GetSlot(str(iSlotId), debug = True)
 
         # For tests only.
@@ -186,6 +138,7 @@ class SATNETServer(protocol.Protocol):
 
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, gs_user, sc_user)
+
     StartRemote.responder(iStartRemote)
 
     def vEndRemote(self):
@@ -210,6 +163,7 @@ class SATNETServer(protocol.Protocol):
                 self.factory.active_connections[self.sUsername])
 
         return {'bResult': True}
+
     EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):
@@ -243,6 +197,7 @@ class SATNETServer(protocol.Protocol):
             #  gs_channel=gs_channel, sc_channel=sc_channel,\
             #   upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
             #    message=sMsg)
+
             log.msg('Message saved on server')
 
         # ... if the GS operator is not connected, the remote SC client will be
@@ -280,16 +235,17 @@ class SATNETServer(protocol.Protocol):
             #    message=sMsg)
 
         return {'bResult': True}
+
     SendMsg.responder(vSendMsg)
 
-    # def vSlotEnd(self, iSlotId):
-    #     log.msg(
-    #         "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
-    #     self.callRemote(
-    #         NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
-    #     # Remove the timer ID reference to avoid it to be canceled
-    #     # a second time when the client disconnects
-    #     self.credProto.session = None
+    def vSlotEnd(self, iSlotId):
+        log.msg(
+            "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
+        self.callRemote(
+            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
+        # Remove the timer ID reference to avoid it to be canceled
+        # a second time when the client disconnects
+        self.credProto.session = None
 
 
 def main():
