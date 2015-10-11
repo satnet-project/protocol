@@ -83,6 +83,11 @@ class SATNETServer(protocol.Protocol):
     bGSuser = None
     slot = None
 
+
+    def blablaba(self):
+        texto = 'texto'
+        print texto
+
     def dataReceived(self, data):
         log.msg(self.sUsername + ' session timeout reset')
         self.resetTimeout()
@@ -93,11 +98,16 @@ class SATNETServer(protocol.Protocol):
 
         # self.slot = Satnet_GetSlot(str(iSlotId), debug = True)
 
+        # For tests only
+        from time import time
+        timestamp = int(time())
+        timestamp = timestamp + 60
+
         # For tests only.
         self.slot = {'state': 'RESERVED',\
          'gs_username': 's.gongoragarcia@gmail.com',\
           'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': 1444327000 }
+           'ending_time': timestamp }
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -145,22 +155,23 @@ class SATNETServer(protocol.Protocol):
         log.msg("(" + self.sUsername + ") --------- End Remote ---------")
         # Disconnect both users (need to be done from the CredReceiver
         # instance)
-        self.credProto.transport.loseConnection()
-        # If the client is still in active_connections (only true when he
-        # was in a remote connection and he was disconnected in the first
-        # place)
-        if self.factory.active_connections[self.sUsername]:
-            # Notify the remote client about this disconnection. The
-            # notification is sent through the SATNETServer instance
-            self.factory.active_protocols[self.factory.active_connections[
-                self.sUsername]].callRemote(NotifyEvent,\
-                 iEvent=NotifyEvent.END_REMOTE, sDetails=None)
-            # Close connection
-            self.factory.active_protocols[self.factory.active_connections[
-                self.sUsername]].credProto.transport.loseConnection()
-            # Remove active connection
-            self.factory.active_connections.pop(
-                self.factory.active_connections[self.sUsername])
+        # self.credProto.transport.loseConnection()
+        # self.transport.loseConnection()
+        # # If the client is still in active_connections (only true when he
+        # # was in a remote connection and he was disconnected in the first
+        # # place)
+        # if self.factory.active_connections[self.sUsername]:
+        #     # Notify the remote client about this disconnection. The
+        #     # notification is sent through the SATNETServer instance
+        #     self.factory.active_protocols[self.factory.active_connections[
+        #         self.sUsername]].callRemote(NotifyEvent,\
+        #          iEvent=NotifyEvent.END_REMOTE, sDetails=None)
+        #     # Close connection
+        #     self.factory.active_protocols[self.factory.active_connections[
+        #         self.sUsername]].credProto.transport.loseConnection()
+        #     # Remove active connection
+        #     self.factory.active_connections.pop(
+        #         self.factory.active_connections[self.sUsername])
 
         return {'bResult': True}
 
@@ -173,7 +184,7 @@ class SATNETServer(protocol.Protocol):
         slot = {'state': 'RESERVED',\
          'gs_channel': 'groundstation_channel',\
           'sc_channel': 'spacecraft_channel',\
-           'starting_time': 1576836800, 'ending_time': 1677836800 }
+           'starting_time': 1576836800, 'ending_time': 1677850000 }
 
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
@@ -256,7 +267,7 @@ def main():
     pf = CredAMPServerFactory()
     cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
-    reactor.listenSSL(1234, pf, cert.options())
+    connector = reactor.listenSSL(1234, pf, cert.options())
     log.msg('Server running...')
     reactor.run()
 

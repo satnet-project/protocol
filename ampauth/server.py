@@ -44,6 +44,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from ampCommands import StartRemote
 from ampCommands import NotifyEvent
+from ampCommands import EndRemote
 from clientErrors import SlotErrorNotification
 from rpcrequests import Satnet_RPC
 from server_amp import SATNETServer
@@ -105,19 +106,16 @@ class CredReceiver(AMP, TimeoutMixin):
 
     def timeoutConnection(self):
         log.err('Session timeout expired')
-        self.transport.abortConnection()
+        # self.transport.abortConnection()
+        self.transport.loseConnection()
 
     def connectionLost(self, reason):
-
         if self.sUsername in self.factory.active_protocols['localUsr']:
             self.factory.active_protocols['localUsr'] = []
-
         if self.remoteUsr in self.factory.active_protocols['remoteUsr']:
             self.factory.active_protocols['remoteUsr'] = []
-
         if self.sUsername in self.factory.active_connections['localUsr']:
             self.factory.active_connections['localUsr'] = []
-
         if self.remoteUsr in self.factory.active_connections['remoteUsr']:
             self.factory.active_connections['remoteUsr'] = []
 
@@ -125,12 +123,25 @@ class CredReceiver(AMP, TimeoutMixin):
             self.session.cancel()
 
         log.err(reason.getErrorMessage())
-        log.msg('Active clients: ' + str(len(self.factory.active_protocols)))
+
+        active_protocols = len(self.factory.active_protocols['localUsr']) +\
+         len(self.factory.active_protocols['remoteUsr'])
+        active_connections = len(self.factory.active_connections['localUsr']) +\
+         len(self.factory.active_connections['remoteUsr'])
+
+        log.msg('Active clients: ' + str(active_protocols))
         # divided by 2 because the dictionary is doubly linked
-        log.msg('Active connections: ' +\
-         str(len(self.factory.active_connections)/2))
+        log.msg('Active connections: ' + str(active_connections))
 
         self.setTimeout(None)  # Cancel the pending timeout
+
+        # reactor.callLater(1, EndRemote())
+
+        # try:
+        #     res = self.callRemote(EndRemote)
+        # except:
+        #     print "error"
+
         self.transport.loseConnection()
         super(CredReceiver, self).connectionLost(reason)
 
@@ -142,12 +153,6 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             if self.factory.active_connections:
                 log.msg('Active connections dictionary already created')
-                # print "connections dentro del if"
-                # print type(self.factory.active_connections)
-                # print self.factory.active_connections
-                # self.factory.active_connections.setdefault('localUsr', [])
-                # self.factory.active_connections.setdefault('remoteUsr', [])
-                # print self.factory.active_connections
         except:
             self.factory.active_connections = {}
             self.factory.active_connections.setdefault('localUsr', [])
@@ -156,10 +161,6 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             if self.factory.active_protocols:
                 log.msg('Active protocols dictionary already created')
-                # print "connections dentro del if"
-                # print type(self.factory.active_protocols)
-                # self.factory.active_protocols.setdefault('localUsr', [])
-                # self.factory.active_protocols.setdefault('remoteUsr', [])
         except:
             self.factory.active_protocols = {}
             self.factory.active_protocols.setdefault('localUsr', [])
@@ -188,10 +189,13 @@ class CredReceiver(AMP, TimeoutMixin):
             # avatar.sUsername = sUsername
             # self.active_protocols[sUsername] = self
             log.msg('Connection made')
-            log.msg('Active clients: ' +\
-             str(len(self.factory.active_protocols)))
-            log.msg('Active connections: ' +\
-             str(len(self.factory.active_connections)))
+            active_protocols = len(self.factory.active_protocols['localUsr']) +\
+             len(self.factory.active_protocols['remoteUsr'])
+            active_connections = len(self.factory.active_connections['localUsr']) +\
+             len(self.factory.active_connections['remoteUsr'])
+            
+            log.msg('Active clients: ' + str(active_protocols))
+            log.msg('Active connections: ' + str(active_connections))
 
             return {'bAuthenticated': True}
 
@@ -202,7 +206,9 @@ class CredReceiver(AMP, TimeoutMixin):
     Login.responder(login)
 
     def CreateConnection(self, iSlotEnd, iSlotId, remoteUsr, localUsr):
-
+        """
+        Create a new connection checking the time slot.
+        """
         self.remoteUsr = remoteUsr
 
         iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
@@ -221,6 +227,8 @@ class CredReceiver(AMP, TimeoutMixin):
             If time is correct, attach remote user to active_protocols
             """
             self.factory.active_protocols['remoteUsr'].append(remoteUsr)
+        else:
+            log.msg('Time error.')
      
         """
         Create an instante for finish the slot at correct time.
