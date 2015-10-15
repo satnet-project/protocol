@@ -24,50 +24,24 @@ from os import path
 import sys
 import logging
 import datetime
-# import django
 import pytz
-# from django.core import management
 from mock import Mock, MagicMock
 
 sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
-#sys.path.append(os.path.dirname(os.getcwd()) + "/server")
-
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "website.settings")
-# django.setup() #To avoid the error "django.core.exceptions.AppRegistryNotReady: Models aren't loaded yet."
-
-# Dependencies for _setUp_databases
-# from services.common import misc, simulation
-# from services.common.testing import helpers
-
-# from services.configuration.jrpc.views import channels as jrpc_channels_if
-# from services.configuration.jrpc.views import rules as jrpc_rules_if
-# from services.configuration.jrpc.serializers import serialization as jrpc_keys
-# from services.scheduling.jrpc.views import groundstations as jrpc_gs_scheduling
-# from services.scheduling.jrpc.views import spacecraft as jrpc_sc_scheduling
-# from services.configuration.models import rules, availability, channels
-# from services.configuration import signals
-# from services.scheduling.models import operational
-# from services.network.models import server as server_models
-
-# Dependencies for the tests
-# from twisted.cred.portal import Portal
 from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
 from twisted.python import log
 
 from ampauth.errors import BadCredentials
-# from ampauth.client import login
-from ampauth.commands import Login
+from ampauth.login import Login
 from ampauth.server import CredReceiver, CredAMPServerFactory
 
 from client_amp import ClientProtocol
-from _commands import NotifyMsg, NotifyEvent
-from errors import SlotErrorNotification, RemoteClientNotification
+from ampCommands import NotifyMsg, NotifyEvent
+from clientErrors import SlotErrorNotification, RemoteClientNotification
 
 from server_amp import SATNETServer
-
-# from services.common import misc
 
 
 """
@@ -185,145 +159,6 @@ class TestStartRemote(unittest.TestCase):
         self.iSlots_available.append(self.mockUser1.slot)
 
         self.iSlots_connected = []
-
-        # server_models.Server.objects.load_local_server()
-
-        # __sc_1_id = 'humsat-sc'
-        # __sc_1_tle_id = 'HUMSAT-D'
-        # __sc_1_ch_1_id = 'humsat-fm'
-        # __sc_1_ch_1_cfg = {
-        #     jrpc_keys.FREQUENCY_K: '437000000',
-        #     jrpc_keys.MODULATION_K: 'FM',
-        #     jrpc_keys.POLARIZATION_K: 'LHCP',
-        #     jrpc_keys.BITRATE_K: '300',
-        #     jrpc_keys.BANDWIDTH_K: '12.500000000'
-        # }
-
-        # __sc_2_id = 'beesat-sc'
-        # __sc_2_tle_id = 'BEESAT-2'
-        # __sc_2_ch_1_id = 'beesat-fm'
-        # __sc_2_ch_1_cfg = {
-        #     jrpc_keys.FREQUENCY_K: '437000000',
-        #     jrpc_keys.MODULATION_K: 'FM',
-        #     jrpc_keys.POLARIZATION_K: 'LHCP',
-        #     jrpc_keys.BITRATE_K: '300',
-        #     jrpc_keys.BANDWIDTH_K: '12.500000000'
-        # }
-
-        # __gs_1_id = 'gs-la'
-        # __gs_1_ch_1_id = 'gs-la-fm'
-        # __gs_1_ch_1_cfg = {
-        #     jrpc_keys.BAND_K:
-        #     'UHF / U / 435000000.000000 / 438000000.000000',
-        #     jrpc_keys.AUTOMATED_K: False,
-        #     jrpc_keys.MODULATIONS_K: ['FM'],
-        #     jrpc_keys.POLARIZATIONS_K: ['LHCP'],
-        #     jrpc_keys.BITRATES_K: [300, 600, 900],
-        #     jrpc_keys.BANDWIDTHS_K: [12.500000000, 25.000000000]
-        # }
-        # __gs_1_ch_2_id = 'gs-la-fm-2'
-        # __gs_1_ch_2_cfg = {
-        #     jrpc_keys.BAND_K:
-        #     'UHF / U / 435000000.000000 / 438000000.000000',
-        #     jrpc_keys.AUTOMATED_K: False,
-        #     jrpc_keys.MODULATIONS_K: ['FM'],
-        #     jrpc_keys.POLARIZATIONS_K: ['LHCP'],
-        #     jrpc_keys.BITRATES_K: [300, 600, 900],
-        #     jrpc_keys.BANDWIDTHS_K: [12.500000000, 25.000000000]
-        # }
-
-        # signals.models.connect_availability_2_operational()
-        # signals.models.connect_channels_2_compatibility()
-        # signals.models.connect_compatibility_2_operational()
-        # signals.models.connect_rules_2_availability()
-        # #signals.connect_segments_2_booking_tle()
-
-        # helpers.init_available()
-        # helpers.init_tles_database()
-        # __band = helpers.create_band()
-
-        # __usr_1_name = 'crespo'
-        # __usr_1_pass = 'cre.spo'
-        # __usr_1_mail = 'crespo@crespo.gal'
-
-        # __usr_2_name = 'tubio'
-        # __usr_2_pass = 'tu.bio'
-        # __usr_2_mail = 'tubio@tubio.gal'
-
-        # __usr_3_name = 'user3'
-        # __usr_3_pass = 'us.er3'
-        # __usr_3_mail = 'user3@user3.gal'
-
-        # # Default values: username=testuser, password=testuser.
-        # __user_def = helpers.create_user_profile()
-        # __usr_1 = helpers.create_user_profile(
-        #     username=__usr_1_name, password=__usr_1_pass, email=__usr_1_mail)
-        # __usr_2 = helpers.create_user_profile(
-        #     username=__usr_2_name, password=__usr_2_pass, email=__usr_2_mail)
-        # __usr_3 = helpers.create_user_profile(
-        #     username=__usr_3_name, password=__usr_3_pass, email=__usr_3_mail)
-
-        # __sc_1 = helpers.create_sc(
-        #     user_profile=__usr_1,
-        #     identifier=__sc_1_id,
-        #     tle_id=__sc_1_tle_id,
-        # )
-
-        # __sc_2 = helpers.create_sc(
-        #     user_profile=__usr_2,
-        #     identifier=__sc_2_id,
-        #     tle_id=__sc_2_tle_id,
-        # )
-        # __gs_1 = helpers.create_gs(
-        #     user_profile=__usr_2, identifier=__gs_1_id,
-        # )
-
-        # operational.OperationalSlot.objects.get_simulator().set_debug()
-        # operational.OperationalSlot.objects.set_debug()
-
-        # jrpc_channels_if.gs_channel_create(
-        #     ground_station_id=__gs_1_id,
-        #     channel_id=__gs_1_ch_1_id,
-        #     configuration=__gs_1_ch_1_cfg
-        # )
-
-        # jrpc_rules_if.add_rule(
-        #     __gs_1_id, __gs_1_ch_1_id,
-        #     helpers.create_jrpc_daily_rule(
-        #         starting_time=misc.localize_time_utc(datetime.time(
-        #             hour=8, minute=0, second=0
-        #         )),
-        #         ending_time=misc.localize_time_utc(datetime.time(
-        #             hour=23, minute=55, second=0
-        #         ))
-        #     )
-        # )
-
-        # jrpc_channels_if.sc_channel_create(
-        #     spacecraft_id=__sc_1_id,
-        #     channel_id=__sc_1_ch_1_id,
-        #     configuration=__sc_1_ch_1_cfg
-        # )
-
-        # jrpc_channels_if.sc_channel_create(
-        #     spacecraft_id=__sc_2_id,
-        #     channel_id=__sc_2_ch_1_id,
-        #     configuration=__sc_2_ch_1_cfg
-        # )
-
-        # sc_1_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_1_id)
-        # sc_2_o_slots = jrpc_sc_scheduling.get_operational_slots(__sc_2_id)
-
-        # sc_1_s_slots = jrpc_sc_scheduling.select_slots(
-        #     __sc_1_id, [int(slot['identifier']) for slot in sc_1_o_slots])
-
-        # sc_2_s_slots = jrpc_sc_scheduling.select_slots(
-        #     __sc_2_id, [int(slot['identifier']) for slot in sc_2_o_slots])
-
-        # gs_1_o_slots = jrpc_gs_scheduling.get_operational_slots(__gs_1_id)
-
-        # gs_c_slots = jrpc_gs_scheduling.confirm_selections(
-        #     __gs_1_id, [int(slot['identifier']) for slot in gs_1_o_slots[2:4]])
 
     def setUp(self):
         log.startLogging(sys.stdout)
