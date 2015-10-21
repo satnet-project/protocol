@@ -69,7 +69,7 @@ class TestMultipleClients(unittest.TestCase):
 
     """
     Testing multiple client connections
-    TDOD. Test multiple valid connections
+    TO-DO. Test multiple valid connections
     """
 
     def mockLoginMethod(self, username, password):

@@ -19,13 +19,15 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-from os import path, remove
+from os import path
+from os import remove
 import os
 import sys
 import logging
 import datetime
 import pytz
-from mock import Mock, MagicMock
+from mock import Mock
+from mock import MagicMock
 import unittest
 
 sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
@@ -33,9 +35,11 @@ sys.path.append(os.path.abspath(path.join(path.dirname(__file__), "..")))
 
 # Dependencies for the tests
 from twisted.python import log
-from twisted.internet import defer, protocol
+from twisted.internet import defer
+from twisted.internet import protocol
 from twisted.cred.portal import Portal
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor
+from twisted.internet import ssl
 
 # For test purposes
 from twisted.manhole.service import Realm
@@ -44,7 +48,8 @@ from ampauth.server import CredAMPServerFactory, CredReceiver
 # from ampauth.commands import Login
 from client_amp import ClientProtocol
 print sys.path
-from ampCommands import NotifyMsg, NotifyEvent
+from ampCommands import NotifyMsg
+from ampCommands import NotifyEvent
 # from errors import *
 
 """
