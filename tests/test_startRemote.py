@@ -38,7 +38,8 @@ from ampauth.login import Login
 from ampauth.server import CredReceiver, CredAMPServerFactory
 
 from client_amp import ClientProtocol
-from ampCommands import NotifyMsg, NotifyEvent
+from ampCommands import NotifyMsg
+from ampCommands import NotifyEvent
 from clientErrors import SlotErrorNotification, RemoteClientNotification
 
 from server_amp import SATNETServer
