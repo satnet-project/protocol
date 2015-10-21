@@ -28,12 +28,10 @@ sys.path.append(path.abspath(path.join(path.dirname(__file__), "..")))
 
 from twisted.internet import defer, protocol, reactor, ssl
 from twisted.internet.error import CannotListenError
-# from twisted.cred.portal import Portal
 from twisted.python import log
 
 from ampauth.errors import BadCredentials
 from ampauth.server import CredReceiver, CredAMPServerFactory
-# from ampauth.testing import Realm
 from client_amp import ClientProtocol
 from rpcrequests import Satnet_RPC
 
