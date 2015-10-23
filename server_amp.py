@@ -23,19 +23,14 @@ __author__ = 'xabicrespog@gmail.com'
 import os
 import sys
 import logging
-from datetime import datetime
 
 from twisted.python import log
-from twisted.protocols.amp import AMP
 from twisted.internet import reactor
 from twisted.internet import ssl
 from twisted.internet import protocol
-from twisted.internet.task import LoopingCall
-from twisted.cred.portal import Portal
 
 from ampauth.server import *
 from clientErrors import SlotErrorNotification
-from clientErrors import RemoteClientNotification
 
 from rpcrequests import Satnet_GetSlot 
 from rpcrequests import Satnet_StoreMessage 
@@ -83,10 +78,6 @@ class SATNETServer(protocol.Protocol):
     bGSuser = None
     slot = None
 
-
-    def blablaba(self):
-        texto = 'texto'
-        print texto
 
     def dataReceived(self, data):
         log.msg(self.sUsername + ' session timeout reset')
