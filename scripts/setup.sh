@@ -8,6 +8,7 @@ sudo apt --assume-yes install build-essential
 sudo apt --assume-yes install python-dev
 sudo apt --assume-yes install python-pip
 sudo apt --assume-yes install virtualenv
+sudo apt --assume-yes install libffi-dev
 
 # Create a virtualenv
 virtualenv $venv_path
