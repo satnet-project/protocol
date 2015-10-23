@@ -4,7 +4,15 @@
 
 This repository contains the communications real time protocol based on Twisted for the SatNet network.
 
-In the file INSTALL you will find detailed installation instructions.
+#### Installation
+
+Steps to install the generic client for the SATNet network:
+
+1. To install the dependencies run, from the Scripts folder:
+
+`./setup.sh`
+
+You will need root privileges.
 
 #### Dependencies
 
