@@ -181,49 +181,64 @@ class SATNETServer(protocol.Protocol):
         # If the client haven't started a connection via StartRemote command...
         # TODO. Never enters because the clients are in active_protocols as 
         # soon as they log in
-        if self.sUsername not in self.factory.active_connections:
+
+        if self.sUsername not in self.factory.active_connections['localUsr']:
+        # if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
-        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
-            PassiveMessage = Satnet_StorePassiveMessage(groundstation_id =\
-             'groundstation_id', timestamp = 'timestamp', doppler_shift =\
-              'doppler_shift', message = sMsg)
+        elif self.factory.active_connections['localUsr'] == False:
+            if self.bGSuser == True:
+                # elif self.factory.active_connections[self.sUsername] == None\
+                # and self.bGSuser == True:
+                PassiveMessage = Satnet_StorePassiveMessage(groundstation_id =\
+                 'groundstation_id', timestamp = 'timestamp', doppler_shift =\
+                  'doppler_shift', message = sMsg)
 
-            """
-            Old method. Should be maintained until the system runs without problems.
-            """
-            # Message.objects.create(operational_slot=self.slot[0],\
-            #  gs_channel=gs_channel, sc_channel=sc_channel,\
-            #   upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
-            #    message=sMsg)
+                """
+                Old method. Should be maintained until the system runs without problems.
+                """
+                # Message.objects.create(operational_slot=self.slot[0],\
+                #  gs_channel=gs_channel, sc_channel=sc_channel,\
+                #   upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
+                #    message=sMsg)
 
-            log.msg('Message saved on server')
+                log.msg('Message saved on server')
 
-        # ... if the GS operator is not connected, the remote SC client will be
-        # notified to wait for the GS to connect...
-        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
-            self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_DISCONNECTED,\
-                 sDetails=None)
-        # ... else, send the message to the remote and store it in the DB
+                # ... if the GS operator is not connected, the remote SC client 
+                # will be notified to wait for the GS to connect...
+            elif self.bGSuser == False:
+                self.callRemote(NotifyEvent,\
+                 iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
+                # ... else, send the message to the remote and store it in the DB
         else:
             # NotifyMsg is a class from client_amp
             #
             # send message to remote client
-            self.factory.active_protocols[self.factory.active_connections[
-                self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
+            # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
 
             # store messages in the DB (as already forwarded)
             gs_channel = slot['gs_channel']
             sc_channel = slot['sc_channel']
 
-            Message = Satnet_StoreMessage(operational_slot = slot_id,\
-             gs_channel = gs_channel, sc_channel = sc_channel,\
-              upwards = self.bGSuser, forwarded = True,\
-               tx_timestamp = iTimestamp, message = sMsg)
+            """
+            Old method.
+            """
+            # Message = Satnet_StoreMessage(operational_slot = slot_id,\
+            #  gs_channel = gs_channel, sc_channel = sc_channel,\
+            #   upwards = self.bGSuser, forwarded = True,\
+            #    tx_timestamp = iTimestamp, message = sMsg)
+            
+            slot_id = 2
+            upwards = True
+            forwarded = True
+            timestamp = 1677850000
+
+            Message = Satnet_StoreMessage(slot_id, upwards, forwarded,\
+             timestamp, sMsg)
+
 
             """
             Old method. Should be maintained until the system runs without problems.

@@ -79,11 +79,6 @@ class CredReceiver(AMP, TimeoutMixin):
     :type session:
         L{IDelayedCall}
 
-    :ivar factory:
-        The duration of the session timeout in seconds. After this time the user
-        will be automagically disconnected.
-    :type factory:
-        L{CredAMPServerFactory}        
     """
 
     rpc_if = None
@@ -91,7 +86,7 @@ class CredReceiver(AMP, TimeoutMixin):
     sUsername = ''
     iTimeOut = 300  # seconds
     session = None
-    factory = None
+    # factory = None
 
     avatar = None
 
@@ -149,6 +144,7 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         Generate a new challenge for the given username.
         """
+        self.factory = CredAMPServerFactory()
 
         try:
             if self.factory.active_connections:

@@ -51,7 +51,7 @@ from ampauth.server import CredReceiver
 from ampauth.server import CredAMPServerFactory
 from clientErrors import SlotErrorNotification
 
-from ampCommands import SendMsg
+from ampCommands import SendMsg, StartRemote
 
 from client_amp import ClientProtocol
 from rpcrequests import Satnet_RPC
@@ -142,11 +142,13 @@ class TestPassiveMessage(unittest.TestCase):
 
     def mockSendMsg(self, sMsg, iTimestamp):
 
-        try:
-            if self.flag_StartRemote == True:
-                return {'bResult': True}
-        except:
-            raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
+        return {'bResult': True}
+
+        # try:
+        #     if self.flag_StartRemote == True:
+        #         return {'bResult': True}
+        # except:
+        #     raise SlotErrorNotification('Connection not available. Call StartRemote command first.')
 
     def _setUp_databases(self):
         """
@@ -174,20 +176,45 @@ class TestPassiveMessage(unittest.TestCase):
         
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
         self.serverDisconnected = defer.Deferred()
+
+        """
+        Instancia la creacion del servidor y le pasa la desconexion
+        """
         self.serverPort = self._listenServer(self.serverDisconnected)
+
+        """
+        Crea dos objetos del tipo deferred para conectar y desconectar
+        Uno para cada cliente
+        """
 
         self.connected1 = defer.Deferred()
         self.clientDisconnected1 = defer.Deferred()
+        
+        """
+        Crea una factory. El caso es que la factory que crea yo no
+        la creo en mis ejemplos
+        """
+        # self.factory1 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
         self.factory1 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
         self.clientConnection1 = self._connectClients(self.factory1,\
          self.connected1, self.clientDisconnected1)
 
+        """
+        Los dos objetos deferreds mas.
+        """
         self.connected2 = defer.Deferred()
         self.clientDisconnected2 = defer.Deferred()
+        
+        """
+        Y la otra factory
+        """
         self.factory2 = protocol.ClientFactory.forProtocol(ClientProtocolTest)
         self.clientConnection2 = self._connectClients(self.factory2,\
          self.connected2, self.clientDisconnected2)
 
+        """
+        Retorna cuando ambos estan creados, ya lo estan,
+        """
         return defer.gatherResults([self.connected1, self.connected2])
 
     def _listenServer(self, d):
@@ -197,9 +224,17 @@ class TestPassiveMessage(unittest.TestCase):
         # pf = CredAMPServerFactory(portal)
         try:
             self.pf = CredAMPServerFactory()
-            self.pf.protocol = CredReceiver
+            self.pf.protocol = CredReceiver()
             self.pf.protocol.login = MagicMock(side_effect=self.mockLoginMethod)
+            """
+            StartRemote funciona como una llamada del tipo AMP.
+            Esto esta mal.
+            """
             self.pf.protocol.startremote = MagicMock(side_effect=self.mockStartRemote)
+            """
+            SendMsg funciona como una llamada del tipo AMP.
+            Esto esta mal.
+            """
             self.pf.protocol.sendmsg = MagicMock(side_effect=self.mockSendMsg)
             self.pf.onConnectionLost = d
             cert = ssl.PrivateCertificate.loadPEM(
@@ -209,12 +244,26 @@ class TestPassiveMessage(unittest.TestCase):
             log.msg("Server already initialized")
 
     def _connectClients(self, factory, d1, d2):
+        """
+        Le pasa su factoria correspondiente y los metodos de conexion
+        y desconexion correspondientes
+        """
         factory.onConnectionMade = d1
         factory.onConnectionLost = d2
 
+
+        """
+        Carga del certificado
+        """
         cert = ssl.Certificate.loadPEM(open('../key/public.pem').read())
+        """
+        Configuracion
+        """
         options = ssl.optionsForClientTLS(u'example.humsat.org', cert)
 
+        """
+        Inicio del reactor.
+        """
         return reactor.connectSSL("localhost", 1234, factory, options)
 
     def tearDown(self):
@@ -241,6 +290,7 @@ class TestPassiveMessage(unittest.TestCase):
 
     # get_utc_timestamp use?
     # @defer.inlineCallbacks // Why?
+    @defer.inlineCallbacks
     def test_passiveMessage(self):
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> test_passiveMessage starts")
         __iSlotId = 1
@@ -253,12 +303,17 @@ class TestPassiveMessage(unittest.TestCase):
         # # To notify when a new message is received by the client
         # res = yield login(self.factory1.protoInstance, UsernamePassword('tubio', 'tu.bio'))
         # self.assertTrue(res['bAuthenticated'])
+        res = self.pf.protocol.login('xabi', 'pwdxabi')
+        self.assertTrue(res['bAuthenticated'])
 
         """
         Inicia startremote
         """
-        # res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
-        # self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+        res = yield self.factory1.protoInstance.callRemote(StartRemote, iSlotId=__iSlotId)
+        self.assertEqual(res['iResult'], StartRemote.REMOTE_NOT_CONNECTED)
+
+        print "res"
+        print res
 
         """
         Envia el mensaje
@@ -267,18 +322,20 @@ class TestPassiveMessage(unittest.TestCase):
         #     SendMsg, sMsg=__sMessageA2B, iTimestamp=misc.get_utc_timestamp())
         # self.assertTrue(res['bResult'])
 
-        res = self.pf.protocol.login('xabi', 'pwdxabi')
-        self.assertTrue(res['bAuthenticated'])
 
-        res = self.pf.protocol.startremote(iSlotId=__iSlotId)
-        self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')
+        # res = self.pf.protocol.login('xabi', 'pwdxabi')
+        # self.assertTrue(res['bAuthenticated'])
 
-        get_utc_timestamp = Mock(return_value='return')
+        # res = self.pf.protocol.startremote(iSlotId=__iSlotId)
+        # self.assertEqual(res['iResult'], 'StartRemote.REMOTE_NOT_CONNECTED')
 
-        res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
-         iTimestamp=get_utc_timestamp())
-        self.assertTrue(res['bResult'])
+        # get_utc_timestamp = Mock(return_value='return')
 
+        # res = self.pf.protocol.sendmsg(sMsg=__sMessageA2B,\
+        #  iTimestamp=get_utc_timestamp())
+        # self.assertTrue(res['bResult'])
+
+        # self.pf.callRemote(SendMsg, sMsg, iTimestamp=get_utc_timestamp) 
 
 
     # """
