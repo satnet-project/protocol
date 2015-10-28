@@ -195,7 +195,7 @@ class SATNETServer(protocol.Protocol):
                 # and self.bGSuser == True:
                 PassiveMessage = Satnet_StorePassiveMessage(groundstation_id =\
                  'groundstation_id', timestamp = 'timestamp', doppler_shift =\
-                  'doppler_shift', message = sMsg)
+                  'doppler_shift', message = sMsg, debug = True)
 
                 """
                 Old method. Should be maintained until the system runs without problems.
@@ -237,7 +237,7 @@ class SATNETServer(protocol.Protocol):
             timestamp = 1677850000
 
             Message = Satnet_StoreMessage(slot_id, upwards, forwarded,\
-             timestamp, sMsg)
+             timestamp, sMsg, debug = True)
 
 
             """
@@ -271,9 +271,15 @@ def main():
     log.startLogging(sys.stdout)
 
     pf = CredAMPServerFactory()
-    cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
+    # cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
 
-    connector = reactor.listenSSL(1234, pf, cert.options())
+    # connector = reactor.listenSSL(1234, pf, cert.options())
+ 
+    from twisted.internet import reactor, ssl
+    sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',\
+     'key/public.pem',)
+    connector = reactor.listenSSL(1234, pf, contextFactory = sslContext,)
+
     log.msg('Server running...')
     reactor.run()
 

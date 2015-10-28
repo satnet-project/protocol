@@ -23,8 +23,12 @@ __author__ = 'xabicrespog@gmail.com'
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
-import requests, json, threading
+import requests 
+import json
+import threading
 from ampauth.errors import BadCredentials
+from twisted.python import log
+
 
 class HttpSessionTransport(HttpPostClientTransport):
     """
@@ -107,8 +111,9 @@ class Satnet_RPC():
         if not self.call('system.login', user, pwd):
             raise BadCredentials()
         else:
-            print "keepalive"
-        #     self.call('network.keepAlive')
+            log.msg('Keep alive connection')
+            # print "keepalive"
+            # self.call('network.keepAlive')
 
     # def _keepAlive(self):
     #     threading.Timer(300, self._keepAlive).start() # set daemon to false
@@ -198,10 +203,18 @@ class Satnet_StoreMessage():
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
         else:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+            self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
+
+        log.msg('Send message')
+        log.msg(slot_id)
+        log.msg(upwards)
+        log.msg(forwarded)
+        log.msg(timestamp)
+        log.msg(message)
+
         self.call('communications.storeMessage', slot_id, upwards, forwarded,\
-         timestamp, message)
+        timestamp, message)
 
     def call(self, call, *args):
         """
@@ -216,7 +229,7 @@ class Satnet_StoreMessage():
             Arguments required by the method to be invocked.
         """
 
-        return self._rpc_client.call(call, args, None)
+        return self._rpc_client_.call(call, args, None)
 
 
 class Satnet_StorePassiveMessage():
