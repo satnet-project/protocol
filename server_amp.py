@@ -38,7 +38,6 @@ from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote, EndRemote, SendMsg
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# from client_amp import NotifyMsg
 
 
 class SATNETServer(protocol.Protocol):
@@ -142,27 +141,35 @@ class SATNETServer(protocol.Protocol):
 
     StartRemote.responder(iStartRemote)
 
+    # TO-DO
+    # Check what kind of list, or dict, do we need.
+    # Maybe it's wrong!
+    #
     def vEndRemote(self):
         log.msg("(" + self.sUsername + ") --------- End Remote ---------")
         # Disconnect both users (need to be done from the CredReceiver
         # instance)
         # self.credProto.transport.loseConnection()
-        # self.transport.loseConnection()
-        # # If the client is still in active_connections (only true when he
-        # # was in a remote connection and he was disconnected in the first
-        # # place)
+        self.transport.loseConnection()
+        # If the client is still in active_connections (only true when he
+        # was in a remote connection and he was disconnected in the first
+        # place)
         # if self.factory.active_connections[self.sUsername]:
-        #     # Notify the remote client about this disconnection. The
-        #     # notification is sent through the SATNETServer instance
-        #     self.factory.active_protocols[self.factory.active_connections[
-        #         self.sUsername]].callRemote(NotifyEvent,\
-        #          iEvent=NotifyEvent.END_REMOTE, sDetails=None)
-        #     # Close connection
-        #     self.factory.active_protocols[self.factory.active_connections[
-        #         self.sUsername]].credProto.transport.loseConnection()
-        #     # Remove active connection
-        #     self.factory.active_connections.pop(
-        #         self.factory.active_connections[self.sUsername])
+        if self.factory.active_connections['localUsr'] == self.sUsername:
+
+            # Notify the remote client about this disconnection. The
+            # notification is sent through the SATNETServer instance
+            self.factory.active_protocols[self.factory.active_connections[
+                self.sUsername]].callRemote(NotifyEvent,\
+                 iEvent=NotifyEvent.END_REMOTE, sDetails=None)
+
+            # Close connection
+            self.factory.active_protocols[self.factory.active_connections[
+                self.sUsername]].credProto.transport.loseConnection()
+
+            # Remove active connection
+            self.factory.active_connections.pop(
+                self.factory.active_connections[self.sUsername])
 
         return {'bResult': True}
 
@@ -223,9 +230,7 @@ class SATNETServer(protocol.Protocol):
             gs_channel = slot['gs_channel']
             sc_channel = slot['sc_channel']
 
-            """
-            Old method.
-            """
+            # OWld method
             # Message = Satnet_StoreMessage(operational_slot = slot_id,\
             #  gs_channel = gs_channel, sc_channel = sc_channel,\
             #   upwards = self.bGSuser, forwarded = True,\
@@ -239,10 +244,8 @@ class SATNETServer(protocol.Protocol):
             Message = Satnet_StoreMessage(slot_id, upwards, forwarded,\
              timestamp, sMsg, debug = True)
 
-
-            """
-            Old method. Should be maintained until the system runs without problems.
-            """
+            # Old method. Should be maintained until the system runs 
+            # without problems.
             # gs_channel = self.slot[0].groundstation_channel
             # sc_channel = self.slot[0].spacecraft_channel
 
@@ -252,17 +255,17 @@ class SATNETServer(protocol.Protocol):
             #    message=sMsg)
 
         return {'bResult': True}
-
     SendMsg.responder(vSendMsg)
 
-    def vSlotEnd(self, iSlotId):
-        log.msg(
-            "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
-        self.callRemote(
-            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
-        # Remove the timer ID reference to avoid it to be canceled
-        # a second time when the client disconnects
-        self.credProto.session = None
+    # # TO-DO
+    # def vSlotEnd(self, iSlotId):
+    #     log.msg(
+    #         "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
+    #     self.callRemote(
+    #         NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
+    #     # Remove the timer ID reference to avoid it to be canceled
+    #     # a second time when the client disconnects
+    #     self.credProto.session = None
 
 
 def main():
