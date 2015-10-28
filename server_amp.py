@@ -38,7 +38,7 @@ from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote, EndRemote, SendMsg
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from client_amp import NotifyMsg
+# from client_amp import NotifyMsg
 
 
 class SATNETServer(protocol.Protocol):
