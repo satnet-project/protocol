@@ -160,7 +160,7 @@ class Satnet_GetSlot(object):
         return self._rpc_client.call(call, args, None)
 
 
-class Satnet_StoreMessage():
+class Satnet_StoreMessage(object):
     """
     @rpc4django.rpcmethod(
         name='communications.storeMessage')
@@ -231,7 +231,7 @@ class Satnet_StoreMessage():
         return self._rpc_client_.call(call, args, None)
 
 
-class Satnet_StorePassiveMessage():
+class Satnet_StorePassiveMessage(object):
     """
     @rpc4django.rpcmethod(
         name='communications.gs.storePassiveMessage')
