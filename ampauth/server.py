@@ -28,11 +28,8 @@ from errors import BadCredentials
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
-from twisted.internet.task import LoopingCall
-from twisted.cred.credentials import UsernamePassword
 from twisted.cred.error import UnauthorizedLogin
 from twisted.protocols.amp import AMP
-from twisted.protocols.amp import IBoxReceiver
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
@@ -157,11 +154,15 @@ class CredReceiver(AMP, TimeoutMixin):
         Generate a new challenge for the given username.
         """
         self.factory = CredAMPServerFactory()
+        #
+        # Don't mix asynchronus and syncronus code.
+        # Try-except sentences aren't allowed.
+        #
 
         try:
             if self.factory.active_connections:
                 log.msg('Active connections dictionary already created')
-        except:
+        except Exception as e:
             self.factory.active_connections = {}
             self.factory.active_connections.setdefault('localUsr', [])
             self.factory.active_connections.setdefault('remoteUsr', [])
@@ -169,7 +170,7 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             if self.factory.active_protocols:
                 log.msg('Active protocols dictionary already created')
-        except:
+        except Exception as e:
             self.factory.active_protocols = {}
             self.factory.active_protocols.setdefault('localUsr', [])
             self.factory.active_protocols.setdefault('remoteUsr', [])
@@ -224,9 +225,8 @@ class CredReceiver(AMP, TimeoutMixin):
             raise SlotErrorNotification('This slot (' + str(iSlotId) +\
              ') has expired')
         elif (slot_remaining_time > 0):
-            """
-            If time is correct, attach remote user to active_protocols
-            """
+
+            # If time is correct, attach remote user to active_protocols
             self.factory.active_protocols['remoteUsr'].append(remoteUsr)
         else:
             log.msg('Time error.')
@@ -236,10 +236,10 @@ class CredReceiver(AMP, TimeoutMixin):
          self.vSlotEnd, iSlotId)
 
         if remoteUsr not in self.factory.active_protocols['remoteUsr']:
-            """
-            If remoteUsr is not available remove localUsr from active_protocols
-            dictionary.
-            """
+
+            # If remoteUsr is not available remove localUsr from active_protocols
+            # dictionary.
+
             log.msg('Remote user ' + remoteUsr + ' not connected yet')
             self.factory.active_connections[localUsr] = None          
             return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}

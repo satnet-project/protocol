@@ -25,7 +25,6 @@ from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
 import requests 
 import json
-import threading
 from ampauth.errors import BadCredentials
 from twisted.python import log
 
@@ -77,7 +76,7 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
             print e
 
 
-class Satnet_RPC():
+class Satnet_RPC(object):
     """
     Start RPC connection and keep session open.
 
@@ -134,7 +133,7 @@ class Satnet_RPC():
         return self._rpc_client.call(call, args, None)
 
 
-class Satnet_GetSlot():
+class Satnet_GetSlot(object):
 
     def __init__(self, slot_id, debug=False):
         if not debug:

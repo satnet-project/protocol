@@ -32,7 +32,6 @@ from twisted.internet import protocol
 from ampauth.server import *
 from clientErrors import SlotErrorNotification
 
-from rpcrequests import Satnet_GetSlot 
 from rpcrequests import Satnet_StoreMessage 
 from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote, EndRemote, SendMsg
@@ -269,7 +268,6 @@ def main():
 
     # connector = reactor.listenSSL(1234, pf, cert.options())
  
-    from twisted.internet import reactor, ssl
     sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',\
      'key/public.pem',)
     connector = reactor.listenSSL(1234, pf, contextFactory = sslContext,)

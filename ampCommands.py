@@ -22,12 +22,9 @@ __author__ = 'xabicrespog@gmail.com'
 
 from twisted.protocols import amp
 from clientErrors import SlotErrorNotification
-from clientErrors import RemoteClientNotification
 
-"""
-Commandes implemented by the N-server which will be invoked by a
-G- or M- clients.
-"""
+# Commandes implemented by the N-server which will be invoked by a
+# G- or M- clients.
 
 
 class StartRemote(amp.Command):
@@ -104,10 +101,8 @@ class SendMsg(amp.Command):
         Boolean
     """
 
-"""
-Commandes implemented by G- or M- clients which will be invoked
-by a N-server.
-"""
+# Commandes implemented by G- or M- clients which will be invoked
+# by a N-server.
 
 class NotifyEvent(amp.Command):
     arguments = [('iEvent', amp.Integer()),
