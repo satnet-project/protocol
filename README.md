@@ -1,4 +1,4 @@
-[![Code Health](https://landscape.io/github/satnet-project/protocol/master/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/master)
+[![Code Health](https://landscape.io/github/satnet-project/protocol/jrpc_if/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/jrpc_if)
 
 # protocol
 This repository contains the communications real time protocol based on Twisted for the SatNet network.
