@@ -46,7 +46,7 @@ from twisted.manhole.service import Realm
 
 from ampauth.server import CredAMPServerFactory, CredReceiver
 # from ampauth.commands import Login
-from client_amp import ClientProtocol
+from client_amp_test import ClientProtocol
 print sys.path
 from ampCommands import NotifyMsg
 from ampCommands import NotifyEvent

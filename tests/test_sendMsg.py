@@ -53,7 +53,7 @@ from clientErrors import SlotErrorNotification
 
 from ampCommands import SendMsg, StartRemote
 
-from client_amp import ClientProtocol
+from client_amp_test import ClientProtocol
 from rpcrequests import Satnet_RPC
 
 

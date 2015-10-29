@@ -86,7 +86,6 @@ class CredReceiver(AMP, TimeoutMixin):
     sUsername = ''
     iTimeOut = 300  # seconds
     session = None
-    # factory = None
 
     avatar = None
 
@@ -128,17 +127,30 @@ class CredReceiver(AMP, TimeoutMixin):
         # divided by 2 because the dictionary is doubly linked
         log.msg('Active connections: ' + str(active_connections))
 
+        # log.msg('Antes de EndRemote')
+        # # res = yield self.callRemote(EndRemote)
+        # # log.msg(res)
+        # log.msg(self.test)
+        # res = self.test()
+        # log.msg(res)
+        # log.msg('Despues de EndRemote')
+
+
+        # notification = self.callRemote(
+        #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
+        #      sDetails=str(remoteUsr))
+
+
         self.setTimeout(None)  # Cancel the pending timeout
-
-        # reactor.callLater(1, EndRemote())
-
-        # try:
-        #     res = self.callRemote(EndRemote)
-        # except:
-        #     print "error"
-
         self.transport.loseConnection()
+
         super(CredReceiver, self).connectionLost(reason)
+
+    def test(self):
+        log.msg('estoy dentro de test')
+        log.msg(EndRemote)
+        # res = yield self.callRemote(EndRemote)
+
 
     def login(self, sUsername, sPassword):
         """
@@ -166,16 +178,9 @@ class CredReceiver(AMP, TimeoutMixin):
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
-            """
-            Attach local user to active protocols list.
-            """
+            # Attach local user to active protocols list.
             self.sUsername = sUsername
             self.factory.active_protocols['localUsr'].append(self.sUsername)
-
-        """
-        Por aqui tengo que meter que el usuario remoto este conectado
-        para ver que pasaria
-        """
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
@@ -226,9 +231,7 @@ class CredReceiver(AMP, TimeoutMixin):
         else:
             log.msg('Time error.')
      
-        """
-        Create an instante for finish the slot at correct time.
-        """  
+        # Create an instante for finish the slot at correct time.  
         self.session = reactor.callLater(slot_remaining_time,\
          self.vSlotEnd, iSlotId)
 
@@ -256,9 +259,6 @@ class CredReceiver(AMP, TimeoutMixin):
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))
-            """
-            StartRemote instance needs a return value.
-            """
             return {'iResult': StartRemote.REMOTE_READY}
 
 

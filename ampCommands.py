@@ -109,7 +109,6 @@ Commandes implemented by G- or M- clients which will be invoked
 by a N-server.
 """
 
-
 class NotifyEvent(amp.Command):
     arguments = [('iEvent', amp.Integer()),
                  ('sDetails', amp.String(optional=True))]

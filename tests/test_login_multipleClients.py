@@ -36,7 +36,7 @@ from twisted.python import log
 from ampauth.errors import BadCredentials, UnauthorizedLogin
 from ampauth.server import CredReceiver, CredAMPServerFactory
 # from ampauth.testing import Realm
-from client_amp import ClientProtocol
+from client_amp_test import ClientProtocol
 from rpcrequests import Satnet_RPC
 
 

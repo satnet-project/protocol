@@ -37,7 +37,7 @@ from ampauth.errors import BadCredentials
 from ampauth.login import Login
 from ampauth.server import CredReceiver, CredAMPServerFactory
 
-from client_amp import ClientProtocol
+from client_amp_test import ClientProtocol
 from ampCommands import NotifyMsg
 from ampCommands import NotifyEvent
 from clientErrors import SlotErrorNotification, RemoteClientNotification
