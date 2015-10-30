@@ -32,11 +32,14 @@ from twisted.internet import protocol
 from ampauth.server import *
 from clientErrors import SlotErrorNotification
 
+from rpcrequests import Satnet_GetSlot
 from rpcrequests import Satnet_StoreMessage 
 from rpcrequests import Satnet_StorePassiveMessage
-from ampCommands import StartRemote, EndRemote, SendMsg
+from ampCommands import StartRemote
+from ampCommands import EndRemote
+from ampCommands import SendMsg
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 class SATNETServer(protocol.Protocol):
@@ -86,18 +89,7 @@ class SATNETServer(protocol.Protocol):
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
 
-        # self.slot = Satnet_GetSlot(str(iSlotId), debug = True)
-
-        # For tests only
-        from time import time
-        timestamp = int(time())
-        timestamp = timestamp + 60
-
-        # For tests only.
-        self.slot = {'state': 'RESERVED',\
-         'gs_username': 's.gongoragarcia@gmail.com',\
-          'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': timestamp }
+        self.slot = Satnet_GetSlot(str(iSlotId), debug = True).call()
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -235,6 +227,8 @@ class SATNETServer(protocol.Protocol):
             #  gs_channel = gs_channel, sc_channel = sc_channel,\
             #   upwards = self.bGSuser, forwarded = True,\
             #    tx_timestamp = iTimestamp, message = sMsg)
+
+            log.msg("mensaje guardado")
             
             slot_id = 2
             upwards = True

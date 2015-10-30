@@ -142,9 +142,11 @@ class Satnet_GetSlot(object):
         else:
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
-        self.call('scheduling.slot.get', slot_id)
 
-    def call(self, call, *args):
+        # self.call('scheduling.slot.get', slot_id)
+
+    # def call(self, call, *args):
+    def call(self):
         """
         Make an RPC call to the SatNet server.
 
@@ -156,8 +158,19 @@ class Satnet_GetSlot(object):
         :param args:
             Arguments required by the method to be invocked.
         """
+        
+        # For tests only
+        from time import time
+        timestamp = int(time())
+        timestamp = timestamp + 60
 
-        return self._rpc_client.call(call, args, None)
+        slot = {'state': 'RESERVED',\
+         'gs_username': 's.gongoragarcia@gmail.com',\
+          'sc_username': 'spacecraft', 'starting_time': 1576836800,\
+           'ending_time': timestamp }
+
+        # return self._rpc_client.call(call, args, None)
+        return slot
 
 
 class Satnet_StoreMessage(object):
@@ -205,13 +218,6 @@ class Satnet_StoreMessage(object):
             self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
 
-        log.msg('Send message')
-        log.msg(slot_id)
-        log.msg(upwards)
-        log.msg(forwarded)
-        log.msg(timestamp)
-        log.msg(message)
-
         self.call('communications.storeMessage', slot_id, upwards, forwarded,\
         timestamp, message)
 
@@ -228,7 +234,10 @@ class Satnet_StoreMessage(object):
             Arguments required by the method to be invocked.
         """
 
-        return self._rpc_client_.call(call, args, None)
+        # return self._rpc_client_.call(call, args, None)
+
+        # For tests only
+        return True
 
 
 class Satnet_StorePassiveMessage(object):
