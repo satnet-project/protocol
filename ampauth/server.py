@@ -272,7 +272,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Remove the timer ID reference to avoid it to be canceled
         # a second time when the client disconnects
         
-        # To-do. What happens?
+        # Session is an instance of 
         self.session = None
 
 
