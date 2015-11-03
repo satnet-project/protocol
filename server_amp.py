@@ -20,7 +20,6 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-import os
 import sys
 import logging
 
@@ -29,7 +28,7 @@ from twisted.internet import reactor
 from twisted.internet import ssl
 from twisted.internet import protocol
 
-from ampauth.server import *
+from ampauth.server import CredAMPServerFactory
 from clientErrors import SlotErrorNotification
 
 from rpcrequests import Satnet_GetSlot
@@ -38,8 +37,6 @@ from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote
 from ampCommands import EndRemote
 from ampCommands import SendMsg
-
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 class SATNETServer(protocol.Protocol):

@@ -14,7 +14,7 @@ sudo apt --assume-yes install libssl-dev
 # Create a virtualenv
 virtualenv $venv_path
 source "$venv_path/bin/activate"
-pip install -r "$script_path/requirements.txt"
+pip install -r "$project_path/requirements.txt"
 
 # Create a self-signed certicate
 bash "$script_path/protocol-setup.sh"

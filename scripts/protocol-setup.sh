@@ -20,7 +20,7 @@ create_testing_keys()
     # 6: Generate clients bundle (Certificate)
     cp key/test.crt key/public.pem
 
-    # 7: Copy key to working folder
+    # 7: Move keys
     mv key ../
 }
 

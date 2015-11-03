@@ -163,6 +163,7 @@ class CredReceiver(AMP, TimeoutMixin):
             if self.factory.active_connections:
                 log.msg('Active connections dictionary already created')
         except Exception as e:
+            log.err(e)
             self.factory.active_connections = {}
             self.factory.active_connections.setdefault('localUsr', [])
             self.factory.active_connections.setdefault('remoteUsr', [])
@@ -171,6 +172,7 @@ class CredReceiver(AMP, TimeoutMixin):
             if self.factory.active_protocols:
                 log.msg('Active protocols dictionary already created')
         except Exception as e:
+            log.err(e)
             self.factory.active_protocols = {}
             self.factory.active_protocols.setdefault('localUsr', [])
             self.factory.active_protocols.setdefault('remoteUsr', [])
@@ -250,9 +252,9 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections['remoteUsr'].append(remoteUsr)
             self.factory.active_connections['localUsr'].append(localUsr)
 
-            notification = self.callRemote(
-                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-                 sDetails=str(remoteUsr))
+            notification = self.callRemote(NotifyEvent,\
+             iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(remoteUsr))
+            log.msg(notification)
 
             log.msg('Active clients: ' +\
              str(len(self.factory.active_protocols)))           
