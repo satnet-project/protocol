@@ -18,9 +18,3 @@ pip install -r scripts/requirements.txt
 cd {PROJECT_PATH}
 python server_amp.py
 ```
-
-## Execute tests
-```shell
-cd {PROJECT_PATH}
-trial tests/*
-```
