@@ -28,7 +28,7 @@ from twisted.internet import reactor
 from twisted.internet import ssl
 from twisted.internet import protocol
 
-from ampauth.server import CredAMPServerFactory
+from ampauth.server import *
 from clientErrors import SlotErrorNotification
 
 from rpcrequests import Satnet_GetSlot
