@@ -97,8 +97,11 @@ class CredReceiver(AMP, TimeoutMixin):
 
     def timeoutConnection(self):
         log.err('Session timeout expired')
-        # self.transport.abortConnection()
         self.transport.loseConnection()
+
+    def doSomething(self, text_error):
+        log.err("hey doSomething")
+        #log.err(text)
 
     def connectionLost(self, reason):
         if self.sUsername in self.factory.active_protocols['localUsr']:
@@ -109,6 +112,12 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections['localUsr'] = []
         if self.remoteUsr in self.factory.active_connections['remoteUsr']:
             self.factory.active_connections['remoteUsr'] = []
+
+        # notification is a Deferred
+        notification = self.callRemote(EndRemote)
+
+        notification.addErrback(self.doSomething)
+        notification.callback('error')
 
         if self.session is not None:
             self.session.cancel()
@@ -124,30 +133,13 @@ class CredReceiver(AMP, TimeoutMixin):
         # divided by 2 because the dictionary is doubly linked
         log.msg('Active connections: ' + str(active_connections))
 
-        # log.msg('Antes de EndRemote')
-        # # res = yield self.callRemote(EndRemote)
-        # # log.msg(res)
-        # log.msg(self.test)
-        # res = self.test()
-        # log.msg(res)
-        # log.msg('Despues de EndRemote')
-
-
-        # notification = self.callRemote(
-        #     NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,\
-        #      sDetails=str(remoteUsr))
+        # I must call the instance EndRemote for notice about connection's end.
 
 
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
 
         super(CredReceiver, self).connectionLost(reason)
-
-    def test(self):
-        log.msg('estoy dentro de test')
-        log.msg(EndRemote)
-        # res = yield self.callRemote(EndRemote)
-
 
     def login(self, sUsername, sPassword):
         """
@@ -162,8 +154,7 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             if self.factory.active_connections:
                 log.msg('Active connections dictionary already created')
-        except Exception as e:
-            log.err(e)
+        except Exception:
             self.factory.active_connections = {}
             self.factory.active_connections.setdefault('localUsr', [])
             self.factory.active_connections.setdefault('remoteUsr', [])
@@ -171,8 +162,7 @@ class CredReceiver(AMP, TimeoutMixin):
         try:
             if self.factory.active_protocols:
                 log.msg('Active protocols dictionary already created')
-        except Exception as e:
-            log.err(e)
+        except Exception:
             self.factory.active_protocols = {}
             self.factory.active_protocols.setdefault('localUsr', [])
             self.factory.active_protocols.setdefault('remoteUsr', [])
@@ -265,15 +255,16 @@ class CredReceiver(AMP, TimeoutMixin):
 
 
     def vSlotEnd(self, iSlotId):
-        log.msg(
-            "(" + self.sUsername + ") Slot " + str(iSlotId) + ' has finished')
-        self.callRemote(
-            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None)
+        log.msg("(" + self.sUsername + ") Slot " +\
+         str(iSlotId) + ' has finished')
+        self.callRemote(NotifyEvent, iEvent=NotifyEvent.SLOT_END,\
+         sDetails=None)
         # Remove the timer ID reference to avoid it to be canceled
         # a second time when the client disconnects
         
         # Session is an instance of 
         self.session = None
+
 
 
 class CredAMPServerFactory(ServerFactory):

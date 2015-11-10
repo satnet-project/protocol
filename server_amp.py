@@ -76,7 +76,6 @@ class SATNETServer(protocol.Protocol):
     bGSuser = None
     slot = None
 
-
     def dataReceived(self, data):
         log.msg(self.sUsername + ' session timeout reset')
         self.resetTimeout()
@@ -135,7 +134,8 @@ class SATNETServer(protocol.Protocol):
     # Maybe it's wrong!
     # ¿¿¿Cuando hace falta esto???
     def vEndRemote(self):
-        log.msg("(" + self.sUsername + ") --------- End Remote ---------")
+        log.msg("hola endRemote")
+        # log.msg("(" + self.sUsername + ") --------- End Remote ---------")
         # # Disconnect both users (need to be done from the CredReceiver
         # # instance)
         # # self.credProto.transport.loseConnection()
@@ -186,6 +186,8 @@ class SATNETServer(protocol.Protocol):
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
         elif self.factory.active_connections['localUsr'] == False:
+            return {'bResult': False}
+            
             if self.bGSuser == True:
                 # elif self.factory.active_connections[self.sUsername] == None\
                 # and self.bGSuser == True:
@@ -208,12 +210,17 @@ class SATNETServer(protocol.Protocol):
             elif self.bGSuser == False:
                 self.callRemote(NotifyEvent,\
                  iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
+                return {'bResult': False}
                 # ... else, send the message to the remote and store it in the DB
         else:
             # NotifyMsg is a class from client_amp
             #
+            # 
+            #
             # send message to remote client
             # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
+
+            self.callRemote(NotifyMsg)
 
             # store messages in the DB (as already forwarded)
             gs_channel = slot['gs_channel']
@@ -235,6 +242,8 @@ class SATNETServer(protocol.Protocol):
             Message = Satnet_StoreMessage(slot_id, upwards, forwarded,\
              timestamp, sMsg, debug = True)
 
+            return {'bResult': True}
+
             # Old method. Should be maintained until the system runs 
             # without problems.
             # gs_channel = self.slot[0].groundstation_channel
@@ -245,7 +254,6 @@ class SATNETServer(protocol.Protocol):
             #   upwards=self.bGSuser, forwarded=True, tx_timestamp=iTimestamp,\
             #    message=sMsg)
 
-        return {'bResult': True}
     SendMsg.responder(vSendMsg)
 
 
@@ -255,13 +263,11 @@ def main():
     log.startLogging(sys.stdout)
 
     pf = CredAMPServerFactory()
-    # cert = ssl.PrivateCertificate.loadPEM(open('key/server.pem').read())
-
-    # connector = reactor.listenSSL(1234, pf, cert.options())
  
     sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',\
      'key/public.pem',)
-    connector = reactor.listenSSL(1234, pf, contextFactory = sslContext,)
+
+    reactor.listenSSL(1234, pf, contextFactory = sslContext,)
 
     log.msg('Server running...')
     reactor.run()

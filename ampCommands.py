@@ -66,7 +66,8 @@ class EndRemote(amp.Command):
     arguments = []
     response = [('bResult', amp.Boolean())]
     """
-    Invoked by a client whenever this one wants to finalize the remote operation.
+    Invoked by a client whenever this one wants to finalize the remote 
+    operation.
     """
 
 
@@ -78,8 +79,8 @@ class SendMsg(amp.Command):
         SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'}
 
     """
-    Invoked when a client wants to send a message to a remote entity. To use it, the 
-    command StartRemote shall be invoked first.
+    Invoked when a client wants to send a message to a remote entity.
+    To use it, the command StartRemote shall be invoked first.
     
     :param sMsg:
         String containing the message
@@ -137,14 +138,16 @@ class NotifyEvent(amp.Command):
     REMOTE_CONNECTED = -4
 
 
-class NotifyMsg(amp.Command):
-    arguments = [('sMsg', amp.String())]
-    requiresAnswer = False
-    """
-    Used to send a message to a remote client.
+# Not useful.
+
+# class NotifyMsg(amp.Command):
+#     arguments = [('sMsg', amp.String())]
+#     requiresAnswer = False
+#     """
+#     Used to send a message to a remote client.
     
-    :param sMsg:
-        Remote client identification number
-    :type sMsg:
-        L{String}
-    """
+#     :param sMsg:
+#         Remote client identification number
+#     :type sMsg:
+#         L{String}
+#     """

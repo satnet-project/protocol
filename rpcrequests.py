@@ -162,7 +162,7 @@ class Satnet_GetSlot(object):
         # For tests only
         from time import time
         timestamp = int(time())
-        timestamp = timestamp + 60
+        timestamp = timestamp + 240
 
         slot = {'state': 'RESERVED',\
          'gs_username': 's.gongoragarcia@gmail.com',\
