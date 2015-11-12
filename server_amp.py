@@ -273,4 +273,18 @@ def main():
     reactor.run()
 
 if __name__ == '__main__':
-    main()
+
+    if sys.argv[1] == '--debug':
+        from twisted.internet import defer
+        defer.setDebugging((True))
+
+        main()
+
+    elif sys.argv[1] == '--help':
+        print "Help"
+        
+    else:
+        main()
+
+
+

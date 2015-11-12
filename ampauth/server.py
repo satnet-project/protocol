@@ -114,10 +114,10 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections['remoteUsr'] = []
 
         # notification is a Deferred
-        notification = self.callRemote(EndRemote)
+        # notification = self.callRemote(EndRemote)
 
-        notification.addErrback(self.doSomething)
-        notification.callback('error')
+        # notification.addErrback(self.doSomething)
+        # notification.callback('error')
 
         if self.session is not None:
             self.session.cancel()
