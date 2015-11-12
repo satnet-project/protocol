@@ -143,7 +143,7 @@ class Satnet_GetSlot(object):
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
 
-        # self.call('scheduling.slot.get', slot_id)
+        self.call()
 
     # def call(self, call, *args):
     def call(self):
