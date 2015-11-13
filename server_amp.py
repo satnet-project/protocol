@@ -274,16 +274,17 @@ def main():
 
 if __name__ == '__main__':
 
-    if sys.argv[1] == '--debug':
-        from twisted.internet import defer
-        defer.setDebugging((True))
+    try:
+        if sys.argv[1] == '--debug':
+            from twisted.internet import defer
+            defer.setDebugging((True))
 
-        main()
+            main()
 
-    elif sys.argv[1] == '--help':
-        print "Help"
-        
-    else:
+        if sys.argv[1] == '--help':
+            print "Help"
+    
+    except:
         main()
 
 
