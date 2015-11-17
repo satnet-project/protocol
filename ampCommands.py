@@ -138,16 +138,14 @@ class NotifyEvent(amp.Command):
     REMOTE_CONNECTED = -4
 
 
-# Not useful.
-
-# class NotifyMsg(amp.Command):
-#     arguments = [('sMsg', amp.String())]
-#     requiresAnswer = False
-#     """
-#     Used to send a message to a remote client.
+class NotifyMsg(amp.Command):
+    arguments = [('sMsg', amp.String())]
+    requiresAnswer = False
+    """
+    Used to send a message to a remote client.
     
-#     :param sMsg:
-#         Remote client identification number
-#     :type sMsg:
-#         L{String}
-#     """
+    :param sMsg:
+        Remote client identification number
+    :type sMsg:
+        L{String}
+    """

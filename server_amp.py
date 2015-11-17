@@ -37,6 +37,7 @@ from rpcrequests import Satnet_StorePassiveMessage
 from ampCommands import StartRemote
 from ampCommands import EndRemote
 from ampCommands import SendMsg
+from ampCommands import NotifyMsg
 
 
 class SATNETServer(protocol.Protocol):
@@ -78,7 +79,7 @@ class SATNETServer(protocol.Protocol):
 
     def dataReceived(self, data):
         log.msg(self.sUsername + ' session timeout reset')
-        self.resetTimeout()
+        # self.resetTimeout()
         super(SATNETServer, self).dataReceived(data)
 
     # Neceito corregir el tema del slot nuevo.
@@ -220,7 +221,7 @@ class SATNETServer(protocol.Protocol):
             # send message to remote client
             # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
 
-            self.callRemote(NotifyMsg)
+            self.callRemote(NotifyMsg, sMsg="Protocol has received the message")
 
             # store messages in the DB (as already forwarded)
             gs_channel = slot['gs_channel']
