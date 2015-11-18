@@ -44,7 +44,7 @@ from ampCommands import NotifyEvent
 from ampCommands import EndRemote
 from clientErrors import SlotErrorNotification
 from rpcrequests import Satnet_RPC
-from server_amp import SATNETServer
+from server_amp import *
 
 
 class CredReceiver(AMP, TimeoutMixin):
