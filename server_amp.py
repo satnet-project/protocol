@@ -221,7 +221,7 @@ class SATNETServer(protocol.Protocol):
             # send message to remote client
             # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
 
-            # self.callRemote(NotifyMsg, sMsg="Protocol has received the message")
+            self.callRemote(NotifyMsg, sMsg="Protocol has received the message")
 
             # store messages in the DB (as already forwarded)
             gs_channel = slot['gs_channel']
@@ -233,7 +233,7 @@ class SATNETServer(protocol.Protocol):
             #   upwards = self.bGSuser, forwarded = True,\
             #    tx_timestamp = iTimestamp, message = sMsg)
 
-            log.msg("mensaje guardado")
+            log.msg("Saved message")
             
             slot_id = 2
             upwards = True

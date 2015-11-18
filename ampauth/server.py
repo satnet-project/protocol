@@ -28,6 +28,7 @@ from errors import BadCredentials
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
+from twisted.internet.task import LoopingCall
 from twisted.cred.error import UnauthorizedLogin
 from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
@@ -251,6 +252,8 @@ class CredReceiver(AMP, TimeoutMixin):
             # divided by 2 because the dictionary is doubly linked
             log.msg('Active connections: ' +\
              str(len(self.factory.active_connections) / 2))
+
+
             return {'iResult': StartRemote.REMOTE_READY}
 
 
@@ -277,3 +280,12 @@ class CredAMPServerFactory(ServerFactory):
     instance is also created.
     """
     protocol = CredReceiver
+
+    # def __init__(self):
+
+    #     self.loop = LoopingCall(self.sendSomethingToClient)
+    #     self.loop.start(0.1)
+    #     print 'Server running'
+
+    # def sendSomethingToClient(self):
+    #     self.sendString('something')
