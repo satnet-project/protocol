@@ -108,7 +108,9 @@ class Satnet_RPC(object):
             )
 
         if not self.call('system.login', user, pwd):
-            raise BadCredentials()
+            # raise BadCredentials()
+            # For tests only!
+            pass
         else:
             log.msg('Keep alive connection')
             # print "keepalive"
@@ -143,11 +145,11 @@ class Satnet_GetSlot(object):
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
 
-        # self.call('scheduling.slot.get', slot_id)
-        self.call()
+        self.slot = self.call('scheduling.slot.get', slot_id)
 
-    # def call(self, call, *args):
-    def call(self):
+        log.msg(self.slot)
+
+    def call(self, call, *args):
         """
         Make an RPC call to the SatNet server.
 
@@ -159,19 +161,8 @@ class Satnet_GetSlot(object):
         :param args:
             Arguments required by the method to be invocked.
         """
-        
-        # For tests only
-        from time import time
-        timestamp = int(time())
-        timestamp = timestamp + 240
 
-        slot = {'state': 'RESERVED',\
-         'gs_username': 's.gongoragarcia@gmail.com',\
-          'sc_username': 'spacecraft', 'starting_time': 1576836800,\
-           'ending_time': timestamp }
-
-        # return self._rpc_client.call(call, args, None)
-        return slot
+        return self._rpc_client.call(call, args, None)
 
 
 class Satnet_StoreMessage(object):

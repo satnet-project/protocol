@@ -22,6 +22,10 @@ __author__ = 'xabicrespog@gmail.com'
 
 import os
 import sys
+import calendar
+import pytz
+import time
+from datetime import datetime
 
 from login import Login
 from errors import BadCredentials
@@ -35,8 +39,6 @@ from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
 import misc
-from datetime import datetime
-import pytz
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -205,11 +207,16 @@ class CredReceiver(AMP, TimeoutMixin):
         Create a new connection checking the time slot.
         """
         self.remoteUsr = remoteUsr
+        import dateutil.parser
 
-        iSlotEnd = datetime.utcfromtimestamp(iSlotEnd).replace(tzinfo=pytz.utc)
+        # Datetime object
+        iSlotEnd = dateutil.parser.parse(iSlotEnd)
+        iSlotEnd = int(time.mktime(iSlotEnd.timetuple()))
 
-        slot_remaining_time = int((iSlotEnd -\
-         misc.localize_datetime_utc(datetime.utcnow())).total_seconds())
+        timeNow = misc.localize_datetime_utc(datetime.utcnow())
+        timeNow = int(time.mktime(timeNow.timetuple()))
+
+        slot_remaining_time = iSlotEnd - timeNow
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
         if (slot_remaining_time <= 0):

@@ -86,7 +86,10 @@ class SATNETServer(protocol.Protocol):
     def iStartRemote(self, iSlotId):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
 
-        self.slot = Satnet_GetSlot(str(iSlotId), debug = True).call()
+        iSlotId = -1
+
+        slot = Satnet_GetSlot(iSlotId, debug = True)
+        self.slot = slot.slot
 
         # If slot NOT operational yet...
         if not self.slot:
@@ -95,7 +98,7 @@ class SATNETServer(protocol.Protocol):
                 'Slot ' + str(iSlotId) + ' is not yet operational')
         else:
             # If it is too soon to connect to this slot...
-            if self.slot['state'] != 'RESERVED':
+            if self.slot['state'] != 'TEST': # RESERVED
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
                 raise SlotErrorNotification('Slot ' + str(iSlotId) +\
                  ' has not yet been reserved')
@@ -133,7 +136,6 @@ class SATNETServer(protocol.Protocol):
     # TO-DO
     # Check what kind of list, or dict, do we need.
     # Maybe it's wrong!
-    # ¿¿¿Cuando hace falta esto???
     def vEndRemote(self):
         log.msg("hola endRemote")
         # log.msg("(" + self.sUsername + ") --------- End Remote ---------")
