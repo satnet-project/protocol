@@ -87,6 +87,7 @@ class SATNETServer(protocol.Protocol):
         log.msg("(" + self.sUsername + ") --------- Start Remote ---------")
 
         iSlotId = -1
+        self.iSlotId = iSlotId
 
         slot = Satnet_GetSlot(iSlotId, debug = True)
         self.slot = slot.slot
@@ -168,14 +169,6 @@ class SATNETServer(protocol.Protocol):
     EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):
-
-        # For tests only, where can I get the current channel?
-        slot_id = 2
-        slot = {'state': 'RESERVED',\
-         'gs_channel': 'groundstation_channel',\
-          'sc_channel': 'spacecraft_channel',\
-           'starting_time': 1576836800, 'ending_time': 1677850000 }
-
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
         # TODO. Never enters because the clients are in active_protocols as 
@@ -217,17 +210,14 @@ class SATNETServer(protocol.Protocol):
                 # ... else, send the message to the remote and store it in the DB
         else:
             # NotifyMsg is a class from client_amp
-            #
-            # 
-            #
             # send message to remote client
             # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
 
             self.callRemote(NotifyMsg, sMsg="Protocol has received the message")
 
             # store messages in the DB (as already forwarded)
-            gs_channel = slot['gs_channel']
-            sc_channel = slot['sc_channel']
+            # gs_channel = slot['gs_channel']
+            # sc_channel = slot['sc_channel']
 
             # OWld method
             # Message = Satnet_StoreMessage(operational_slot = slot_id,\
@@ -236,13 +226,15 @@ class SATNETServer(protocol.Protocol):
             #    tx_timestamp = iTimestamp, message = sMsg)
 
             log.msg("Saved message")
-            
-            slot_id = 2
+
             upwards = True
             forwarded = True
-            timestamp = 1677850000
 
-            Message = Satnet_StoreMessage(slot_id, upwards, forwarded,\
+            # Timestamp = Actual time
+            timestamp = misc.localize_datetime_utc(datetime.utcnow())
+            timestamp = int(time.mktime(timestamp.timetuple()))
+
+            Message = Satnet_StoreMessage(self.iSlotId, upwards, forwarded,\
              timestamp, sMsg, debug = True)
 
             return {'bResult': True}

@@ -207,14 +207,16 @@ class CredReceiver(AMP, TimeoutMixin):
         Create a new connection checking the time slot.
         """
         self.remoteUsr = remoteUsr
+        
         import dateutil.parser
-
-        # Datetime object
         iSlotEnd = dateutil.parser.parse(iSlotEnd)
         iSlotEnd = int(time.mktime(iSlotEnd.timetuple()))
 
         timeNow = misc.localize_datetime_utc(datetime.utcnow())
         timeNow = int(time.mktime(timeNow.timetuple()))
+
+        # For tests only
+        iSlotEnd = timeNow + 240
 
         slot_remaining_time = iSlotEnd - timeNow
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
