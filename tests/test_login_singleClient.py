@@ -53,14 +53,14 @@ class ServerProtocolTest(CredReceiver):
         self.factory.onConnectionLost.callback(self)
 
 
-class ClientProtocolTest(ClientProtocol):
+# class ClientProtocolTest(ClientProtocol):
 
-    def connectionMade(self):
-        self.factory.protoInstance = self
-        self.factory.onConnectionMade.callback(self)
+#     def connectionMade(self):
+#         self.factory.protoInstance = self
+#         self.factory.onConnectionMade.callback(self)
 
-    def connectionLost(self, reason):
-        self.factory.onConnectionLost.callback(self)
+#     def connectionLost(self, reason):
+#         self.factory.onConnectionLost.callback(self)
 
 """
 Testing for one single client connection
@@ -139,6 +139,7 @@ class TestSingleClient(unittest.TestCase):
 
     def _connectClient(self, d1, d2):
         self.factory = protocol.ClientFactory.forProtocol(ClientProtocolTest)
+        ClientProtocol
         self.factory.onConnectionMade = d1
         self.factory.onConnectionLost = d2
 

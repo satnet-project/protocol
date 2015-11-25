@@ -225,8 +225,6 @@ class SATNETServer(protocol.Protocol):
             #   upwards = self.bGSuser, forwarded = True,\
             #    tx_timestamp = iTimestamp, message = sMsg)
 
-            log.msg("Saved message")
-
             upwards = True
             forwarded = True
 

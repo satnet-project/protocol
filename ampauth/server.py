@@ -216,7 +216,7 @@ class CredReceiver(AMP, TimeoutMixin):
         timeNow = int(time.mktime(timeNow.timetuple()))
 
         # For tests only
-        iSlotEnd = timeNow + 240
+        iSlotEnd = timeNow + 480
 
         slot_remaining_time = iSlotEnd - timeNow
         log.msg('Slot remaining time: ' + str(slot_remaining_time))

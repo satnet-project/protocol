@@ -147,8 +147,6 @@ class Satnet_GetSlot(object):
 
         self.slot = self.call('scheduling.slot.get', slot_id)
 
-        log.msg(self.slot)
-
     def call(self, call, *args):
         """
         Make an RPC call to the SatNet server.
@@ -210,8 +208,11 @@ class Satnet_StoreMessage(object):
             self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
 
+        hMessage = message.replace(":", "")
+        bMessage = bytearray.fromhex(hMessage)
+        
         self.call('communications.storeMessage', slot_id, upwards, forwarded,\
-        timestamp, message)
+        timestamp, bMessage)
 
     def call(self, call, *args):
         """
