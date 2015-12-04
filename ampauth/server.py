@@ -122,10 +122,10 @@ class CredReceiver(AMP, TimeoutMixin):
 
         log.err(reason.getErrorMessage())
 
-        active_protocols = len(self.factory.active_protocols['localUsr']) + 
-                                len(self.factory.active_protocols['remoteUsr'])
-        active_connections = len(self.factory.active_connections['localUsr']) + 
-                                    len(self.factory.active_connections['remoteUsr'])
+        active_protocols = len(self.factory.active_protocols['localUsr']) +\
+         len(self.factory.active_protocols['remoteUsr'])
+        active_connections = len(self.factory.active_connections['localUsr']) +\
+         len(self.factory.active_connections['remoteUsr'])
 
         log.msg('Active clients: ' + str(active_protocols))
         #  divided by 2 because the dictionary is doubly linked
@@ -180,11 +180,10 @@ class CredReceiver(AMP, TimeoutMixin):
             #  avatar.sUsername = sUsername
             #  self.active_protocols[sUsername] = self
             log.msg('Connection made')
-            active_protocols = len(self.factory.active_protocols['localUsr']) + 
-                                    len(self.factory.active_protocols['remoteUsr'])
-            active_connections = len(self.factory.active_connections['localUsr']) + 
-                                        len(self.factory.active_connections['remoteUsr'])
-           
+            active_protocols = len(self.factory.active_protocols['localUsr']) +\
+             len(self.factory.active_protocols['remoteUsr'])
+            active_connections = len(self.factory.active_connections['localUsr']) +\
+             len(self.factory.active_connections['remoteUsr'])
             log.msg('Active clients: ' + str(active_protocols))
             log.msg('Active connections: ' + str(active_connections))
 
