@@ -1,4 +1,8 @@
 # coding=utf-8
+from twisted.protocols import amp
+from twisted.cred.error import UnauthorizedLogin
+from errors import BadCredentials
+
 """
    Copyright 2014 Xabier Crespo Álvarez
 
@@ -19,10 +23,6 @@
 """
 __author__ = 'xabicrespog@gmail.com'
 
-
-from twisted.protocols import amp
-from twisted.cred.error import UnauthorizedLogin
-from errors import BadCredentials
 
 class Login(amp.Command):
 

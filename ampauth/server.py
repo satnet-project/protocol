@@ -1,4 +1,29 @@
 # coding=utf-8
+import os
+import sys
+import time
+from datetime import datetime
+
+from login import Login
+from errors import BadCredentials
+
+from twisted.internet import reactor
+from twisted.internet.protocol import ServerFactory
+from twisted.cred.error import UnauthorizedLogin
+from twisted.protocols.amp import AMP
+from twisted.protocols.policies import TimeoutMixin
+from twisted.python import log
+
+import misc
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from ampCommands import StartRemote
+from ampCommands import NotifyEvent
+from clientErrors import SlotErrorNotification
+from rpcrequests import Satnet_RPC
+from server_amp import *
+
 """
    Copyright 2014, 2015 Xabier Crespo Álvarez
 
@@ -18,36 +43,6 @@
     Xabier Crespo Álvarez (xabicrespog@gmail.com)
 """
 __author__ = 'xabicrespog@gmail.com'
-
-
-import os
-import sys
-import calendar
-import pytz
-import time
-from datetime import datetime
-
-from login import Login
-from errors import BadCredentials
-
-from twisted.internet import reactor
-from twisted.internet.protocol import ServerFactory
-from twisted.internet.task import LoopingCall
-from twisted.cred.error import UnauthorizedLogin
-from twisted.protocols.amp import AMP
-from twisted.protocols.policies import TimeoutMixin
-from twisted.python import log
-
-import misc
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from ampCommands import StartRemote
-from ampCommands import NotifyEvent
-from ampCommands import EndRemote
-from clientErrors import SlotErrorNotification
-from rpcrequests import Satnet_RPC
-from server_amp import *
 
 
 class CredReceiver(AMP, TimeoutMixin):
@@ -84,7 +79,7 @@ class CredReceiver(AMP, TimeoutMixin):
     rpc_if = None
     logout = None
     sUsername = ''
-    iTimeOut = 300  # seconds
+    iTimeOut = 300  #  seconds
     session = None
 
     avatar = None
@@ -104,7 +99,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
     def doSomething(self, text_error):
         log.err("hey doSomething")
-        #log.err(text)
+        #  log.err(text)
 
     def connectionLost(self, reason):
         if self.sUsername in self.factory.active_protocols['localUsr']:
@@ -116,28 +111,27 @@ class CredReceiver(AMP, TimeoutMixin):
         if self.remoteUsr in self.factory.active_connections['remoteUsr']:
             self.factory.active_connections['remoteUsr'] = []
 
-        # notification is a Deferred
-        # notification = self.callRemote(EndRemote)
+        #  notification is a Deferred
+        #  notification = self.callRemote(EndRemote)
 
-        # notification.addErrback(self.doSomething)
-        # notification.callback('error')
+        #  notification.addErrback(self.doSomething)
+        #  notification.callback('error')
 
         if self.session is not None:
             self.session.cancel()
 
         log.err(reason.getErrorMessage())
 
-        active_protocols = len(self.factory.active_protocols['localUsr']) +\
-         len(self.factory.active_protocols['remoteUsr'])
-        active_connections = len(self.factory.active_connections['localUsr']) +\
-         len(self.factory.active_connections['remoteUsr'])
+        active_protocols = len(self.factory.active_protocols['localUsr']) + 
+                                len(self.factory.active_protocols['remoteUsr'])
+        active_connections = len(self.factory.active_connections['localUsr']) + 
+                                    len(self.factory.active_connections['remoteUsr'])
 
         log.msg('Active clients: ' + str(active_protocols))
-        # divided by 2 because the dictionary is doubly linked
+        #  divided by 2 because the dictionary is doubly linked
         log.msg('Active connections: ' + str(active_connections))
 
-        # I must call the instance EndRemote for notice about connection's end.
-
+        #  I must call the instance EndRemote for notice about connection's end.
 
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
@@ -150,8 +144,8 @@ class CredReceiver(AMP, TimeoutMixin):
         """
         self.factory = CredAMPServerFactory()
         #
-        # Don't mix asynchronus and syncronus code.
-        # Try-except sentences aren't allowed.
+        #  Don't mix asynchronus and syncronus code.
+        #  Try-except sentences aren't allowed.
         #
 
         try:
@@ -174,23 +168,23 @@ class CredReceiver(AMP, TimeoutMixin):
             log.err('Client already logged in')
             raise UnauthorizedLogin('Client already logged in')
         else:
-            # Attach local user to active protocols list.
+            #  Attach local user to active protocols list.
             self.sUsername = sUsername
             self.factory.active_protocols['localUsr'].append(self.sUsername)
 
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
             self.protocol = SATNETServer
-            # avatar.factory = self.factory
-            # avatar.credProto = self
-            # avatar.sUsername = sUsername
-            # self.active_protocols[sUsername] = self
+            #  avatar.factory = self.factory
+            #  avatar.credProto = self
+            #  avatar.sUsername = sUsername
+            #  self.active_protocols[sUsername] = self
             log.msg('Connection made')
-            active_protocols = len(self.factory.active_protocols['localUsr']) +\
-             len(self.factory.active_protocols['remoteUsr'])
-            active_connections = len(self.factory.active_connections['localUsr']) +\
-             len(self.factory.active_connections['remoteUsr'])
-            
+            active_protocols = len(self.factory.active_protocols['localUsr']) + 
+                                    len(self.factory.active_protocols['remoteUsr'])
+            active_connections = len(self.factory.active_connections['localUsr']) + 
+                                        len(self.factory.active_connections['remoteUsr'])
+           
             log.msg('Active clients: ' + str(active_protocols))
             log.msg('Active connections: ' + str(active_connections))
 
@@ -207,7 +201,7 @@ class CredReceiver(AMP, TimeoutMixin):
         Create a new connection checking the time slot.
         """
         self.remoteUsr = remoteUsr
-        
+       
         import dateutil.parser
         iSlotEnd = dateutil.parser.parse(iSlotEnd)
         iSlotEnd = int(time.mktime(iSlotEnd.timetuple()))
@@ -224,18 +218,18 @@ class CredReceiver(AMP, TimeoutMixin):
         if (slot_remaining_time <= 0):
             log.err('This slot (' + str(iSlotId) + ') has expired')
 
-            raise SlotErrorNotification('This slot (' + str(iSlotId) +\
-             ') has expired')
+            raise SlotErrorNotification('This slot (' + str(iSlotId) + 
+                                        ') has expired')
         elif (slot_remaining_time > 0):
 
             # If time is correct, attach remote user to active_protocols
             self.factory.active_protocols['remoteUsr'].append(remoteUsr)
         else:
             log.msg('Time error.')
-     
-        # Create an instante for finish the slot at correct time.  
-        self.session = reactor.callLater(slot_remaining_time,\
-         self.vSlotEnd, iSlotId)
+    
+        #  Create an instante for finish the slot at correct time.  
+        self.session = reactor.callLater(slot_remaining_time, 
+                                            self.vSlotEnd, iSlotId)
 
         if remoteUsr not in self.factory.active_protocols['remoteUsr']:
 
@@ -252,31 +246,29 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections['remoteUsr'].append(remoteUsr)
             self.factory.active_connections['localUsr'].append(localUsr)
 
-            notification = self.callRemote(NotifyEvent,\
-             iEvent=NotifyEvent.REMOTE_CONNECTED, sDetails=str(remoteUsr))
+            notification = self.callRemote(NotifyEvent, 
+                                            iEvent=NotifyEvent.REMOTE_CONNECTED, 
+                                            sDetails=str(remoteUsr))
             log.msg(notification)
 
-            log.msg('Active clients: ' +\
-             str(len(self.factory.active_protocols)))           
+            log.msg('Active clients: ' + 
+                    str(len(self.factory.active_protocols)))           
             # divided by 2 because the dictionary is doubly linked
-            log.msg('Active connections: ' +\
-             str(len(self.factory.active_connections) / 2))
-
+            log.msg('Active connections: ' + 
+                    str(len(self.factory.active_connections) / 2))
 
             return {'iResult': StartRemote.REMOTE_READY}
 
-
     def vSlotEnd(self, iSlotId):
-        log.msg("(" + self.sUsername + ") Slot " +\
-         str(iSlotId) + ' has finished')
-        self.callRemote(NotifyEvent, iEvent=NotifyEvent.SLOT_END,\
-         sDetails=None)
-        # Remove the timer ID reference to avoid it to be canceled
-        # a second time when the client disconnects
-        
-        # Session is an instance of 
+        log.msg("(" + self.sUsername + ") Slot " + 
+                str(iSlotId) + ' has finished')
+        self.callRemote(NotifyEvent, iEvent=NotifyEvent.SLOT_END, 
+                        sDetails=None)
+        #  Remove the timer ID reference to avoid it to be canceled
+        #  a second time when the client disconnects
+       
+        #  Session is an instance of 
         self.session = None
-
 
 
 class CredAMPServerFactory(ServerFactory):
