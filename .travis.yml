@@ -19,6 +19,12 @@ git:
 #   - git checkout jrpc_if
 #   - cd ../scripts 
 
+install:
+  - pip install coverage
+  - pip install coveralls
+  - pip install nose
+
+
 # install:
   # - bash ./setup.sh -travisCI
   # - cd ../tests
@@ -45,5 +51,8 @@ git:
 #  - coverage run test_clientToServer.py
 #  - coverage run test_serverToClient.py
 
-# after_success:
-#   - 'coveralls'
+script:
+  - nosetests --with-coverage --cover-erase
+
+after_success:
+  - 'coveralls'
