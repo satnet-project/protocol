@@ -21,7 +21,6 @@ install:
 
 script:
   - cd ../
-  - python setup.py install
   - nosetests --with-coverage --cover-erase
   - cd tests/
   - pwd
