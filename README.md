@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/satnet-project/protocol.svg)](https://travis-ci.org/satnet-project/protocol)
 [![Code Health](https://landscape.io/github/satnet-project/protocol/master/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/master)
 
 ### Protocol communications for SATNet project.
