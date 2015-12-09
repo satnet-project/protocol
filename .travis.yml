@@ -58,6 +58,7 @@ script:
 
 after_success:
   - cd ../
+  - pwd
   - coverage combine
   - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
   - 'coveralls'
