@@ -20,9 +20,7 @@ install:
   - bash ./setup.sh -travisCI
 
 script:
-  - pwd
   - cd ../
-  - pwd
   - nosetests --with-coverage --cover-erase
   - cd tests/
   - pwd
@@ -32,4 +30,4 @@ after_success:
   - cd ../
   - coverage combine
   - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
-  - 'coveralls'
+  - coveralls
