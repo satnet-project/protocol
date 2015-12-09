@@ -24,6 +24,7 @@ script:
   - pwd
   - ls -a
   - nosetests --with-coverage --cover-erase
+  - nosetests --exclude-dir=/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/
   # - coverage combine
   # - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
   - cd tests/
