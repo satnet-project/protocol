@@ -50,11 +50,15 @@ install:
   # - pwd
   # - ls
   # - nosetests --with-coverage --cover-erase --cover-package=ampauth
-#  - coverage run test_clientToServer.py
-#  - coverage run test_serverToClient.py
 
 script:
+  - pwd
+  - cd ../
+  - pwd
   - nosetests --with-coverage --cover-erase
+  - cd tests/
+  - pwd
+  - coverage run test_init.py
 
 after_success:
   - cd ../
