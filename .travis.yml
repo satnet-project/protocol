@@ -23,6 +23,8 @@ install:
   - pip install coverage
   - pip install coveralls
   - pip install nose
+  - cd scripts
+  - bash ./setup.sh -travisCI
 
 
 # install:
