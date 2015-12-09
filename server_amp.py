@@ -63,8 +63,9 @@ class SATNETServer(protocol.Protocol):
         L{CredReceiver}
 
     :ivar bGSuser:
-        Indicates if the current user is a GS user (True) or a SC user (false). If this
-        variable is None, it means that it has not been yet connected.
+        Indicates if the current user is a GS user (True) or a SC user 
+        (false). If this variable is None, it means that it has not been 
+        yet connected.
     :type bGSuser:
         L{boolean}
 
@@ -88,7 +89,7 @@ class SATNETServer(protocol.Protocol):
         iSlotId = -1
         self.iSlotId = iSlotId
 
-        slot = Satnet_GetSlot(iSlotId, debug = True)
+        slot = Satnet_GetSlot(iSlotId, debug=True)
         self.slot = slot.slot
 
         #  If slot NOT operational yet...
@@ -97,17 +98,18 @@ class SATNETServer(protocol.Protocol):
             raise SlotErrorNotification(
                 'Slot ' + str(iSlotId) + ' is not yet operational')
         else:
-            # If it is too soon to connect to this slot...
-            if self.slot['state'] != 'TEST': # RESERVED
+            #  If it is too soon to connect to this slot...
+            if self.slot['state'] != 'TEST':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
-                raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
+                raise SlotErrorNotification('Slot ' + str(iSlotId) +
+                                             ' has not yet been reserved')
 
-            gs_user = self.slot['gs_username']            
+            gs_user = self.slot['gs_username']           
             sc_user = self.slot['sc_username']
             
             #  If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
-                log.err('This slot has not been assigned to this user')               
+                log.err('This slot has not been assigned to this user')              
                 raise SlotErrorNotification('This user is not assigned to this slot')
             #  if the GS user and the SC user belong to the same client...
             elif gs_user == self.sUsername and sc_user == self.sUsername:
@@ -117,15 +119,15 @@ class SATNETServer(protocol.Protocol):
             elif gs_user == self.sUsername:
                 self.bGSuser = True
 
-                return self.CreateConnection(self.slot['ending_time'],\
-                 iSlotId, sc_user, gs_user)
+                return self.CreateConnection(self.slot['ending_time'], iSlotId,
+                                             sc_user, gs_user)
 
             #  if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
 
-                return self.CreateConnection(self.slot['ending_time'],\
-                 iSlotId, gs_user, sc_user)
+                return self.CreateConnection(self.slot['ending_time'],
+                                             iSlotId, gs_user, sc_user)
 
     StartRemote.responder(iStartRemote)
 
@@ -218,11 +220,11 @@ def main():
     log.startLogging(sys.stdout)
 
     pf = CredAMPServerFactory()
- 
-    sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',\
-     'key/public.pem',)
 
-    reactor.listenSSL(1234, pf, contextFactory = sslContext,)
+    sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',
+                                                    'key/public.pem',)
+
+    reactor.listenSSL(1234, pf, contextFactory=sslContext,)
 
     log.msg('Server running...')
     reactor.run()
@@ -237,6 +239,6 @@ if __name__ == '__main__':
             main()
 
         if sys.argv[1] == '--help':
-            print "Help"  
+            print "Help"
     except:
         main()
