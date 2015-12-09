@@ -28,9 +28,6 @@ then
 
 	echo ">>> This script will generate a daemon for SATNet protocol"
 	sudo mkdir /opt/satnet
-
-	pwd
-
 	sudo cp -r -f ../../protocol /opt/satnet/
 
 	sudo cp satnet-protocol.sh /usr/local/bin
