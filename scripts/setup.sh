@@ -2,7 +2,7 @@
 script_path="$( cd "$( dirname "$0" )" && pwd )"
 project_path=$( readlink -e "$script_path/.." )
 
-if [ $1 == '-travisCI'];
+if [ $1 == '-travisCI' ];
 then
 	venv_path="$project_path/.venv"
 
