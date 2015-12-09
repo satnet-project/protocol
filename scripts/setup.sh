@@ -23,6 +23,21 @@ then
 	# Create a self-signed certicate
 	bash "$script_path/protocol-setup.sh"
 
+	# Supervisor install
+	sudo apt --assume-yes install supervisor
+
+	echo ">>> This script will generate a daemon for SATNet protocol"
+	sudo mkdir /opt/satnet
+	sudo cp ../../protocol /opt/satnet/
+
+	sudo cp satnet-protocol.sh /usr/local/bin
+	sudo chmod +x /usr/local/bin/satnet-protocol.sh
+
+	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
+
+	sudo supervisorctl reread
+	sudo supervisorctl update
+
 elif [ $1 == '-travisCI' ];
 then
 	venv_path="$project_path/.venv"
