@@ -57,4 +57,7 @@ script:
   - nosetests --with-coverage --cover-erase
 
 after_success:
+  - cd ../
+  - coverage combine
+  - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
   - 'coveralls'
