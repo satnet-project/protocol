@@ -1,4 +1,23 @@
 # coding=utf-8
+import sys
+import logging
+
+from twisted.python import log
+from twisted.internet import reactor
+from twisted.internet import ssl
+from twisted.internet import protocol
+
+from ampauth.server import *
+from clientErrors import SlotErrorNotification
+
+from rpcrequests import Satnet_GetSlot
+from rpcrequests import Satnet_StorePassiveMessage
+from ampCommands import StartRemote
+from ampCommands import EndRemote
+from ampCommands import SendMsg
+from ampCommands import NotifyMsg
+
+
 """
      Copyright 2014, 2015 Xabier Crespo Álvarez
 
@@ -18,26 +37,6 @@
     Xabier Crespo Álvarez (xabicrespog@gmail.com)
 """
 __author__ = 'xabicrespog@gmail.com'
-
-
-import sys
-import logging
-
-from twisted.python import log
-from twisted.internet import reactor
-from twisted.internet import ssl
-from twisted.internet import protocol
-
-from ampauth.server import *
-from clientErrors import SlotErrorNotification
-
-from rpcrequests import Satnet_GetSlot
-from rpcrequests import Satnet_StoreMessage 
-from rpcrequests import Satnet_StorePassiveMessage
-from ampCommands import StartRemote
-from ampCommands import EndRemote
-from ampCommands import SendMsg
-from ampCommands import NotifyMsg
 
 
 class SATNETServer(protocol.Protocol):
@@ -92,7 +91,7 @@ class SATNETServer(protocol.Protocol):
         slot = Satnet_GetSlot(iSlotId, debug = True)
         self.slot = slot.slot
 
-        # If slot NOT operational yet...
+        #  If slot NOT operational yet...
         if not self.slot:
             log.err('Slot ' + str(iSlotId) + ' is not yet operational')
             raise SlotErrorNotification(
@@ -101,31 +100,27 @@ class SATNETServer(protocol.Protocol):
             # If it is too soon to connect to this slot...
             if self.slot['state'] != 'TEST': # RESERVED
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
-                raise SlotErrorNotification('Slot ' + str(iSlotId) +\
-                 ' has not yet been reserved')
+                raise SlotErrorNotification('Slot ' + str(iSlotId) + ' has not yet been reserved')
 
             gs_user = self.slot['gs_username']            
             sc_user = self.slot['sc_username']
             
-            # If this slot has not been assigned to this user...
+            #  If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
-                log.err('This slot has not been assigned to this user')
-                
-                raise SlotErrorNotification(
-                    'This user is not assigned to this slot')
-            #... if the GS user and the SC user belong to the same client...
+                log.err('This slot has not been assigned to this user')               
+                raise SlotErrorNotification('This user is not assigned to this slot')
+            #  if the GS user and the SC user belong to the same client...
             elif gs_user == self.sUsername and sc_user == self.sUsername:
-                log.msg('Both MCC and GSS belong to the same client')
-                
+                log.msg('Both MCC and GSS belong to the same client')              
                 return {'iResult': StartRemote.CLIENTS_COINCIDE}
-            #... if the remote client is the SC user...
+            #  if the remote client is the SC user...
             elif gs_user == self.sUsername:
                 self.bGSuser = True
 
                 return self.CreateConnection(self.slot['ending_time'],\
                  iSlotId, sc_user, gs_user)
 
-            #... if the remote client is the GS user...
+            #  if the remote client is the GS user...
             elif sc_user == self.sUsername:
                 self.bGSuser = False
 
@@ -170,60 +165,35 @@ class SATNETServer(protocol.Protocol):
 
     def vSendMsg(self, sMsg, iTimestamp):
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
-        # If the client haven't started a connection via StartRemote command...
+        # If the client haven't started a connection via StartRemote command
         # TODO. Never enters because the clients are in active_protocols as 
         # soon as they log in
 
         if self.sUsername not in self.factory.active_connections['localUsr']:
-        # if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
-        # ... if the SC operator is not connected, sent messages will be saved
-        # as passive messages...
-        elif self.factory.active_connections['localUsr'] == False:
+        #  if the SC operator is not connected, sent messages will be saved
+        #  as passive messages...
+        elif self.factory.active_connections['localUsr'] is False:
             return {'bResult': False}
-            
-            if self.bGSuser == True:
-                # elif self.factory.active_connections[self.sUsername] == None\
-                # and self.bGSuser == True:
-                PassiveMessage = Satnet_StorePassiveMessage(groundstation_id =\
-                 'groundstation_id', timestamp = 'timestamp', doppler_shift =\
-                  'doppler_shift', message = sMsg, debug = True)
 
-                """
-                Old method. Should be maintained until the system runs without problems.
-                """
-                # Message.objects.create(operational_slot=self.slot[0],\
-                #  gs_channel=gs_channel, sc_channel=sc_channel,\
-                #   upwards=self.bGSuser, forwarded=False, tx_timestamp=iTimestamp,\
-                #    message=sMsg)
-
+            if self.bGSuser is True:
+                PassiveMessage = Satnet_StorePassiveMessage(
+                    groundstation_id='groundstation_id',
+                    timestamp='timestamp',
+                    doppler_shift='doppler_shift',
+                    message=sMsg, debug=True)
+                log.msg(PassiveMessage)
                 log.msg('Message saved on server')
-
-                # ... if the GS operator is not connected, the remote SC client 
-                # will be notified to wait for the GS to connect...
-            elif self.bGSuser == False:
-                self.callRemote(NotifyEvent,\
-                 iEvent=NotifyEvent.REMOTE_DISCONNECTED, sDetails=None)
+            elif self.bGSuser is False:
+                self.callRemote(NotifyEvent,
+                                iEvent=NotifyEvent.REMOTE_DISCONNECTED,
+                                sDetails=None)
                 return {'bResult': False}
-                # ... else, send the message to the remote and store it in the DB
         else:
-            # NotifyMsg is a class from client_amp
-            # send message to remote client
-            # self.factory.active_protocols[self.factory.active_connections[self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
-
-            self.callRemote(NotifyMsg, sMsg="Protocol has received the message")
-
-            # store messages in the DB (as already forwarded)
-            # gs_channel = slot['gs_channel']
-            # sc_channel = slot['sc_channel']
-
-            # OWld method
-            # Message = Satnet_StoreMessage(operational_slot = slot_id,\
-            #  gs_channel = gs_channel, sc_channel = sc_channel,\
-            #   upwards = self.bGSuser, forwarded = True,\
-            #    tx_timestamp = iTimestamp, message = sMsg)
+            self.callRemote(NotifyMsg,
+                            sMsg="Protocol has received the message")
 
             upwards = True
             forwarded = True
@@ -232,26 +202,18 @@ class SATNETServer(protocol.Protocol):
             timestamp = misc.localize_datetime_utc(datetime.utcnow())
             timestamp = int(time.mktime(timestamp.timetuple()))
 
-            Message = Satnet_StoreMessage(self.iSlotId, upwards, forwarded,\
-             timestamp, sMsg, debug = True)
+            #  the remote client is online so the message will be send
+            Satnet_StoreMessage(self.iSlotId, upwards, forwarded,
+                                timestamp, sMsg, debug=True)
+            log.msg(Satnet_StoreMessage)
 
             return {'bResult': True}
-
-            # Old method. Should be maintained until the system runs 
-            # without problems.
-            # gs_channel = self.slot[0].groundstation_channel
-            # sc_channel = self.slot[0].spacecraft_channel
-
-            # Message.objects.create(operational_slot=self.slot[0],\
-            #  gs_channel=gs_channel, sc_channel=sc_channel,\
-            #   upwards=self.bGSuser, forwarded=True, tx_timestamp=iTimestamp,\
-            #    message=sMsg)
 
     SendMsg.responder(vSendMsg)
 
 
 def main():
-    logger = logging.getLogger('server')
+    logging.getLogger('server')
 
     log.startLogging(sys.stdout)
 
@@ -275,10 +237,6 @@ if __name__ == '__main__':
             main()
 
         if sys.argv[1] == '--help':
-            print "Help"
-    
+            print "Help"  
     except:
         main()
-
-
-
