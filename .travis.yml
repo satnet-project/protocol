@@ -21,10 +21,8 @@ install:
 
 script:
   - cd ../
-#  - nosetests --with-coverage --cover-erase --cover-inclusive
+  - nosetests --with-coverage --cover-erase --cover-inclusive
   - cd tests
-#  - coverage run test_init.py
-  - coverage run --source=/home/travis/
 
 after_success:
   - cd ../
