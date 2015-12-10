@@ -21,15 +21,12 @@ install:
 
 script:
   - cd ../
-  - pwd
-  - ls -a
-  - nosetests --with-coverage --cover-erase --cover-inclusive
+#  - nosetests --with-coverage --cover-erase --cover-inclusive
   - cd tests
   - coverage run test_init.py
 
 after_success:
   - cd ../
-  - coverage combine
   - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
   - coverage combine
   - cat .coverage

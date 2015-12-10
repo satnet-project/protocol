@@ -35,6 +35,13 @@ then
 
 	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
 
+	sudo cp -r -f ../../server /opt/satnet
+
+	sudo cp satnet-server.sh /usr/local/bin
+	sudo chmod +x /usr/local/bin/satnet-server.sh
+
+	sudo cp satnet-server-conf.conf /etc/supervisor/conf.d/
+
 	sudo supervisorctl reread
 	sudo supervisorctl update
 
