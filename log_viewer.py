@@ -12,8 +12,6 @@ from PyQt4 import QtGui, QtCore
 
 from Queue import Queue
 
-from twisted.python import log
-
 
 """
      Copyright 2015 Samuel Góngora García
@@ -44,46 +42,44 @@ class LogViewer(QtGui.QWidget):
 
         enviromentDesktop = os.environ.get('DESKTOP_SESSION')
 
+        name = 'hola'
+
+        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
+        self.setFixedSize(1300, 800)
+        self.setWindowTitle("SATNet protocol console - %s" %(name)) 
+
+        filesAvailable = []
+        filesAvailable = self.searchForLogs()
+        self.initButtons(filesAvailable)
+        self.initLogo()
+        self.initConsole()
+
     def initUI(self):
         pass
 
-    def initButtons(self):
+    def initButtons(self, filesAvailable):
         # Control buttons.
         buttons = QtGui.QGroupBox(self)
         grid = QtGui.QGridLayout(buttons)
         buttons.setLayout(grid)
 
-        # New connection.
-        self.ButtonNew = QtGui.QPushButton("Connection")
-        self.ButtonNew.setToolTip("Start a new connection using the selected connection")
-        self.ButtonNew.setFixedWidth(145)
-        self.ButtonNew.clicked.connect(self.NewConnection)
-        # Close connection.
-        self.ButtonCancel = QtGui.QPushButton("Disconnection")
-        self.ButtonCancel.setToolTip("End current connection")
-        self.ButtonCancel.setFixedWidth(145)
-        self.ButtonCancel.clicked.connect(self.CloseConnection)
-        self.ButtonCancel.setEnabled(False)
-        # Load parameters from file
-        ButtonLoad = QtGui.QPushButton("Load parameters from file")
-        ButtonLoad.setToolTip("Load parameters from <i>.settings</i> file")
-        ButtonLoad.setFixedWidth(296)
-        ButtonLoad.clicked.connect(self.LoadParameters, 1)
+        # File selector
+        self.LabelFile = QtGui.QComboBox()
+        self.LabelFile.setFixedWidth(300)
+        self.LabelFile.addItems(filesAvailable)
+        self.LabelFile.activated.connect(self.openFile)
         # Configuration
         ButtonConfiguration = QtGui.QPushButton("Configuration")
         ButtonConfiguration.setToolTip("Open configuration window")
         ButtonConfiguration.setFixedWidth(145)
-        ButtonConfiguration.clicked.connect(self.SetConfiguration)
         # Help.
         ButtonHelp = QtGui.QPushButton("Help")
         ButtonHelp.setToolTip("Click for help")
         ButtonHelp.setFixedWidth(145)
         ButtonHelp.clicked.connect(self.usage)
-        grid.addWidget(self.ButtonNew, 0, 0, 1, 1)
-        grid.addWidget(self.ButtonCancel, 0, 1, 1, 1)
-        grid.addWidget(ButtonLoad, 1, 0, 1, 2)
-        grid.addWidget(ButtonConfiguration, 2, 0, 1, 1)
-        grid.addWidget(ButtonHelp, 2, 1, 1, 1)
+        grid.addWidget(self.LabelFile, 0, 0, 1, 2)
+        grid.addWidget(ButtonConfiguration, 1, 0, 1, 1)
+        grid.addWidget(ButtonHelp, 1, 1, 1, 1)
         buttons.setTitle("Connection")
         buttons.move(10, 10)
 
@@ -102,9 +98,6 @@ class LogViewer(QtGui.QWidget):
         self.console.setFont(QtGui.QFont('SansSerif', 11))
 
     def usage(self):
-        log.msg("USAGE of client_amp.py")
-        log.msg("Usage: python client_amp.py [-u <username>]")
-        log.msg("Set SATNET username to login")
         print ("\n"          
                 "Usage: python client_amp.py [-p <password>] # Set SATNET user password to login\n"
                 "Usage: python client_amp.py [-t <slot_ID>] # Set the slot id corresponding to the pass you will track\n"
@@ -128,6 +121,21 @@ class LogViewer(QtGui.QWidget):
                 "[UDP]\n"
                 "ip: 127.0.0.1\n"
                 "udpport: 5005")
+
+    def searchForLogs(self):
+        from os import listdir, chdir
+        filesAvailable = listdir('/var/log/')
+        filesNeeded = []
+        for i in range(len(filesAvailable)):
+            if filesAvailable[i].startswith('satnet'):
+                filesNeeded.append(filesAvailable[i])
+        return filesNeeded
+
+    def openFile(self):
+        fileNeeded = str(self.LabelFile.currentText())
+        fileNeeded = '/var/log/' + fileNeeded
+        file = open(fileNeeded, 'r')
+        print file.read()
 
     def center(self):
         frameGm = self.frameGeometry()
@@ -180,21 +188,11 @@ class ResultObj(QtCore.QObject):
 
 
 if __name__ == '__main__':
-    username = ""
-    password = ""
-    slot = ""
-    connection = ""
-    serialPort = ""
-    baudRate = ""
-    UDPIp = ""
-    UDPPort = ""
-
     queue = Queue()
-    # sys.stdout = WriteStream(queue)
+    sys.stdout = WriteStream(queue)
 
-    log.startLogging(sys.stdout)
-    log.msg('------------------------------------------------- ' +
-            'SATNet - Generic client' +
+    print('------------------------------------------------- ' +
+            'SATNet - Protocol log viewer' +
             ' -------------------------------------------------')
 
     qapp = QtGui.QApplication(sys.argv)
@@ -208,6 +206,7 @@ if __name__ == '__main__':
     my_receiver.mysignal.connect(app.append_text)
     my_receiver.start()
 
+    sys.exit(qapp.exec_())
 
     """
     from qtreactor import pyqt4reactor
