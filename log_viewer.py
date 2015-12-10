@@ -208,7 +208,6 @@ if __name__ == '__main__':
     my_receiver.mysignal.connect(app.append_text)
     my_receiver.start()
 
-    sys.exit(app.exec_)
 
     """
     from qtreactor import pyqt4reactor
