@@ -12,6 +12,7 @@ from clientErrors import SlotErrorNotification
 
 from rpcrequests import Satnet_GetSlot
 from rpcrequests import Satnet_StorePassiveMessage
+from rpcrequests import Satnet_StoreMessage
 from ampCommands import StartRemote
 from ampCommands import EndRemote
 from ampCommands import SendMsg
