@@ -23,7 +23,7 @@ script:
   - cd ../
   - pwd
   - ls -a
-  - nosetests --with-coverage --cover-erase
+  - nosetests --with-coverage --cover-erase --cover-inclusive
   - cd tests
   - coverage run test_init.py
 
