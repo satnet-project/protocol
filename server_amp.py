@@ -58,13 +58,14 @@ class SATNETServer(protocol.Protocol):
         L{ServerFactory}
 
     :ivar credProto:
-        Used to disconnect the users from the servers (via credProto.loseConnection())
+        Used to disconnect the users from the servers
+        (via credProto.loseConnection())
     :type credProto:
         L{CredReceiver}
 
     :ivar bGSuser:
-        Indicates if the current user is a GS user (True) or a SC user 
-        (false). If this variable is None, it means that it has not been 
+        Indicates if the current user is a GS user (True) or a SC user
+        (false). If this variable is None, it means that it has not been
         yet connected.
     :type bGSuser:
         L{boolean}

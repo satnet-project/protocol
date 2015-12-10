@@ -2,7 +2,7 @@
 script_path="$( cd "$( dirname "$0" )" && pwd )"
 project_path=$( readlink -e "$script_path/.." )
 
-if [ $1 == '-i' ];
+if [ $1 == '-install' ];
 then
 	venv_path="$project_path/.venv"
 
@@ -86,5 +86,19 @@ then
 
 	# Create a self-signed certicate
 	# bash "$script_path/protocol-setup.sh"
+
+elif [ $1 == '-uninstall' ];
+then
+
+	echo ">>> This script will remove the daemon for SATNet protocol"
+	sudo rm -r -f /opt/satnet/
+
+	sudo rm /usr/local/bin/satnet-protocol.sh
+	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
+
+	sudo rm /usr/local/bin/satnet-server.sh
+	sudo rm /etc/supervisor/conf.d/satnet-server-conf.conf
+
+	sudo apt --assume-yes remove supervisor
 
 fi
