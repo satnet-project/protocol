@@ -1,0 +1,9 @@
+dependencies:
+  pre:
+    - sudo apt-get install python-mock
+    - sudo apt-get install python-twisted
+    - cd scripts && bash ./setup.sh -circleCI
+
+test:
+  override:
+    - cd tests/ && python test_init.py
