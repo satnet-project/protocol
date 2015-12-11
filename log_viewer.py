@@ -1,15 +1,8 @@
 # coding=utf-8
 import sys
-import logging
-
-
-
-import sys
 import os
-import warnings
 
 from PyQt4 import QtGui, QtCore
-
 from Queue import Queue
 
 
@@ -42,7 +35,10 @@ class LogViewer(QtGui.QWidget):
 
         enviromentDesktop = os.environ.get('DESKTOP_SESSION')
 
-        name = 'hola'
+        import ConfigParser
+        config = ConfigParser.ConfigParser()
+        config.read(".settings")
+        name = config.get('Server', 'name')
 
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
         self.setFixedSize(1300, 800)

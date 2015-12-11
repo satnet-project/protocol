@@ -101,4 +101,12 @@ then
 
 	sudo apt --assume-yes remove supervisor
 
+elif [ $1 == '-update' ];
+then
+	echo ">>> This script will update protocol files and directories"
+
+	# Copiar ficheros.
+	# Copiar scripts.
+	# Reiniciar daemon.
+
 fi

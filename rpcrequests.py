@@ -146,8 +146,6 @@ class Satnet_GetSlot(object):
              HttpSessionTransport('http://localhost:8000/jrpc/'))
 
         self.slot = self.call('scheduling.slot.get', slot_id)
-        print "el slot es"
-        print self.slot
 
     def call(self, call, *args):
         """
