@@ -27,21 +27,24 @@ then
 	sudo apt --assume-yes install supervisor
 
 	echo ">>> This script will generate a daemon for SATNet protocol"
+	echo ">>> Populating directories"
 	sudo mkdir /opt/satnet
-	sudo cp -r -f ../../protocol /opt/satnet/
+	sudo mkdir /opt/satnet/protocol
+	sudo cp -r -f ../../protocol /opt/satnet/protocol
 
+	sudo mkdir /opt/satnet/server
+	sudo cp -r -f ../../server /opt/satnet/server
+
+	echo ">>> Copying daemons"
 	sudo cp satnet-protocol.sh /usr/local/bin
 	sudo chmod +x /usr/local/bin/satnet-protocol.sh
-
 	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
-
-	sudo cp -r -f ../../server /opt/satnet
 
 	sudo cp satnet-server.sh /usr/local/bin
 	sudo chmod +x /usr/local/bin/satnet-server.sh
-
 	sudo cp satnet-server-conf.conf /etc/supervisor/conf.d/
 
+	echo ">>> Updating Supervisor"
 	sudo supervisorctl reread
 	sudo supervisorctl update
 
@@ -107,10 +110,15 @@ then
 	echo ">>> Removing old data"
 	sudo rm -rf /opt/satnet/
 
+	echo ">>> Downloading new data" # To-do. Download new server data.
+	wget https://github.com/satnet-project/protocol/archive/jrpc_if.zip
+	unzip jrpc_if
+
 	echo ">>> Copying new data"
-	sudo mkdir /opt/satnet/protocol
-	sudo mkdir /opt/satnet/protocol
-	sudo cp -rf ../../protocol /opt/satnet/protocol
+	sudo mkdir /opt/satnet/
+	sudo mkdir /opt/satnet/protocol/
+	sudo cp -rf protocol-jrpc_if/* /opt/satnet/protocol/
+	rm -rf protocol-jrpc_if/
 	sudo mkdir /opt/satnet/server
 	sudo cp -rf ../../server /opt/satnet/server
 
