@@ -170,7 +170,7 @@ class SATNETServer(protocol.Protocol):
     def vSendMsg(self, sMsg, iTimestamp):
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command
-        # TODO. Never enters because the clients are in active_protocols as 
+        # TODO. Never enters because the clients are in active_protocols as
         # soon as they log in
 
         if self.sUsername not in self.factory.active_connections['localUsr']:

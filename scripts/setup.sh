@@ -29,11 +29,11 @@ then
 	echo ">>> This script will generate a daemon for SATNet protocol"
 	echo ">>> Populating directories"
 	sudo mkdir /opt/satnet
-	sudo mkdir /opt/satnet/protocol
-	sudo cp -r -f ../../protocol /opt/satnet/protocol
+	# sudo mkdir /opt/satnet/protocol
+	sudo cp -r -f ../../protocol /opt/satnet/
 
-	sudo mkdir /opt/satnet/server
-	sudo cp -r -f ../../server /opt/satnet/server
+	# sudo mkdir /opt/satnet/server
+	sudo cp -r -f ../../server /opt/satnet/
 
 	echo ">>> Copying daemons"
 	sudo cp satnet-protocol.sh /usr/local/bin

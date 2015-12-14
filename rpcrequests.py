@@ -47,11 +47,11 @@ class HttpSessionTransport(HttpPostClientTransport):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        r = self.s.post(self.endpoint, data=message,\
-         headers={'content-type':'application/json'})
+        r = self.s.post(self.endpoint, data=message, headers={'content-type':'application/json'})
 
         if expect_reply:
             return r.content
+
 
 class JSONRPCProtocolFix(JSONRPCProtocol):
     """
@@ -139,11 +139,15 @@ class Satnet_GetSlot(object):
 
     def __init__(self, slot_id, debug=False):
         if not debug:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
+            self._rpc_client = RPCClient(
+                JSONRPCProtocolFix(),
+                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
+                )
         else:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('http://localhost:8000/jrpc/'))
+            self._rpc_client = RPCClient(JSONRPCProtocolFix(),
+                                         HttpSessionTransport(
+                                            'http://localhost:8000/jrpc/')
+                                         )
 
         self.slot = self.call('scheduling.slot.get', slot_id)
 
