@@ -104,9 +104,31 @@ then
 elif [ $1 == '-update' ];
 then
 	echo ">>> This script will update protocol files and directories"
+	echo ">>> Removing old data"
+	sudo rm -rf /opt/satnet/
 
-	# Copiar ficheros.
-	# Copiar scripts.
-	# Reiniciar daemon.
+	echo ">>> Copying new data"
+	sudo mkdir /opt/satnet/protocol
+	sudo mkdir /opt/satnet/protocol
+	sudo cp -rf ../../protocol /opt/satnet/protocol
+	sudo mkdir /opt/satnet/server
+	sudo cp -rf ../../server /opt/satnet/server
+
+	echo ">>> Updating daemon protocol"
+	sudo rm /usr/local/bin/satnet-protocol.sh
+	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
+	sudo cp satnet-protocol.sh /usr/local/bin
+	sudo chmod +x /usr/local/bin/satnet-protocol.sh
+	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
+
+	echo ">>> Updating daemon server"
+	sudo rm /usr/local/bin/satnet-server.sh
+	sudo rm /etc/supervisor/conf.d/satnet-server-conf.conf
+	sudo cp satnet-server.sh /usr/local/bin
+	sudo chmod +x /usr/local/bin/satnet-server.sh
+	sudo cp satnet-server-conf.conf /etc/supervisor/conf.d/
+
+	echo ">>> Updating Supervisor"
+	sudo supervisorctl update
 
 fi
