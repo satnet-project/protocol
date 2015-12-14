@@ -33,7 +33,7 @@ class LogViewer(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 18))
 
-        enviromentDesktop = os.environ.get('DESKTOP_SESSION')
+        # enviromentDesktop = os.environ.get('DESKTOP_SESSION')
 
         import ConfigParser
         config = ConfigParser.ConfigParser()
@@ -42,7 +42,7 @@ class LogViewer(QtGui.QWidget):
 
         QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
         self.setFixedSize(1300, 800)
-        self.setWindowTitle("SATNet protocol console - %s" %(name)) 
+        self.setWindowTitle("SATNet protocol console - %s" % (name))
 
         filesAvailable = []
         filesAvailable = self.searchForLogs()
@@ -73,53 +73,44 @@ class LogViewer(QtGui.QWidget):
         ButtonHelp.setToolTip("Click for help")
         ButtonHelp.setFixedWidth(145)
         ButtonHelp.clicked.connect(self.usage)
+        # Clear window
+        ButtonClearWindow = QtGui.QPushButton("Clear Window")
+        ButtonClearWindow.setToolTip("Click for clear the actual window")
+        ButtonClearWindow.setFixedWidth(145)
+        ButtonClearWindow.clicked.connect(self.clearWindow)
+        # Clear file
+        ButtonClearLog = QtGui.QPushButton("Clear Log")
+        ButtonClearLog.setToolTip("Click for remove the actual log")
+        ButtonClearLog.setFixedWidth(145)
+        ButtonClearLog.clicked.connect(self.clearLog)
+
         grid.addWidget(self.LabelFile, 0, 0, 1, 2)
         grid.addWidget(ButtonConfiguration, 1, 0, 1, 1)
         grid.addWidget(ButtonHelp, 1, 1, 1, 1)
+        grid.addWidget(ButtonClearWindow, 2, 0, 1, 1)
+        grid.addWidget(ButtonClearLog, 2, 1, 1, 1)
         buttons.setTitle("Connection")
         buttons.move(10, 10)
 
     def initLogo(self):
         # Logo.
         LabelLogo = QtGui.QLabel(self)
-        LabelLogo.move(20, 490)
+        LabelLogo.move(1110, 10)
         pic = QtGui.QPixmap(os.getcwd() + "/logo.png")
         LabelLogo.setPixmap(pic)
         LabelLogo.show()
 
     def initConsole(self):
         self.console = QtGui.QTextBrowser(self)
-        self.console.move(340, 10)
-        self.console.resize(950, 780)
+        self.console.move(10, 200)
+        self.console.resize(1280, 580)
         self.console.setFont(QtGui.QFont('SansSerif', 11))
 
     def usage(self):
-        print ("\n"          
-                "Usage: python client_amp.py [-p <password>] # Set SATNET user password to login\n"
-                "Usage: python client_amp.py [-t <slot_ID>] # Set the slot id corresponding to the pass you will track\n"
-                "Usage: python client_amp.py [-c <connection>] # Set the type of interface with the GS (serial or udp)\n"
-                "Usage: python client_amp.py [-s <serialport>] # Set serial port\n"
-                "Usage: python client_amp.py [-b <baudrate>] # Set serial port baudrate\n"
-                "Usage: python client_amp.py [-i <ip>] # Set ip direction\n"
-                "Usage: python client_amp.py [-u <udpport>] # Set udp port\n"
-                "\n"
-                "Example for serial config: python client_amp.py -g -n crespo -p cre.spo -t 2 -c serial -s /dev/ttyS1 -b 115200\n"
-                "Example for udp config: python client_amp.py -g -n crespo -p cre.spo -t 2 -c udp -i 127.0.0.1 -u 5001\n"
-                "\n"
-                "[User]\n"
-                "username: crespo\n"
-                "password: cre.spo\n"
-                "slot_id: 2\n"
-                "connection: udp\n"
-                "[Serial]\n"
-                "serialport: /dev/ttyUSB0\n"
-                "baudrate: 9600\n"
-                "[UDP]\n"
-                "ip: 127.0.0.1\n"
-                "udpport: 5005")
+        print "Log viewer for protocol logs of SATNet server and protocol."
 
     def searchForLogs(self):
-        from os import listdir, chdir
+        from os import listdir
         filesAvailable = listdir('/var/log/')
         filesNeeded = []
         for i in range(len(filesAvailable)):
@@ -132,12 +123,20 @@ class LogViewer(QtGui.QWidget):
         fileNeeded = '/var/log/' + fileNeeded
         file = open(fileNeeded, 'r')
         print file.read()
+        # Needs a new thread
+        # timefile_old = os.stat(fileNeeded).st_mtime
+        # while 1:
+        #     timefile_new = os.stat(fileNeeded).st_mtime
+        #     if timefile_new > timefile_old:
+        #         timefile_old = timefile_new
+        #         print file.read()
 
     def center(self):
         frameGm = self.frameGeometry()
         screen_pos = QtGui.QApplication.desktop().cursor().pos()
         screen = QtGui.QApplication.desktop().screenNumber(screen_pos)
-        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen).center()
+        centerPoint = QtGui.QApplication.desktop().screenGeometry(screen
+                                                                  ).center()
         frameGm.moveCenter(centerPoint)
         self.move(frameGm.topLeft())
 
@@ -146,6 +145,17 @@ class LogViewer(QtGui.QWidget):
     def append_text(self, text):
         self.console.moveCursor(QtGui.QTextCursor.End)
         self.console.insertPlainText(text)
+
+    def clearWindow(self):
+        self.console.clear()
+
+    def clearLog(self):
+        log = str(self.LabelFile.currentText())
+        filename = '/var/log/' + log
+        print filename
+        #open(filename, 'w').close()
+        timefile = os.stat(filename).st_mtime
+        print timefile
 
 
 # Objects designed for output the information
@@ -159,10 +169,11 @@ class WriteStream(object):
     def flush(self):
         pass
 
-#  A QObject (to be run in a QThread) which sits waiting 
+#  A QObject (to be run in a QThread) which sits waiting
 #  for data to come  through a Queue.Queue().
-#  It blocks until data is available, and one it has got something from 
-#  the queue, it sends it to the "MainThread" by emitting a Qt Signal 
+#  It blocks until data is available, and one it has got something from
+#  the queue, it sends it to the "MainThread" by emitting a Qt Signal
+
 
 class MyReceiver(QtCore.QThread):
     mysignal = QtCore.pyqtSignal(str)
@@ -188,26 +199,18 @@ if __name__ == '__main__':
     sys.stdout = WriteStream(queue)
 
     print('------------------------------------------------- ' +
-            'SATNet - Protocol log viewer' +
-            ' -------------------------------------------------')
+          'SATNet - Protocol log viewer' +
+          ' -------------------------------------------------')
 
     qapp = QtGui.QApplication(sys.argv)
     app = LogViewer()
     app.setWindowIcon(QtGui.QIcon('logo.png'))
     app.show()
 
-    # Create thread that will listen on the other end of the 
+    # Create thread that will listen on the other end of the
     # queue, and send the text to the textedit in our application
     my_receiver = MyReceiver(queue)
     my_receiver.mysignal.connect(app.append_text)
     my_receiver.start()
 
     sys.exit(qapp.exec_())
-
-    """
-    from qtreactor import pyqt4reactor
-    pyqt4reactor.install()
-
-    from twisted.internet import reactor
-    reactor.run()
-    """
