@@ -47,6 +47,9 @@ then
 	sudo supervisorctl reread
 	sudo supervisorctl update
 
+	currentUser=$(whoami)
+	chown $currentUser ~/.satnet/logs/*  
+
 elif [ $1 == '-travisCI' ];
 then
 	venv_path="$project_path/.venv"
