@@ -99,6 +99,10 @@ then
 	sudo rm /usr/local/bin/satnet-server.sh
 	sudo rm /etc/supervisor/conf.d/satnet-server-conf.conf
 
+	echo ">>> Removing old logs"
+	rm ~/satnet/logs/*
+	echo ">>> Removing configuration files"
+
 	sudo apt --assume-yes remove supervisor
 
 elif [ $1 == '-update' ];
