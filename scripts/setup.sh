@@ -28,6 +28,8 @@ then
 
 	echo ">>> This script will generate a daemon for SATNet protocol"
 	echo ">>> Populating directories"
+	mkdir ~/.satnet/
+	mkdir ~/.satnet/logs/
 	sudo mkdir /opt/satnet
 	sudo cp -r -f ../../protocol /opt/satnet/
 	sudo cp -r -f ../../server /opt/satnet/
