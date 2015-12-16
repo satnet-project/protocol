@@ -1,4 +1,5 @@
 #!/bin/bash
 cd "/opt/satnet/server/"
 source ".venv/bin/activate"
-python manage.py runserver
+sudo chmod +x /opt/satnet/server/manage.py
+python manage.py runserversgongarpass
