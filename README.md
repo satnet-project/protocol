@@ -25,6 +25,8 @@ Before starting the script should be activate the corresponding virtualenv to sa
 
 #### Normal operation
 
-To run the procotol communications you must execute: 
+SATNet protocol runs under supervisor module. Installation script will create a daemon which, in every system start, will execute SATNet protocol. This process is transparent for the user.
 
-```python server_amp.py```
+This daemon creates a serie of logs that reports the operation. They are located at `/logs` folder, which can be found at the hidden folder `.satnet` created inside the user's home directory.
+
+For easy access to them can be used log_viewer script. To launch this script should run satnetprotocol.
