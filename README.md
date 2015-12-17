@@ -29,4 +29,4 @@ SATNet protocol runs under supervisor module. Installation script will create a 
 
 This daemon creates a serie of logs that reports the operation. They are located at `/logs` folder, which can be found at the hidden folder `.satnet` created inside the user's home directory.
 
-For easy access to them can be used log_viewer script. To launch this script should run satnetprotocol.
+For easy access to them can be used log_viewer script. To launch this script should run `satnetprotocol`
