@@ -211,7 +211,7 @@ if __name__ == '__main__':
 
     qapp = QtGui.QApplication(sys.argv)
     app = LogViewer()
-    app.setWindowIcon(QtGui.QIcon('logo.png'))
+    app.setWindowIcon(QtGui.QIcon('icono.png'))
     app.show()
 
     # Create thread that will listen on the other end of the
