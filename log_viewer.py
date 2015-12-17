@@ -111,7 +111,9 @@ class LogViewer(QtGui.QWidget):
 
     def searchForLogs(self):
         from os import listdir
-        filesAvailable = listdir('/var/log/')
+        from os import path
+        home = str(path.expanduser('~'))
+        filesAvailable = listdir(home + '/.satnet/logs/')
         filesNeeded = []
         for i in range(len(filesAvailable)):
             if filesAvailable[i].startswith('satnet'):
@@ -119,8 +121,10 @@ class LogViewer(QtGui.QWidget):
         return filesNeeded
 
     def openFile(self):
+        from os import path
+        home = str(path.expanduser('~'))
         fileNeeded = str(self.LabelFile.currentText())
-        fileNeeded = '/var/log/' + fileNeeded
+        fileNeeded = home + '/.satnet/logs/' + fileNeeded
         file = open(fileNeeded, 'r')
         print file.read()
         # Needs a new thread
@@ -150,12 +154,15 @@ class LogViewer(QtGui.QWidget):
         self.console.clear()
 
     def clearLog(self):
+        from os import path
+        from os import remove
+        home = str(path.expanduser('~'))
         log = str(self.LabelFile.currentText())
-        filename = '/var/log/' + log
-        print filename
-        #open(filename, 'w').close()
-        timefile = os.stat(filename).st_mtime
-        print timefile
+        filename = home + '/.satnet/logs/' + log
+        open(filename, 'w').close()
+        print "Log located at %s has been cleared." % (filename)
+        # timefile = os.stat(filename).st_mtime
+        # print timefile
 
 
 # Objects designed for output the information
