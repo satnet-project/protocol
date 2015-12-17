@@ -14,6 +14,7 @@ then
 	sudo apt --assume-yes install libffi-dev
 	sudo apt --assume-yes install libssl-dev
 	sudo apt --assume-yes install libpq-dev
+	sudo apt --assume-yes install shc
 
 	# Create a virtualenv
 	virtualenv $venv_path
@@ -33,6 +34,15 @@ then
 	sudo mkdir /opt/satnet
 	sudo cp -r -f ../../protocol /opt/satnet/
 
+	sudo shc -f satnetprotocol.sh
+	sudo rm satnetprotocol.sh.x.c
+	sudo chmod 777 satnetprotocol.sh.x
+	sudo chown $currentUser satnetprotocol.sh.x
+	mv satnetprotocol.sh.x satnetprotocol
+
+	mkdir ~/bin/
+	mv satnetprotocol ~/bin/
+
 	echo ">>> Copying daemons"
 	sudo cp satnet-protocol.sh /usr/local/bin
 	sudo chmod +x /usr/local/bin/satnet-protocol.sh
@@ -43,7 +53,15 @@ then
 	sudo supervisorctl update
 
 	currentUser=$(whoami)
-	sudo chown $currentUser ~/.satnet/logs/*  
+	sudo chown $currentUser ~/.satnet/logs/* 
+
+	echo ">>> For apply changes you must reboot your system"
+	echo ">>> Reboot now? (yes/no)"
+	read OPTION
+	if [ $OPTION == 'yes' ];
+	then
+		sudo reboot
+	fi
 
 elif [ $1 == '-travisCI' ];
 then
@@ -95,9 +113,6 @@ then
 
 	sudo rm /usr/local/bin/satnet-protocol.sh
 	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
-
-	sudo rm /usr/local/bin/satnet-server.sh
-	sudo rm /etc/supervisor/conf.d/satnet-server-conf.conf
 
 	echo ">>> Removing old logs"
 	rm ~/satnet/logs/*
