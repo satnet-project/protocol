@@ -15,11 +15,39 @@ then
 	sudo apt --assume-yes install libssl-dev
 	sudo apt --assume-yes install libpq-dev
 	sudo apt --assume-yes install shc
+	sudo apt --assume-yes --force-yes install unzip
 
 	# Create a virtualenv
 	virtualenv $venv_path
 	source "$venv_path/bin/activate"
 	pip install -r "$project_path/requirements.txt"
+
+	# Downloading packages for GUI
+	# Needed to install SIP first
+	cd $venv_path
+	mkdir build && cd build
+	pip install SIP --allow-unverified SIP --download="."
+	unzip sip*
+	echo "antes de uno"
+	pwd
+	ls
+	cd sip*
+	python configure.py
+	make
+	sudo make install
+	cd ../ && rm -r -f sip*
+
+	# PyQt4 installation.
+	wget http://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
+	tar xvzf PyQt-x11-gpl-4.11.4.tar.gz
+	cd PyQt-x11-gpl-4.11.4
+	python ./configure.py --confirm-license --no-designer-plugin -q /usr/bin/qmake-qt4 -e QtGui -e QtCore
+	make
+	# Bug. Needed ldconfig, copy it from /usr/sbin
+	cp /sbin/ldconfig ../../bin/
+	sudo ldconfig
+	sudo make install
+	cd ../ && rm -r -f PyQt*
 
 	# Create a self-signed certicate
 	bash "$script_path/protocol-setup.sh"
@@ -34,6 +62,9 @@ then
 	sudo mkdir /opt/satnet
 	sudo cp -r -f ../../protocol /opt/satnet/
 
+	currentUser=$(whoami)
+
+	cd $script_path
 	sudo shc -f satnetprotocol.sh
 	sudo rm satnetprotocol.sh.x.c
 	sudo chmod 777 satnetprotocol.sh.x
@@ -42,6 +73,9 @@ then
 
 	mkdir ~/bin/
 	mv satnetprotocol ~/bin/
+
+	cp satnetprotocol.desktop ~/Escritorio
+	cp satnetprotocol.desktop ~/Desktop
 
 	echo ">>> Copying daemons"
 	sudo cp satnet-protocol.sh /usr/local/bin
@@ -62,8 +96,9 @@ then
 	then
 		sudo reboot
 	fi
+fi
 
-elif [ $1 == '-travisCI' ];
+if [ $1 == '-travisCI' ];
 then
 	venv_path="$project_path/.venv"
 
@@ -83,8 +118,9 @@ then
 
 	# Create a self-signed certicate
 	# bash "$script_path/protocol-setup.sh"
+fi
 
-elif [ $1 == '-circleCI' ];
+if [ $1 == '-circleCI' ];
 then
 	venv_path="$project_path/.venv"
 
@@ -104,23 +140,48 @@ then
 
 	# Create a self-signed certicate
 	# bash "$script_path/protocol-setup.sh"
+fi
 
-elif [ $1 == '-uninstall' ];
+if [ $1 == '-uninstall' ];
 then
-
-	echo ">>> This script will remove the daemon for SATNet protocol"
+	echo ">>> Removing program files"
 	sudo rm -r -f /opt/satnet/
 
+	echo ">>> Removing the daemon for SATNet protocol"
 	sudo rm /usr/local/bin/satnet-protocol.sh
 	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
 
 	echo ">>> Removing old logs"
-	rm ~/satnet/logs/*
-	echo ">>> Removing configuration files"
+	rm ~/.satnet/logs/*
+
+	echo ">>> Removing executables"
+	rm ~/bin/satnetprotocol
+
+	echo ">>> Removing links"
+	rm ~/Desktop/satnetprotocol.desktop
+	rm ~/Escritorio/satnetprotocol.desktop
 
 	sudo apt --assume-yes remove supervisor
+	sudo apt --assume-yes remove build-essential
+	sudo apt --assume-yes remove python-dev
+	sudo apt --assume-yes remove python-pip
+	sudo apt --assume-yes remove virtualenv
+	sudo apt --assume-yes remove libffi-dev
+	sudo apt --assume-yes remove libssl-dev
+	sudo apt --assume-yes remove libpq-dev
+	sudo apt --assume-yes remove shc
+	sudo apt --assume-yes remove unzip
 
-elif [ $1 == '-update' ];
+	echo ">>> Do you wish to remove all configuration files? (yes/no)"
+	read OPTION
+	if [ $OPTION == 'yes' ];
+	then
+		rm -r -f ~/.satnet
+	fi
+fi
+
+
+if [ $1 == '-update' ];
 then
 	echo ">>> This script will update protocol files and directories"
 	echo ">>> Removing old data"
