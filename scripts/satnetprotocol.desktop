@@ -3,5 +3,5 @@
 Encoding=UTF-8
 Name=SATNet Protocol
 Exec=satnetprotocol
-Icon=/home/sgongar/Dev/generic-client/logo.png
+Icon=/opt/satnet/icono.png
 Type=Application
