@@ -32,23 +32,18 @@ then
 	mkdir ~/.satnet/logs/
 	sudo mkdir /opt/satnet
 	sudo cp -r -f ../../protocol /opt/satnet/
-	sudo cp -r -f ../../server /opt/satnet/
 
 	echo ">>> Copying daemons"
 	sudo cp satnet-protocol.sh /usr/local/bin
 	sudo chmod +x /usr/local/bin/satnet-protocol.sh
 	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
 
-	sudo cp satnet-server.sh /usr/local/bin
-	sudo chmod +x /usr/local/bin/satnet-server.sh
-	sudo cp satnet-server-conf.conf /etc/supervisor/conf.d/
-
 	echo ">>> Updating Supervisor"
 	sudo supervisorctl reread
 	sudo supervisorctl update
 
 	currentUser=$(whoami)
-	chown $currentUser ~/.satnet/logs/*  
+	sudo chown $currentUser ~/.satnet/logs/*  
 
 elif [ $1 == '-travisCI' ];
 then
@@ -125,8 +120,9 @@ then
 	sudo mkdir /opt/satnet/protocol/
 	sudo cp -rf protocol-jrpc_if/* /opt/satnet/protocol/
 	rm -rf protocol-jrpc_if/
-	sudo mkdir /opt/satnet/server
-	sudo cp -rf ../../server /opt/satnet/server
+
+	echo ">>> Installing new protocol"
+	# cd /opt/satnet/protocol/scripts
 
 	echo ">>> Updating daemon protocol"
 	sudo rm /usr/local/bin/satnet-protocol.sh
@@ -134,13 +130,6 @@ then
 	sudo cp satnet-protocol.sh /usr/local/bin
 	sudo chmod +x /usr/local/bin/satnet-protocol.sh
 	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
-
-	echo ">>> Updating daemon server"
-	sudo rm /usr/local/bin/satnet-server.sh
-	sudo rm /etc/supervisor/conf.d/satnet-server-conf.conf
-	sudo cp satnet-server.sh /usr/local/bin
-	sudo chmod +x /usr/local/bin/satnet-server.sh
-	sudo cp satnet-server-conf.conf /etc/supervisor/conf.d/
 
 	echo ">>> Updating Supervisor"
 	sudo supervisorctl update
