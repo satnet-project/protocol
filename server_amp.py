@@ -217,17 +217,17 @@ class SATNETServer(protocol.Protocol):
 
 
 def main():
-    logging.getLogger('server')
 
+    logging.getLogger('server')
     log.startLogging(sys.stdout)
 
     pf = CredAMPServerFactory()
 
-    sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',
-                                                    'key/public.pem',)
+    sslContext = ssl.DefaultOpenSSLContextFactory(
+        'key/server.pem', 'key/public.pem'
+    )
 
-    reactor.listenSSL(1234, pf, contextFactory=sslContext,)
-
+    reactor.listenSSL(1234, pf, contextFactory=sslContext)
     log.msg('Server running...')
     reactor.run()
 
@@ -244,3 +244,4 @@ if __name__ == '__main__':
             print "Help"
     except:
         main()
+

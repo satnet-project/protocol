@@ -1,4 +1,5 @@
 #!/bin/bash
-cd "/opt/satnet/protocol/"
-source ".venv/bin/activate"
-python server_amp.py
+
+source /home/rtubiopa/protocol/.venv/bin/activate
+twistd procmon python server_amp.py
+
