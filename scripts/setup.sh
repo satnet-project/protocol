@@ -46,16 +46,13 @@ then
 	# Needed to install SIP first
 	cd $venv_path
 	mkdir build && cd build
-	pip install SIP --allow-unverified SIP --download="."
-	unzip sip*
-	echo "antes de uno"
-	pwd
-	ls
-	cd sip*
+	wget http://downloads.sourceforge.net/project/pyqt/sip/sip-4.17/sip-4.17.tar.gz
+	unzip sip-4.17
+	cd sip-4.17
 	python configure.py
 	make
 	sudo make install
-	cd ../ && rm -r -f sip*
+	cd ../ && rm -r -f sip-4.17
 
 	# PyQt4 installation.
 	wget http://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
