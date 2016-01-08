@@ -55,41 +55,6 @@ function create_selfsigned_keys()
 
 }
 
-function install_sip()
-{
-
-        # Downloading packages for GUI
-        # Needed to install SIP first
-        mkdir build && cd build
-        pip install SIP --allow-unverified SIP --download="."
-        unzip sip*
-        pwd
-        ls
-        cd sip*
-        python configure.py
-        make
-        sudo make install
-        cd ../ && rm -r -f sip*
-
-}
-
-function install_pyqt4()
-{
-
-        # PyQt4 installation.
-        wget http://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
-        tar xvzf PyQt-x11-gpl-4.11.4.tar.gz
-        cd PyQt-x11-gpl-4.11.4
-        python ./configure.py --confirm-license --no-designer-plugin -q /usr/bin/qmake-qt4 -e QtGui -e QtCore
-        make
-        # Bug. Needed ldconfig, copy it from /usr/sbin
-        cp /sbin/ldconfig ../../bin/
-        sudo ldconfig
-        sudo make install
-        cd ../ && rm -r -f PyQt*
-
-}
-
 function create_supervisor_conf()
 {
 
@@ -202,8 +167,6 @@ then
     [[ $_install_venv == 'true' ]] && install_venv
 
     # This installation steps are not mandatory (GUI not required)
-	[[ $_install_sip == 'true' ]] && install_sip
-	[[ $_install_pyqt4 == 'true' ]] && install_pyqt4
 
 	[[ $_generate_keys == 'true' ]] && create_selfsigned_keys
     [[ $_create_logs == 'true' ]] && create_logs_dir
