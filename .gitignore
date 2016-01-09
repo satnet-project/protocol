@@ -6,3 +6,4 @@ logs
 _trial*
 twistd.log
 twistd.pid
+*~
