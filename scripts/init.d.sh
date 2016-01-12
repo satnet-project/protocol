@@ -9,14 +9,16 @@
 ### END INIT INFO
 
 logger "GHServer: Start script executed"
-GH_SERVER_PATH="/home/myname/Python/ghserver"
+# Test values
+GH_SERVER_PATH="/home/sgongar/Dev/protocol"
 export PYTHONPATH="$GH_SERVER_PATH:$PYTHONPATH"
 
 case "$1" in
   start)
     logger "GHServer: Starting"
     echo "Starting GHServer..."
-    twistd -y "$GH_SERVER_PATH/ghserverapp.py" -l "$GH_SERVER_PATH/ghserver.log" --pidfile "$GH_SERVER_PATH/twistd.pid"
+    # twistd -y "$GH_SERVER_PATH/ghserverapp.py" -l "$GH_SERVER_PATH/ghserver.log" --pidfile "$GH_SERVER_PATH/twistd.pid"
+    twistd -y "$GH_SERVER_PATH/server_amp.py" -l "$GH_SERVER_PATH/server_amplog.log" --pidfile "GH_SERVER_PATH/twistd.pid"
     ;;
   stop)
     logger "GHServer: Stopping"
