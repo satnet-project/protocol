@@ -53,8 +53,8 @@ class SATNETServer(protocol.Protocol):
         L{String}
 
     :ivar factory:
-        CredAMPServerFactory instance which handles SATNETServer instances as well
-        as CredReceiver instances    
+        CredAMPServerFactory instance which handles SATNETServer instances
+        as well as CredReceiver instances
     :type factory:
         L{ServerFactory}
 
@@ -104,18 +104,19 @@ class SATNETServer(protocol.Protocol):
             if self.slot['state'] != 'TEST':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
                 raise SlotErrorNotification('Slot ' + str(iSlotId) +
-                                             ' has not yet been reserved')
+                                            ' has not yet been reserved')
 
-            gs_user = self.slot['gs_username']           
+            gs_user = self.slot['gs_username']
             sc_user = self.slot['sc_username']
-            
+
             #  If this slot has not been assigned to this user...
             if gs_user != self.sUsername and sc_user != self.sUsername:
-                log.err('This slot has not been assigned to this user')              
-                raise SlotErrorNotification('This user is not assigned to this slot')
+                log.err('This slot has not been assigned to this user')
+                raise SlotErrorNotification('This user is not ' +
+                                            'assigned to this slot')
             #  if the GS user and the SC user belong to the same client...
             elif gs_user == self.sUsername and sc_user == self.sUsername:
-                log.msg('Both MCC and GSS belong to the same client')              
+                log.msg('Both MCC and GSS belong to the same client')
                 return {'iResult': StartRemote.CLIENTS_COINCIDE}
             #  if the remote client is the SC user...
             elif gs_user == self.sUsername:
@@ -244,4 +245,3 @@ if __name__ == '__main__':
             print "Help"
     except:
         main()
-

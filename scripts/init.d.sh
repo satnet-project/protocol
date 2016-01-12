@@ -11,7 +11,7 @@
 logger "satnetprotocol: Start script executed"
 # Test values
 SATNET_PROTOCOL_PATH="/home/sgongar/Dev/protocol"
-export PYTHONPATH="$GH_SERVER_PATH:$PYTHONPATH"
+export PYTHONPATH="$SATNET_PROTOCOL_PATH:$PYTHONPATH"
 
 case "$1" in
   start)
