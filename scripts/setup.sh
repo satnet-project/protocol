@@ -82,12 +82,13 @@ function create_daemon()
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
-    echo '    [[ -d $SATNET_PROTOCOL_PATH/twistd.pid ]] || {' | tee -a $initd_sh
+    echo '    if [ -e $SATNET_PROTOCOL_PATH/twistd.pid ] || {' | tee -a $initd_sh
+    echo '    then' | tee -a $initd_sh
     echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
     echo '        kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
-    echo '    } && {' | tee -a $initd_sh
+    echo '    else' | tee -a $initd_sh
     echo '        echo "SatNet protocol not running"' | tee -a $initd_sh
-    echo '    }' | tee -a $initd_sh
+    echo '    fi' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  *)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
@@ -179,6 +180,7 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
+_reboot='true'
 
 if [ $1 == '-install' ];
 then

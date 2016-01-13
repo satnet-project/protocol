@@ -30,7 +30,9 @@ application = service.Application('satnetProtocol')
 # internet.TCPServer(5280, site).setServiceParent(application)
 
 pf = CredAMPServerFactory()
-sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem', 'key/public.pem')
+
+sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem',
+                                              'key/public.pem')
 
 reactor.listenSSL(1234, pf, contextFactory=sslContext)
 reactor.run()
