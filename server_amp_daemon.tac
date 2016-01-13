@@ -2,7 +2,7 @@
 
 from ampauth.server import CredAMPServerFactory
 
-from twisted.application import service
+# from twisted.application import service
 from twisted.internet import ssl, reactor
 
 """
@@ -30,9 +30,7 @@ application = service.Application('satnetProtocol')
 # internet.TCPServer(5280, site).setServiceParent(application)
 
 pf = CredAMPServerFactory()
-
-sslContext = ssl.DefaultOpenSSLContextFactory(
-        'key/server.pem', 'key/public.pem')
+sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem', 'key/public.pem')
 
 reactor.listenSSL(1234, pf, contextFactory=sslContext)
 reactor.run()
