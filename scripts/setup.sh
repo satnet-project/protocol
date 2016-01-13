@@ -57,53 +57,45 @@ function create_selfsigned_keys()
 
 }
 
-function create_supervisor_conf()
+function create_daemon()
 {
+    echo '#! /bin/sh' | tee $initd_sh
+    echo '### BEGIN INIT INFO' | tee -a $initd_sh
+    echo '# Provides:          satnetprotocol' | tee -a $initd_sh
+    echo '# Required-Start:    $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
+    echo '# Required-Stop:     $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
+    echo '# Default-Start:     2 3 4 5' | tee -a $initd_sh
+    echo '# Default-Stop:      0 1 6' | tee -a $initd_sh
+    echo '# Short-Description: Start/stop SatNet protocol' | tee -a $initd_sh
+    echo '### END INIT INFO' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'logger "satnetprotocol: Start script executed"' | tee -a $initd_sh
+    echo 'SATNET_PROTOCOL_PATH="/home/sgongar/Dev/protocol"' | tee -a $initd_sh
+    echo 'export PYTHONPATH="$SATNET_PROTOCOL_PATH:$PYTHONPATH"' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'case "$1" in' | tee -a $initd_sh
+    echo '  start)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
+    echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
+    echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp.py" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  stop)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
+    echo '    echo "Stopping SatNet protocol..."' | tee -a $initd_sh
+    echo '    kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  *)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
+    echo '    echo "Usage: /etc/init.d/satnetprotocol {start|stop}"' | tee -a $initd_sh
+    echo '    exit 1' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo 'esac' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'exit 0' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
 
-    echo "[supervisord]" | sudo tee $output_conf_file
-    echo "logfile=/var/log/supervisor.log" | sudo tee -a $output_conf_file
-    echo "[program:satnet-protocol]" | sudo tee -a $output_conf_file
-    echo "command=$runner_sh" | sudo tee -a $output_conf_file
-    echo "environment=PATH=\"$venv_dir/bin\"" | sudo tee -a $output_conf_file
-    echo "directory=$project_path" | sudo tee -a $output_conf_file
-    echo "autostart=true" | sudo tee -a $output_conf_file
-    echo "autorestart=false" | sudo tee -a $output_conf_file
-    echo "stdout_logfile=$logs_dir/output.log" | sudo tee -a $output_conf_file
-    echo "stdout_logfile_maxbytes=10MB" | sudo tee -a $output_conf_file
-    echo "stdout_logfile_backups=10" | sudo tee -a $output_conf_file
-    echo "stderr_logfile=$logs_dir/error.log" | sudo tee -a $output_conf_file
-    echo "stderr_logfile_maxbytes=10MB" | sudo tee -a $output_conf_file
-    echo "stderr_logfile_backups=10" | sudo tee -a $output_conf_file
-
-}
-
-function remove_supervisor_conf()
-{
-
-	echo ">>> Removing satnet-protocol's configuration from within supervisord"
-
-	[[ -f $output_conf_file ]] && {
-
-		sudo rm -f $output_conf_file
-		echo ">>> $output_conf_file removed"
-
-	} || {
-		echo ">>> <$output_conf_file> not found, skipping removal..."
-	}
-
-}
-
-function create_runner_sh()
-{
-
-    echo "#!/bin/bash" | sudo tee $runner_sh
-    echo "" | sudo tee -a $runner_sh
-    echo "source $venv_dir/bin/activate" | sudo tee -a $runner_sh
-    # echo "python server_amp.py" | sudo tee -a $runner_sh
-    echo "twistd procmon python server_amp.py" | sudo tee -a $runner_sh
-    echo "" | sudo tee -a $runner_sh
-
-    chmod +x $runner_sh
+    sudo chmod 755 $initd_sh 
 
 }
 
@@ -147,13 +139,10 @@ function create_logs_dir()
     }
 }
 
-function configure_supervisor()
+function config_daemon()
 {
-    echo ">>> Configuration Supervisor"
-    create_runner_sh
-    create_supervisor_conf
-	sudo supervisorctl reread
-	sudo supervisorctl update
+    echo ">>> Creating daemon"
+    [[ $_config_daemon == 'true' ]] && create_daemon
 }
 
 script_path="$( cd "$( dirname "$0" )" && pwd )"
@@ -162,10 +151,8 @@ project_path=$( readlink -e "$script_path/.." )
 linux_packages="$script_path/debian.packages"
 venv_dir="$project_path/.venv"
 
-runner_sh="$script_path/satnet-protocol.sh"
+initd_sh="$script_path/satnetprotocol"
 logs_dir="$project_path/logs"
-target_supervisor_confd='/etc/supervisor/conf.d'
-output_conf_file="$target_supervisor_confd/satnet-protocol.conf"
 
 keys_dir="$project_path/key"
 keys_private="$keys_dir/test.key"
@@ -179,10 +166,7 @@ _install_venv='true'
 _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
-_config_supervisor='true'
-_install_pyqt4='false'
-_install_sip='false'
-_install_desk_shortcuts='false'
+_config_daemon='true'
 
 if [ $1 == '-install' ];
 then
@@ -192,12 +176,10 @@ then
     [[ $_install_packages == 'true' ]] && install_packages
     [[ $_install_venv == 'true' ]] && install_venv
 
-    # This installation steps are not mandatory (GUI not required)
+    [[ $_config_daemon == 'true']] && config_daemon
 
     [[ $_generate_keys == 'true' ]] && create_selfsigned_keys
     [[ $_create_logs == 'true' ]] && create_logs_dir
-
-    [[ $_config_supervisor == 'true' ]] && configure_supervisor
 
     [[ $_reboot == 'true' ]] && {
 
@@ -215,7 +197,7 @@ fi
 if [ $1 == '-travisCI' ];
 then
 
-	echo ">>> [TravisCI] Installing satnet-protocol..."
+	echo ">>> [TravisCI] Installing satnetprotocol..."
     [[ $_install_venv == 'true' ]] && install_venv
 	exit 0
 
@@ -224,7 +206,7 @@ fi
 if [ $1 == '-circleCI' ];
 then
 
-	echo ">>> [CircleCI] Installing satnet-protocol..."
+	echo ">>> [CircleCI] Installing satnetprotocol..."
     [[ $_install_venv == 'true' ]] && install_venv
     exit 0
 
@@ -233,14 +215,12 @@ fi
 if [ $1 == '-uninstall' ];
 then
 
-	echo ">>> Removing satnet-protocol..."
+	echo ">>> Removing satnetprotocol..."
 	echo ">>> NOTICE: this command only removes external dependencies"
 	echo ">>> NOTICE: to fully remove this program, delete this directory"
 
-	[[ $_config_supervisor == 'true' ]] && remove_supervisor_conf
 	[[ $_install_packages == 'true' ]] && uninstall_packages
 
 	exit 0
 
 fi
-

@@ -6,4 +6,3 @@ libffi-dev
 libssl-dev
 libpq-dev
 unzip
-supervisor
