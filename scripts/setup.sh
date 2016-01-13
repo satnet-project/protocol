@@ -57,6 +57,26 @@ function create_selfsigned_keys()
 
 }
 
+function config_tac()
+{
+    echo "# coding=utf-8" | tee $tac_file
+    echo "" | tee -a $tac_file
+    echo "from ampauth.server import CredAMPServerFactory" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "from twisted.application import service" | tee -a $tac_file
+    echo "from twisted.internet import ssl, reactor" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "application = service.Application('satnetProtocol')" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "pf = CredAMPServerFactory()" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "sslContext = ssl.DefaultOpenSSLContextFactory($project_path/key/server.pem," | tee -a $tac_file
+    echo "                                              $project_path/key/public.pem')" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo 'reactor.listenSSL(1234, pf, contextFactory=sslContext)' | tee -a $tac_file
+    echo 'reactor.run()' | tee -a $tac_file 
+}
+
 function create_daemon()
 {
     echo '#! /bin/bash' | tee $initd_sh
@@ -82,7 +102,7 @@ function create_daemon()
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
-    echo '    if [ -e $SATNET_PROTOCOL_PATH/twistd.pid ] || {' | tee -a $initd_sh
+    echo '    if [ -e $SATNET_PROTOCOL_PATH/twistd.pid ];' | tee -a $initd_sh
     echo '    then' | tee -a $initd_sh
     echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
     echo '        kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
@@ -148,6 +168,7 @@ function config_daemon()
 {
     echo ">>> Creating daemon"
     [[ $_config_daemon == 'true' ]] && create_daemon
+    [[ $_config_tac == 'true']] && config_tac
 
     sudo chmod 755 $initd_sh
     sudo mv $initd_sh /etc/init.d/
@@ -165,6 +186,7 @@ linux_packages="$script_path/debian.packages"
 venv_dir="$project_path/.venv"
 
 initd_sh="$script_path/satnetprotocol"
+tac_file="$project_path/server_amp_daemon.tac"
 logs_dir="$project_path/logs"
 
 keys_dir="$project_path/key"
@@ -180,6 +202,7 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
+_config_tac='true'
 _reboot='true'
 
 if [ $1 == '-install' ];
