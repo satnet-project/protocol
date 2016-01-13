@@ -18,7 +18,7 @@ case "$1" in
     logger "satnetprotocol: Starting"
     echo "Starting SatNet protocol..."
     source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"
-    twistd -y "$SATNET_PROTOCOL_PATH/server_amp.py" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"
+    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/server_amp_log.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"
     ;;
   stop)
     logger "satnetprotocol: Stopping"

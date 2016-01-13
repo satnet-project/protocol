@@ -2,7 +2,7 @@
 
 from ampauth.server import CredAMPServerFactory
 
-from twisted.application import service
+# from twisted.application import service
 from twisted.internet import ssl, reactor
 
 """
@@ -26,34 +26,11 @@ from twisted.internet import ssl, reactor
 __author__ = 's.gongoragarcia@gmail.com'
 
 
-# def get_service():
-#     pf = CredAMPServerFactory()
-
-#     sslContext = ssl.DefaultOpenSSLContextFactory(
-#         'key/server.pem', 'key/public.pem')
-
-#     # return reactor.listenSSL(1234, pf, contextFactory=sslContext)
-#     return
-
-# print "primero"
-# application = service.Application('satnetProtocol')
-# print "segundo"
-# service = get_service()
-# print "tercero"
-# print type(service)
-# service.setServiceParent(application)
-# # eservice.setServiceParent(application)
-
 application = service.Application('satnetProtocol')
 # internet.TCPServer(5280, site).setServiceParent(application)
 
-#
-# RMW adding TLS support for Facebook chat/xmpp support
-#
 pf = CredAMPServerFactory()
-
-sslContext = ssl.DefaultOpenSSLContextFactory(
-        'key/server.pem', 'key/public.pem')
+sslContext = ssl.DefaultOpenSSLContextFactory('key/server.pem', 'key/public.pem')
 
 reactor.listenSSL(1234, pf, contextFactory=sslContext)
 reactor.run()
