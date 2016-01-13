@@ -2,7 +2,7 @@
 
 from ampauth.server import CredAMPServerFactory
 
-# from twisted.application import service
+from twisted.application import service
 from twisted.internet import ssl, reactor
 
 """

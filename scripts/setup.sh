@@ -59,7 +59,7 @@ function create_selfsigned_keys()
 
 function create_daemon()
 {
-    echo '#! /bin/sh' | tee $initd_sh
+    echo '#! /bin/bash' | tee $initd_sh
     echo '### BEGIN INIT INFO' | tee -a $initd_sh
     echo '# Provides:          satnetprotocol' | tee -a $initd_sh
     echo '# Required-Start:    $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
@@ -70,7 +70,7 @@ function create_daemon()
     echo '### END INIT INFO' | tee -a $initd_sh
     echo '' | tee -a $initd_sh
     echo 'logger "satnetprotocol: Start script executed"' | tee -a $initd_sh
-    echo 'SATNET_PROTOCOL_PATH="/home/sgongar/Dev/protocol"' | tee -a $initd_sh
+    echo "SATNET_PROTOCOL_PATH=$project_path" | tee -a $initd_sh
     echo 'export PYTHONPATH="$SATNET_PROTOCOL_PATH:$PYTHONPATH"' | tee -a $initd_sh
     echo '' | tee -a $initd_sh
     echo 'case "$1" in' | tee -a $initd_sh
@@ -78,12 +78,16 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp.py" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
-    echo '    echo "Stopping SatNet protocol..."' | tee -a $initd_sh
-    echo '    kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
+    echo '    [[ -d $SATNET_PROTOCOL_PATH/twistd.pid ]] || {' | tee -a $initd_sh
+    echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
+    echo '        kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
+    echo '    } && {' | tee -a $initd_sh
+    echo '        echo "SatNet protocol not running"' | tee -a $initd_sh
+    echo '    }' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  *)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
@@ -143,6 +147,14 @@ function config_daemon()
 {
     echo ">>> Creating daemon"
     [[ $_config_daemon == 'true' ]] && create_daemon
+
+    sudo chmod 755 $initd_sh
+    sudo mv $initd_sh /etc/init.d/
+
+    sudo chown root:root /etc/init.d/satnetprotocol
+
+    sudo update-rc.d satnetprotocol defaults
+    sudo update-rc.d satnetprotocol enable
 }
 
 script_path="$( cd "$( dirname "$0" )" && pwd )"
@@ -176,7 +188,7 @@ then
     [[ $_install_packages == 'true' ]] && install_packages
     [[ $_install_venv == 'true' ]] && install_venv
 
-    [[ $_config_daemon == 'true']] && config_daemon
+    [[ $_config_daemon == 'true' ]] && config_daemon
 
     [[ $_generate_keys == 'true' ]] && create_selfsigned_keys
     [[ $_create_logs == 'true' ]] && create_logs_dir
