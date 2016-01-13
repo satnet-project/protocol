@@ -168,7 +168,7 @@ function config_daemon()
 {
     echo ">>> Creating daemon"
     [[ $_config_daemon == 'true' ]] && create_daemon
-    [[ $_config_tac == 'true']] && config_tac
+    [[ $_config_tac == 'true' ]] && config_tac
 
     sudo chmod 755 $initd_sh
     sudo mv $initd_sh /etc/init.d/
