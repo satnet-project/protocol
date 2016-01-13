@@ -70,8 +70,8 @@ function config_tac()
     echo "" | tee -a $tac_file
     echo "pf = CredAMPServerFactory()" | tee -a $tac_file
     echo "" | tee -a $tac_file
-    echo "sslContext = ssl.DefaultOpenSSLContextFactory($project_path/key/server.pem," | tee -a $tac_file
-    echo "                                              $project_path/key/public.pem')" | tee -a $tac_file
+    echo "sslContext = ssl.DefaultOpenSSLContextFactory('$project_path/key/server.pem'," | tee -a $tac_file
+    echo "                                              '$project_path/key/public.pem')" | tee -a $tac_file
     echo "" | tee -a $tac_file
     echo 'reactor.listenSSL(1234, pf, contextFactory=sslContext)' | tee -a $tac_file
     echo 'reactor.run()' | tee -a $tac_file 
