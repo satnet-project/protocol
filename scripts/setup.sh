@@ -98,11 +98,11 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "SATNET_PROTOCOL_PATH/twistd.pid"' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile "$SATNET_PROTOCOL_PATH/twistd.pid"' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
-    echo '    if [ -e $SATNET_PROTOCOL_PATH/twistd.pid ];' | tee -a $initd_sh
+    echo '    if [ -e "$SATNET_PROTOCOL_PATH/twistd.pid" ];' | tee -a $initd_sh
     echo '    then' | tee -a $initd_sh
     echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
     echo '        kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
@@ -121,7 +121,6 @@ function create_daemon()
     echo '' | tee -a $initd_sh
 
     sudo chmod 755 $initd_sh 
-
 }
 
 function install_packages()
