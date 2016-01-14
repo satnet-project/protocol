@@ -21,7 +21,6 @@
 
 function create_selfsigned_keys()
 {
-
     [[ -d $keys_dir ]] || {
         echo '>>> Creating keys directory...'
         mkdir -p $keys_dir
@@ -54,7 +53,6 @@ function create_selfsigned_keys()
     cat $keys_crt $keys_private > $keys_server_pem
     # 6: Generate clients bundle (Certificate)
     cp $keys_crt $keys_public_pem
-
 }
 
 function config_tac()
@@ -74,7 +72,6 @@ function config_tac()
     echo "                                              '$project_path/key/public.pem')" | tee -a $tac_file
     echo "" | tee -a $tac_file
     echo 'reactor.listenSSL(1234, pf, contextFactory=sslContext)' | tee -a $tac_file
-    echo 'reactor.run()' | tee -a $tac_file 
 }
 
 function create_daemon()
@@ -103,10 +100,10 @@ function create_daemon()
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
-    echo '    if [ -e "$SATNET_PROTOCOL_PATH/twistd.pid" ];' | tee -a $initd_sh
+    echo '    if [ -e $PID_FILE ];' | tee -a $initd_sh
     echo '    then' | tee -a $initd_sh
     echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
-    echo '        kill `cat $SATNET_PROTOCOL_PATH/twistd.pid`' | tee -a $initd_sh
+    echo '        kill `cat $PID_FILE`' | tee -a $initd_sh
     echo '    else' | tee -a $initd_sh
     echo '        echo "SatNet protocol not running"' | tee -a $initd_sh
     echo '    fi' | tee -a $initd_sh
