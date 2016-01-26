@@ -188,7 +188,7 @@ class SATNETServer(protocol.Protocol):
                     groundstation_id='groundstation_id',
                     timestamp='timestamp',
                     doppler_shift='doppler_shift',
-                    message=sMsg, debug=False
+                    message=sMsg, debug=False)
                 log.msg(PassiveMessage)
                 log.msg('Message saved on server')
             elif self.bGSuser is False:
