@@ -141,7 +141,7 @@ class Satnet_GetSlot(object):
         if not debug:
             self._rpc_client = RPCClient(
                 JSONRPCProtocolFix(),
-                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
+                HttpSessionTransport('http://172.19.51.150/jrpc/')
                 )
         else:
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),
@@ -207,7 +207,7 @@ class Satnet_StoreMessage(object):
      debug = False):
         if not debug:
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
+             HttpSessionTransport('https://172.19.51.150/jrpc/'))
         else:
             self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
@@ -274,7 +274,7 @@ class Satnet_StorePassiveMessage(object):
      debug = False):
         if not debug:
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/'))
+             HttpSessionTransport('http://172.19.51.150/jrpc/'))
         else:
             self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
              HttpSessionTransport('http://localhost:8000/jrpc/'))
