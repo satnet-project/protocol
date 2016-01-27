@@ -173,7 +173,7 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_protocols['localUsr'].append(self.sUsername)
 
         try:
-            self.rpc = Satnet_RPC(sUsername, sPassword, debug=False)
+            self.rpc = Satnet_RPC(sUsername, sPassword, debug=True)
             self.protocol = SATNETServer
             #  avatar.factory = self.factory
             #  avatar.credProto = self

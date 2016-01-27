@@ -91,7 +91,7 @@ class SATNETServer(protocol.Protocol):
         iSlotId = -1
         self.iSlotId = iSlotId
 
-        slot = Satnet_GetSlot(iSlotId, debug=False)
+        slot = Satnet_GetSlot(iSlotId, debug=True)
         self.slot = slot.slot
 
         #  If slot NOT operational yet...
@@ -188,7 +188,7 @@ class SATNETServer(protocol.Protocol):
                     groundstation_id='groundstation_id',
                     timestamp='timestamp',
                     doppler_shift='doppler_shift',
-                    message=sMsg, debug=False)
+                    message=sMsg, debug=True)
                 log.msg(PassiveMessage)
                 log.msg('Message saved on server')
             elif self.bGSuser is False:
@@ -209,7 +209,7 @@ class SATNETServer(protocol.Protocol):
 
             #  the remote client is online so the message will be send
             Satnet_StoreMessage(self.iSlotId, upwards, forwarded,
-                                timestamp, sMsg, debug=False)
+                                timestamp, sMsg, debug=True)
             log.msg(Satnet_StoreMessage)
 
             return {'bResult': True}
