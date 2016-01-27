@@ -95,17 +95,10 @@ class Satnet_RPC(object):
         L{String}
 
     """
-    def __init__(self, user, pwd, debug=False):
-        if not debug:
-            self._rpc_client = RPCClient(
-                JSONRPCProtocolFix(),
-                HttpSessionTransport('https://satnet.aero.calpoly.edu/jrpc/')
-            )
-        else:
-            self._rpc_client = RPCClient(
-                JSONRPCProtocolFix(),
-                HttpSessionTransport('http://localhost:8000/jrpc/')
-            )
+    def __init__(self, user, pwd):
+        self._rpc_client = RPCClient(
+            JSONRPCProtocolFix(),
+            HttpSessionTransport('http://localhost:8000/jrpc/'))
 
         if not self.call('system.login', user, pwd):
             # raise BadCredentials()
@@ -137,17 +130,11 @@ class Satnet_RPC(object):
 
 class Satnet_GetSlot(object):
 
-    def __init__(self, slot_id, debug=False):
-        if not debug:
-            self._rpc_client = RPCClient(
-                JSONRPCProtocolFix(),
-                HttpSessionTransport('http://172.19.51.150/jrpc/')
-                )
-        else:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),
-                                         HttpSessionTransport(
-                                            'http://localhost:8000/jrpc/')
-                                         )
+    def __init__(self, slot_id):
+        self._rpc_client = RPCClient(JSONRPCProtocolFix(),
+                                     HttpSessionTransport(
+                                        'http://localhost:8000/jrpc/')
+                                     )
 
         self.slot = self.call('scheduling.slot.get', slot_id)
 
@@ -203,14 +190,9 @@ class Satnet_StoreMessage(object):
     Return the identifier of the message within the system.
     """
 
-    def __init__(self, slot_id, upwards, forwarded, timestamp, message,\
-     debug = False):
-        if not debug:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('https://172.19.51.150/jrpc/'))
-        else:
-            self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('http://localhost:8000/jrpc/'))
+    def __init__(self, slot_id, upwards, forwarded, timestamp, message):
+        self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
+         HttpSessionTransport('http://localhost:8000/jrpc/'))
 
         hMessage = message.replace(":", "")
         bMessage = bytearray.fromhex(hMessage)
@@ -270,14 +252,10 @@ class Satnet_StorePassiveMessage(object):
     Return 'true' if the message was correctly stored.
     """
 
-    def __init__(self, groundstation_id, timestamp, doppler_shift, message,\
-     debug = False):
-        if not debug:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('http://172.19.51.150/jrpc/'))
-        else:
-            self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-             HttpSessionTransport('http://localhost:8000/jrpc/'))
+    def __init__(self, groundstation_id, timestamp, doppler_shift, message):
+        self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
+         HttpSessionTransport('http://localhost:8000/jrpc/'))
+        
         self.call('communications.storePassiveMessage', slot_id, upwards,\
          forwarded, timestamp, message)
 
