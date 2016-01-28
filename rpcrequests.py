@@ -1,6 +1,15 @@
 # coding=utf-8
+from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
+from tinyrpc.transports.http import HttpPostClientTransport
+from tinyrpc.client import RPCClient
+import requests 
+import json
+from ampauth.errors import BadCredentials
+from twisted.python import log
+
+
 """
-     Copyright 2015 Xabier Crespo Álvarez
+     Copyright 2015, 2016 Xabier Crespo Álvarez
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -18,15 +27,6 @@
     Xabier Crespo Álvarez (xabicrespog@gmail.com)
 """
 __author__ = 'xabicrespog@gmail.com'
-
-
-from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
-from tinyrpc.transports.http import HttpPostClientTransport
-from tinyrpc.client import RPCClient
-import requests 
-import json
-from ampauth.errors import BadCredentials
-from twisted.python import log
 
 
 class HttpSessionTransport(HttpPostClientTransport):

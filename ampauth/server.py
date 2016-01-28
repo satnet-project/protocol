@@ -88,6 +88,12 @@ class CredReceiver(AMP, TimeoutMixin):
         Spacecraft user
     :type clientB
         L{String}
+
+    :ivar bGSuser
+        Indicates if the current user is a GS user (True) or a SC user (false).
+        If this variable is None, it means that it has not been yet connected.
+    :type bGSuser
+        L{Boolean}
     """
 
     logout = None
@@ -104,7 +110,6 @@ class CredReceiver(AMP, TimeoutMixin):
         self.factory.clients.append(self)
 
     def dataReceived(self, data):
-        # Y si cada vez recibo "data" lo reenvio desde aqui?
         log.msg(self.sUsername + ' session timeout reset')
         self.resetTimeout()
         super(CredReceiver, self).dataReceived(data)
@@ -120,9 +125,10 @@ class CredReceiver(AMP, TimeoutMixin):
 
         log.err(reason.getErrorMessage())
 
-        log.msg('Active clients: ')
-        #  divided by 2 because the dictionary is doubly linked
-        log.msg('Active connections: ')
+        log.msg('Active clients: ' +
+                str(len(self.factory.active_protocols)))
+        log.msg('Active connections: ' +
+                str(len(self.factory.active_connections)/2))
 
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
@@ -130,33 +136,26 @@ class CredReceiver(AMP, TimeoutMixin):
         super(CredReceiver, self).connectionLost(reason)
 
     def login(self, sUsername, sPassword):
-
-        self.sUsername = sUsername
-        self.factory = CredAMPServerFactory()
+        # self.factory = CredAMPServerFactory() ¿?
+        if sUsername in self.factory.active_protocols:
+            log.err("Client already logged in.")
+            raise UnauthorizedLogin("Client already logged in.")
+        else:
+            self.sUsername = sUsername
+            # Clean previous registers
+            self.factory.active_protocols[sUsername] = None
         #
         #  Don't mix asynchronus and syncronus code.
         #  Try-except sentences aren't allowed.
         #
-
-        # Comprueba si el cliente A o B está logueado viendo
-        # si sUsername está disponible
-        try:
-            print d
-        except NameError:
-            log.msg("d no creado")
-
-        """
-        if sUsername in self.factory.active_protocols['localUsr']:
-            log.err('Client already logged in')
-            raise UnauthorizedLogin('Client already logged in')
-        """
-
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword)
+            self.factory.active_protocols[sUsername] = self
             log.msg('Connection made')
-
-            self.logger = MessageLogger(open(self.factory.filename, "a"))
-            self.logger.log("User %s" % sUsername)
+            log.msg('Active clients: ' +
+                    str(len(self.factory.active_protocols)))
+            log.msg('Active connections: ' +
+                    str(len(self.factory.active_connections)))
 
             return {'bAuthenticated': True}
 
@@ -172,11 +171,8 @@ class CredReceiver(AMP, TimeoutMixin):
 
         self.iSlotId = iSlotId
 
-        slot = Satnet_GetSlot(iSlotId)
+        slot = Satnet_GetSlot(self.iSlotId)
         self.slot = slot.slot
-
-        import shelve
-        d = shelve.open('test')
 
         #  If slot NOT operational yet...
         if not self.slot:
@@ -184,45 +180,46 @@ class CredReceiver(AMP, TimeoutMixin):
             raise SlotErrorNotification(
                 'Slot ' + str(iSlotId) + ' is not yet operational')
         else:
-            #  If it is too soon to connect to this slot...
+            #  Now only works in test cases
             if self.slot['state'] != 'TEST':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
                 raise SlotErrorNotification('Slot ' + str(iSlotId) +
                                             ' has not yet been reserved')
 
-            clientA = self.slot['gs_username']
-            clientB = self.slot['sc_username']
-
-            print clientA
-            print clientB
+            gs_user = self.slot['gs_username']
+            sc_user = self.slot['sc_username']
 
             #  If this slot has not been assigned to this user...
-            if clientA != self.sUsername and clientB != self.sUsername:
+            if gs_user != self.sUsername and sc_user != self.sUsername:
                 log.err('This slot has not been assigned to this user')
                 raise SlotErrorNotification('This user is not ' +
                                             'assigned to this slot')
             #  if the GS user and the SC user belong to the same client...
-            elif clientA == self.sUsername and clientB == self.sUsername:
+            elif gs_user == self.sUsername and sc_user == self.sUsername:
                 log.msg('Both MCC and GSS belong to the same client')
                 return {'iResult': StartRemote.CLIENTS_COINCIDE}
-            #  if the remote client is the SC user... ClientA
-            elif clientA == self.sUsername:
+            #  if the remote client is the SC user...
+            elif gs_user == self.sUsername:
                 self.bGSuser = True
-                return self.CreateConnection(self.slot['ending_time'],
-                                             iSlotId, clientB, clientA)
+                return self.iCreateConnection(self.slot['ending_time'],
+                                              iSlotId, gs_user, sc_user)
             #  if the remote client is the GS user...
-            elif clientB == self.sUsername:
+            elif sc_user == self.sUsername:
                 self.bGSuser = False
-                return self.CreateConnection(self.slot['ending_time'],
-                                             iSlotId, clientA, clientB)
+                return self.iCreateConnection(self.slot['ending_time'],
+                                              iSlotId, sc_user, gs_user)
 
     StartRemote.responder(iStartRemote)
 
-    def CreateConnection(self, iSlotEnd, iSlotId, clientA, clientC):
+    def iCreateConnection(self, iSlotEnd, iSlotId, clientA, clientC):
         """
         Create a new connection checking the time slot.
+        ClientA sends data
+        ClientC receive data
         """
-        self.remoteUsr = remoteUsr
+
+        clientA = str(clientA)
+        clientC = str(clientC)
 
         import dateutil.parser
         iSlotEnd = dateutil.parser.parse(iSlotEnd)
@@ -232,46 +229,39 @@ class CredReceiver(AMP, TimeoutMixin):
         timeNow = int(time.mktime(timeNow.timetuple()))
 
         # For tests only
-        iSlotEnd = timeNow + 480
+        iSlotEnd = timeNow + 30
 
         slot_remaining_time = iSlotEnd - timeNow
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
         if (slot_remaining_time <= 0):
-            log.err('This slot (' + str(iSlotId) + ') has expired')
+            log.err("This slot (" + str(iSlotId) + ") has expired.")
 
-            raise SlotErrorNotification('This slot (' + str(iSlotId) +
-                                        ') has expired')
-            # If time is correct, attach remote user to active_protocols
+            raise SlotErrorNotification("This slot (" + str(iSlotId) +
+                                        " has expired.")
 
         #  Create an instante for finish the slot at correct time.
         self.session = reactor.callLater(slot_remaining_time,
                                          self.vSlotEnd, iSlotId)
 
-        # Check if remote is on available list
-        # Not in list, raise error
-        """
-        if clientB not in self.factory.active_protocols['remoteUsr']:
+        if clientC not in self.factory.active_protocols:
+            log.msg("Remote user " + clientC + " not connected yet.")
+            # if remote user ins't available remove local user from
+            # active connections list
+            self.factory.active_connections[clientA] = None
             return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
 
-        # Available. Attach to list
-        elif clientB in self.factory.active_protocols['remoteUsr']:
-
-            self.factory.active_connections['remoteUsr'].append(remoteUsr)
-            self.factory.active_connections['localUsr'].append(localUsr)
-
-            notification = self.callRemote(NotifyEvent,
-                                           Event=NotifyEvent.REMOTE_CONNECTED,
-                                           sDetails=str(remoteUsr))
-            log.msg(notification)
-
-            log.msg('Active clients: ')
-            log.msg('Active connections: ')
-
+        else:
+            log.msg("Remote user " + clientC + ".")
+            self.factory.active_connections[clientC] = clientA
+            self.factory.active_connections[clientA] = clientC
+            self.factory.active_protocols[clientC].callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,
+                sDetails=str(clientA))
+            self.callRemote(
+                NotifyEvent, iEvent=NotifyEvent.REMOTE_CONNECTED,
+                sDetails=str(clientC))
             return {'iResult': StartRemote.REMOTE_READY}
-        """
-
-
 
     def vSlotEnd(self, iSlotId):
         log.msg("(" + self.sUsername + ") Slot " +
@@ -282,56 +272,75 @@ class CredReceiver(AMP, TimeoutMixin):
         #  Session is an instance of
         self.session = None
 
-    # TO-DO
-    # Check what kind of list, or dict, do we need.
-    # Maybe it's wrong!
     def vEndRemote(self):
-        log.msg("hola endRemote")
-        # log.msg("(" + self.sUsername + ") --------- End Remote ---------")
-        # # Disconnect both users (need to be done from the CredReceiver
-        # # instance)
-        # # self.credProto.transport.loseConnection()
-        # self.transport.loseConnection()
-        # # If the client is still in active_connections (only true when he
-        # # was in a remote connection and he was disconnected in the first
-        # # place)
-        # # if self.factory.active_connections[self.sUsername]:
-        # if self.factory.active_connections['localUsr'] == self.sUsername:
+        log.msg("(" + self.sUsername + ") --------- End Remote ---------")
+        # Disconnect local user
+        self.transport.loseConnection()
 
-        #     # Notify the remote client about this disconnection. The
-        #     # notification is sent through the SATNETServer instance
-        #     self.factory.active_protocols[self.factory.active_connections[
-        #         self.sUsername]].callRemote(NotifyEvent,\
-        #          iEvent=NotifyEvent.END_REMOTE, sDetails=None)
+        # Try to remove the remote connection
+        try:
+            # Notify remote user
+            self.factory.active_protocols[self.factory.active_connections[
+                self.sUsername]].callRemote(NotifyEvent,
+                                            iEvent=NotifyEvent.END_REMOTE,
+                                            sDetails=None)
 
-        #     # Close connection
-        #     self.factory.active_protocols[self.factory.active_connections[
-        #         self.sUsername]].credProto.transport.loseConnection()
+            # Close remote connection
+            self.factory.active_protocols[self.factory.active_connections[
+                self.sUsername]].transport.loseConnection()
 
-        #     # Remove active connection
-        #     self.factory.active_connections.pop(
-        #         self.factory.active_connections[self.sUsername])
+            # Remove remove factory
+            self.factory.active_connections.pop(
+                self.factory.active_connections[self.sUsername])
+
+        except:
+            # Remove local factory
+            self.factory.active_protocols.pop(self.sUsername)
 
         return {'bResult': True}
 
     EndRemote.responder(vEndRemote)
 
-class MessageLogger:
-    """
-    An independent logger class (because separation of application
-    and protocol logic is a good thing).
-    """
-    def __init__(self, file):
-        self.file = file
+    def vSendMsg(self, sMsg, iTimestamp):
+        groundstation_id = 'id_test'
+        doppler_shift = 'doppler_shift_test'
 
-    def log(self, message):
-        """Write a message to the file."""
-        timestamp = time.strftime("[%H:%M:%S]", time.localtime(time.time()))
-        self.file.write('%s %s\n' % (timestamp, message))
-        self.file.flush()
+        log.msg("(" + self.sUsername + ") --------- Send Message ---------")
+        # If the client haven't started a connection via StartRemote command...
+        if self.sUsername not in self.factory.active_connections:
+            log.msg('Connection not available. Call StartRemote command first')
+            raise SlotErrorNotification(
+                'Connection not available. Call StartRemote command first.')
+        # ... if the SC operator is not connected, sent messages will be saved
+        # as passive messages...
+        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
+            log.msg("RPC Call to Satnet_StorePassiveMessage")
+            self.storePassiveMessage = Satnet_StorePassiveMessage(groundstation_id,
+                                                                  iTimestamp,
+                                                                  doppler_shift,
+                                                                  sMsg)
+        # ... if the GS operator is not connected, the remote SC client will be
+        # notified to wait for the GS to connect...
+        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
+            self.callRemote(NotifyEvent,
+                            iEvent=NotifyEvent.REMOTE_DISCONNECTED,
+                            sDetails=None)
+        else:
+            # Try to send a message to remote client
+            log.msg("hola hola vecinito")
+            try:
+                self.factory.active_protocols[self.factory.active_connections[
+                    self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
+            except:
+                raise WrongFormatNotification("error in frame")
+            # Try to store the message in the remote SatNet server
+            forwarded = ''
+            self.storeMessage = Satnet_StoreMessage(self.iSlotId, self.bGSuser,
+                                                    forwarded, iTimestamp,
+                                                    sMsg)
 
-    def close(self):
-        self.file.close()
+        return {'bResult': True}
+    SendMsg.responder(vSendMsg)
 
 
 class CredAMPServerFactory(ServerFactory):
@@ -341,6 +350,8 @@ class CredAMPServerFactory(ServerFactory):
 
     """
     clients = []
+    active_protocols = {}
+    active_connections = {}
     protocol = CredReceiver
 
     def __init__(self):
