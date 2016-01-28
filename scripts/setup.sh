@@ -108,6 +108,9 @@ function create_daemon()
     echo '        echo "SatNet protocol not running"' | tee -a $initd_sh
     echo '    fi' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
+    echo '  restart)' | tee -a $initd_sh
+    echo '    $0 stop && sleep 2 && $0 start' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
     echo '  *)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
     echo '    echo "Usage: /etc/init.d/satnetprotocol {start|stop}"' | tee -a $initd_sh
