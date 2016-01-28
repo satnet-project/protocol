@@ -311,12 +311,12 @@ class CredReceiver(AMP, TimeoutMixin):
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
-        """
+        
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
             log.msg("RPC Call to Satnet_StorePassiveMessage")
-        """
+
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
