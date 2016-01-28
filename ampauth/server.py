@@ -311,14 +311,12 @@ class CredReceiver(AMP, TimeoutMixin):
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
+        """
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
             log.msg("RPC Call to Satnet_StorePassiveMessage")
-            self.storePassiveMessage = Satnet_StorePassiveMessage(groundstation_id,
-                                                                  iTimestamp,
-                                                                  doppler_shift,
-                                                                  sMsg)
+        """
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
@@ -327,12 +325,11 @@ class CredReceiver(AMP, TimeoutMixin):
                             sDetails=None)
         else:
             # Try to send a message to remote client
-            log.msg("hola hola vecinito")
             try:
                 self.factory.active_protocols[self.factory.active_connections[
                     self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
             except:
-                raise WrongFormatNotification("error in frame")
+                raise WrongFormatNotification("Error forwarding frame to remote user.")
             # Try to store the message in the remote SatNet server
             forwarded = ''
             self.storeMessage = Satnet_StoreMessage(self.iSlotId, self.bGSuser,
