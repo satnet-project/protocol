@@ -83,7 +83,7 @@ function create_daemon()
     echo '# Required-Stop:     $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
     echo '# Default-Start:     2 3 4 5' | tee -a $initd_sh
     echo '# Default-Stop:      0 1 6' | tee -a $initd_sh
-    echo '# Short-Description: Start/stop SatNet protocol' | tee -a $initd_sh
+    echo '# Short-Description: Start/stop/restart SatNet protocol' | tee -a $initd_sh
     echo '### END INIT INFO' | tee -a $initd_sh
     echo '' | tee -a $initd_sh
     echo 'logger "satnetprotocol: Start script executed"' | tee -a $initd_sh
@@ -111,9 +111,23 @@ function create_daemon()
     echo '  restart)' | tee -a $initd_sh
     echo '    $0 stop && sleep 2 && $0 start' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
+    echo '  status)' | tee -a $initd_sh
+    echo '    if [ -f $PID_FILE ]; then' | tee -a $initd_sh
+    echo '      PID=`cat $PID_FILE`' | tee -a $initd_sh
+    echo '      if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then' | tee -a $initd_sh
+    echo '          printf "%s\n" "Process dead but pidfile exists"' | tee -a $initd_sh
+    echo '          exit 1' | tee -a $initd_sh 
+    echo '      else' | tee -a $initd_sh
+    echo '          echo "Running"' | tee -a $initd_sh
+    echo '      fi' | tee -a $initd_sh
+    echo '    else' | tee -a $initd_sh
+    echo '      printf "%s\n" "Service not running"' | tee -a $initd_sh
+    echo '      exit 3' | tee -a $initd_sh
+    echo     'fi' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
     echo '  *)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
-    echo '    echo "Usage: /etc/init.d/satnetprotocol {start|stop}"' | tee -a $initd_sh
+    echo '    echo "Usage: /etc/init.d/satnetprotocol {start|stop|restart}"' | tee -a $initd_sh
     echo '    exit 1' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo 'esac' | tee -a $initd_sh
@@ -122,6 +136,30 @@ function create_daemon()
     echo '' | tee -a $initd_sh
 
     sudo chmod 755 $initd_sh 
+}
+
+
+status_service() {
+    printf "%-50s" "Checking $SERVICE_NAME..."
+    if [ -f $PIDFILE ]; then
+        PID=`cat $PIDFILE`
+        if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then
+            printf "%s\n" "Process dead but pidfile exists"
+            exit 1 
+        else
+            echo "Running"
+        fi
+    else
+        printf "%s\n" "Service not running"
+        exit 3 
+    fi
+}
+
+
+
+function remove_daemon()
+{
+    sudo rm /etc/init.d/satnetprotocol
 }
 
 function install_packages()
@@ -177,6 +215,13 @@ function config_daemon()
 
     sudo update-rc.d satnetprotocol defaults
     sudo update-rc.d satnetprotocol enable
+}
+
+function uninstall_daemon()
+{
+    echo ">>> Removing daemon"
+    remove_daemon
+
 }
 
 script_path="$( cd "$( dirname "$0" )" && pwd )"
@@ -257,6 +302,7 @@ then
 	echo ">>> NOTICE: to fully remove this program, delete this directory"
 
 	[[ $_install_packages == 'true' ]] && uninstall_packages
+    [[ $_config_daemon == 'true' ]] && uninstall_daemon
 	exit 0
 
 fi
