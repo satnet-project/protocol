@@ -103,8 +103,9 @@ class Satnet_RPC(object):
             HttpSessionTransport('http://localhost:8000/jrpc/'))
 
         if not self.call('system.login', user, pwd):
-            raise BadCredentials()
+            # raise BadCredentials()
             # For tests only!
+            pass
         else:
             log.msg('Keep alive connection')
             # print "keepalive"
@@ -199,8 +200,14 @@ class Satnet_StoreMessage(object):
         hMessage = message.replace(":", "")
         bMessage = bytearray.fromhex(hMessage)
 
+        import base64
+        base64Message = base64.b64encode(bMessage)
+
+        log.msg("slotid")
+        log.msg(slot_id) 
+
         self.call('communications.storeMessage', slot_id, upwards,
-                  forwarded, timestamp, bMessage)
+                  forwarded, timestamp, base64Message)
 
     def call(self, call, *args):
         """
