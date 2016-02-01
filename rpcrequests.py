@@ -2,7 +2,7 @@
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
-import requests 
+import requests
 import json
 from ampauth.errors import BadCredentials
 from twisted.python import log
@@ -33,7 +33,7 @@ class HttpSessionTransport(HttpPostClientTransport):
     """
     Transport layer that handles sessions to allow the execution
     of login protected RPC methods
-    
+
     :param endpoint:
         URL to send "POST" data to.
     :type endpoint:
@@ -47,7 +47,8 @@ class HttpSessionTransport(HttpPostClientTransport):
         if not isinstance(message, str):
             raise TypeError('str expected')
 
-        r = self.s.post(self.endpoint, data=message, headers={'content-type':'application/json'})
+        r = self.s.post(self.endpoint, data=message,
+                        headers={'content-type': 'application/json'})
 
         if expect_reply:
             return r.content
@@ -55,7 +56,7 @@ class HttpSessionTransport(HttpPostClientTransport):
 
 class JSONRPCProtocolFix(JSONRPCProtocol):
     """
-    Workaround to solve a bug in rpc4django. This problem is 
+    Workaround to solve a bug in rpc4django. This problem is
     detailed in https://github.com/davidfischer/rpc4django/issues/32.
     As soon as pull request #39 is accepted the parent class must be
     used instead.
@@ -70,7 +71,8 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
                 req.pop('error')
             if req['result'] is None:
                 req.pop('result')
-            return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
+            return super(JSONRPCProtocolFix,
+                         self).parse_reply(json.dumps(req))
         except Exception as e:
             print "Error loading JSON response"
             print e
@@ -101,9 +103,8 @@ class Satnet_RPC(object):
             HttpSessionTransport('http://localhost:8000/jrpc/'))
 
         if not self.call('system.login', user, pwd):
-            # raise BadCredentials()
+            raise BadCredentials()
             # For tests only!
-            pass
         else:
             log.msg('Keep alive connection')
             # print "keepalive"
@@ -191,14 +192,15 @@ class Satnet_StoreMessage(object):
     """
 
     def __init__(self, slot_id, upwards, forwarded, timestamp, message):
-        self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),\
-         HttpSessionTransport('http://localhost:8000/jrpc/'))
+        self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),
+                                      HttpSessionTransport(
+                                        'http://localhost:8000/jrpc/'))
 
         hMessage = message.replace(":", "")
         bMessage = bytearray.fromhex(hMessage)
-        
-        self.call('communications.storeMessage', slot_id, upwards, forwarded,\
-        timestamp, bMessage)
+
+        self.call('communications.storeMessage', slot_id, upwards,
+                  forwarded, timestamp, bMessage)
 
     def call(self, call, *args):
         """
@@ -213,17 +215,14 @@ class Satnet_StoreMessage(object):
             Arguments required by the method to be invocked.
         """
 
-        # return self._rpc_client_.call(call, args, None)
-
-        # For tests only
-        return True
+        return self._rpc_client_.call(call, args, None)
 
 
 class Satnet_StorePassiveMessage(object):
     """
     @rpc4django.rpcmethod(
         name='communications.gs.storePassiveMessage')
-    
+
     This method stores a mesage obtained in a passive manner (this is,
     without requiring from any remote operation to be scheduled) by a
     given groundstation in the database.
@@ -234,7 +233,7 @@ class Satnet_StorePassiveMessage(object):
         L{String}
 
     :ivar timestamp:
-        Moment of the reception of the message at the remote 
+        Moment of the reception of the message at the remote
         Groundstation
     :type timestamp:
         L{int}
@@ -253,11 +252,12 @@ class Satnet_StorePassiveMessage(object):
     """
 
     def __init__(self, groundstation_id, timestamp, doppler_shift, message):
-        self._rpc_client = RPCClient(JSONRPCProtocolFix(),\
-         HttpSessionTransport('http://localhost:8000/jrpc/'))
-        
-        self.call('communications.storePassiveMessage', slot_id, upwards,\
-         forwarded, timestamp, message)
+        self._rpc_client = RPCClient(JSONRPCProtocolFix(),
+                                     HttpSessionTransport(
+                                        'http://localhost:8000/jrpc/'))
+
+        self.call('communications.storePassiveMessage', slot_id,
+                  upwards, forwarded, timestamp, message)
 
     def call(self, call, *args):
         """
@@ -272,4 +272,4 @@ class Satnet_StorePassiveMessage(object):
             Arguments required by the method to be invocked.
         """
 
-        return self._rpc_client.call(call, args, None)            
+        return self._rpc_client.call(call, args, None)

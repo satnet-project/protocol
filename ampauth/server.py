@@ -229,7 +229,7 @@ class CredReceiver(AMP, TimeoutMixin):
         timeNow = int(time.mktime(timeNow.timetuple()))
 
         # For tests only
-        iSlotEnd = timeNow + 30
+        iSlotEnd = timeNow + 86400
 
         slot_remaining_time = iSlotEnd - timeNow
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
@@ -302,16 +302,13 @@ class CredReceiver(AMP, TimeoutMixin):
     EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):
-        groundstation_id = 'id_test'
-        doppler_shift = 'doppler_shift_test'
-
         log.msg("(" + self.sUsername + ") --------- Send Message ---------")
         # If the client haven't started a connection via StartRemote command...
         if self.sUsername not in self.factory.active_connections:
             log.msg('Connection not available. Call StartRemote command first')
             raise SlotErrorNotification(
                 'Connection not available. Call StartRemote command first.')
-        
+
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
         elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
@@ -325,6 +322,7 @@ class CredReceiver(AMP, TimeoutMixin):
                             sDetails=None)
         else:
             # Try to send a message to remote client
+            log.msg("Enter send message")
             try:
                 self.factory.active_protocols[self.factory.active_connections[
                     self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
