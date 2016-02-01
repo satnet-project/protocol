@@ -1,5 +1,9 @@
 *.pyc
 _trial_temp
 key
+logs
 .venv*
 _trial*
+twistd.log
+twistd.pid
+*~

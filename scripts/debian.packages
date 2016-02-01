@@ -1,0 +1,8 @@
+build-essential
+python-dev
+python-pip
+python-virtualenv
+libffi-dev
+libssl-dev
+libpq-dev
+unzip

@@ -1,110 +1,279 @@
 #!/bin/bash
 
 #    Copyright 2015 Samuel Góngora García
-
+#
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-
+#
 #        http://www.apache.org/licenses/LICENSE-2.0
-
+#
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-
+#
 # :Author:
 #     Samuel Góngora García (s.gongoragarcia@gmail.com)
-
+#
 # __author__ = 's.gongoragarcia@gmail.com'
+
+function create_selfsigned_keys()
+{
+    [[ -d $keys_dir ]] || {
+        echo '>>> Creating keys directory...'
+        mkdir -p $keys_dir
+    } && {
+        echo ">>> $keys_dir exists, skipping..."
+    }
+
+    [[ -f $keys_server_pem ]] && [[ -f $keys_public_pem ]] && {
+        echo ">>> Keys already exist, skipping key generation..."
+        return
+    }
+
+    # 1: Generate a Private Key
+    echo '>>> Generating a private key'
+    openssl genrsa -des3 -passout pass:satnet -out $keys_private 1024
+    # 2: Generate a CSR (Certificate Signing Request)
+    echo '>>> Generating a CSR'
+    openssl req -new -key $keys_private -passin pass:satnet\
+    	-out $keys_csr -subj "/CN=$keys_CN"
+    # 3: Remove Passphrase from Private Key
+    echo '>>> Removing passphrase from private key'
+    openssl rsa -in $keys_private -passin pass:satnet -out $keys_private
+    # 4: Generating a Self-Signed Certificate
+    echo '>>> Generating a public key (certificate)'
+    openssl x509 -req -days 365 -in $keys_csr -signkey $keys_private\
+    	-out $keys_crt
+
+    echo '>>> Generating key bundles'
+    # 5: Generate server bundle (Certificate + Private key)
+    cat $keys_crt $keys_private > $keys_server_pem
+    # 6: Generate clients bundle (Certificate)
+    cp $keys_crt $keys_public_pem
+}
+
+function config_tac()
+{
+    echo "# coding=utf-8" | tee $tac_file
+    echo "" | tee -a $tac_file
+    echo "from ampauth.server import CredAMPServerFactory" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "from twisted.application import service" | tee -a $tac_file
+    echo "from twisted.internet import ssl, reactor" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "application = service.Application('satnetProtocol')" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "pf = CredAMPServerFactory()" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo "sslContext = ssl.DefaultOpenSSLContextFactory('$project_path/key/server.pem'," | tee -a $tac_file
+    echo "                                              '$project_path/key/public.pem')" | tee -a $tac_file
+    echo "" | tee -a $tac_file
+    echo 'reactor.listenSSL(1234, pf, contextFactory=sslContext)' | tee -a $tac_file
+}
+
+function create_daemon()
+{
+    echo '#! /bin/bash' | tee $initd_sh
+    echo '### BEGIN INIT INFO' | tee -a $initd_sh
+    echo '# Provides:          satnetprotocol' | tee -a $initd_sh
+    echo '# Required-Start:    $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
+    echo '# Required-Stop:     $local_fs $remote_fs $network $syslog' | tee -a $initd_sh
+    echo '# Default-Start:     2 3 4 5' | tee -a $initd_sh
+    echo '# Default-Stop:      0 1 6' | tee -a $initd_sh
+    echo '# Short-Description: Start/stop/restart SatNet protocol' | tee -a $initd_sh
+    echo '### END INIT INFO' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'logger "satnetprotocol: Start script executed"' | tee -a $initd_sh
+    echo "SATNET_PROTOCOL_PATH=$project_path" | tee -a $initd_sh
+    echo "PID_FILE=$project_path/pid_file.pid" | tee -a $initd_sh
+    echo 'export PYTHONPATH="$SATNET_PROTOCOL_PATH:$PYTHONPATH"' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'case "$1" in' | tee -a $initd_sh
+    echo '  start)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
+    echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
+    echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/server_amplog.log" --pidfile $PID_FILE' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  stop)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
+    echo '    if [ -e $PID_FILE ];' | tee -a $initd_sh
+    echo '    then' | tee -a $initd_sh
+    echo '        echo "Stopping SatNet protocol..."' | tee -a $initd_sh
+    echo '        kill `cat $PID_FILE`' | tee -a $initd_sh
+    echo '    else' | tee -a $initd_sh
+    echo '        echo "SatNet protocol not running"' | tee -a $initd_sh
+    echo '    fi' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  restart)' | tee -a $initd_sh
+    echo '    $0 stop && sleep 2 && $0 start' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  status)' | tee -a $initd_sh
+    echo '    if [ -f $PID_FILE ]; then' | tee -a $initd_sh
+    echo '      PID=`cat $PID_FILE`' | tee -a $initd_sh
+    echo '      if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then' | tee -a $initd_sh
+    echo '          printf "%s\n" "Process dead but pidfile exists"' | tee -a $initd_sh
+    echo '          exit 1' | tee -a $initd_sh 
+    echo '      else' | tee -a $initd_sh
+    echo '          echo "Running"' | tee -a $initd_sh
+    echo '      fi' | tee -a $initd_sh
+    echo '    else' | tee -a $initd_sh
+    echo '      printf "%s\n" "Service not running"' | tee -a $initd_sh
+    echo '      exit 3' | tee -a $initd_sh
+    echo     'fi' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo '  *)' | tee -a $initd_sh
+    echo '    logger "satnetprotocol: Invalid usage"'  | tee -a $initd_sh
+    echo '    echo "Usage: /etc/init.d/satnetprotocol {start|stop|restart}"' | tee -a $initd_sh
+    echo '    exit 1' | tee -a $initd_sh
+    echo '    ;;' | tee -a $initd_sh
+    echo 'esac' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+    echo 'exit 0' | tee -a $initd_sh
+    echo '' | tee -a $initd_sh
+
+    sudo chmod 755 $initd_sh 
+}
+
+
+status_service() {
+    printf "%-50s" "Checking $SERVICE_NAME..."
+    if [ -f $PIDFILE ]; then
+        PID=`cat $PIDFILE`
+        if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then
+            printf "%s\n" "Process dead but pidfile exists"
+            exit 1 
+        else
+            echo "Running"
+        fi
+    else
+        printf "%s\n" "Service not running"
+        exit 3 
+    fi
+}
+
+
+
+function remove_daemon()
+{
+    sudo rm /etc/init.d/satnetprotocol
+}
+
+function install_packages()
+{
+	echo ">>> Installing system packages..."
+	sudo aptitude update && sudo aptitude dist-upgrade -y
+	sudo aptitude install $( cat "$linux_packages" ) -y
+}
+
+function uninstall_packages()
+{
+	echo ">>> Uninstalling system packages..."
+	sudo aptitude remove $( cat "$linux_packages" ) -y
+}
+
+function install_venv()
+{
+	[[ -d $venv_dir ]] || {
+
+    	echo ">>> Creating virtual environment..."
+    	virtualenv --python=python2.7 $venv_dir
+    	source "$venv_dir/bin/activate"
+	    pip install -r "$project_path/requirements.txt"
+	    deactivate
+
+	} && {
+	    echo ">>> Python Virtual environment found, skipping"
+	}
+}
+
+function create_logs_dir()
+{
+	[[ -d $logs_dir ]] || {
+
+    	echo ">>> Creating logging directory = $logs_dir"
+    	mkdir -p $logs_dir
+
+    } && {
+        echo ">>> $logs_dir exists, skipping"
+    }
+}
+
+function config_daemon()
+{
+    echo ">>> Creating daemon"
+    [[ $_config_daemon == 'true' ]] && create_daemon
+    [[ $_config_tac == 'true' ]] && config_tac
+
+    sudo chmod 755 $initd_sh
+    sudo mv $initd_sh /etc/init.d/
+
+    sudo chown root:root /etc/init.d/satnetprotocol
+
+    sudo update-rc.d satnetprotocol defaults
+    sudo update-rc.d satnetprotocol enable
+}
+
+function uninstall_daemon()
+{
+    echo ">>> Removing daemon"
+    remove_daemon
+
+}
 
 script_path="$( cd "$( dirname "$0" )" && pwd )"
 project_path=$( readlink -e "$script_path/.." )
 
+linux_packages="$script_path/debian.packages"
+venv_dir="$project_path/.venv"
+
+initd_sh="$script_path/satnetprotocol"
+tac_file="$project_path/server_amp_daemon.tac"
+logs_dir="$project_path/logs"
+
+keys_dir="$project_path/key"
+keys_private="$keys_dir/test.key"
+keys_csr="$keys_dir/test.csr"
+keys_crt="$keys_dir/test.crt"
+keys_server_pem="$keys_dir/server.pem"
+keys_public_pem="$keys_dir/public.pem"
+keys_CN="edu.calpoly.aero.satnet"
+
+_install_venv='true'
+_install_packages='true'
+_generate_keys='true'
+_create_logs='true'
+_config_daemon='true'
+_config_tac='true'
+_reboot='true'
+
 if [ $1 == '-install' ];
 then
-	venv_path="$project_path/.venv"
+<<<<<<< HEAD
 
-	# Install required packages
-	sudo apt --assume-yes install build-essential
-	sudo apt --assume-yes install python-dev
-	sudo apt --assume-yes install python-pip
-	sudo apt --assume-yes install virtualenv
-	sudo apt --assume-yes install libffi-dev
-	sudo apt --assume-yes install libssl-dev
-	sudo apt --assume-yes install libpq-dev
-	sudo apt --assume-yes install shc
-	sudo apt --assume-yes --force-yes install unzip
+	echo ">>> Installing satnet-protocol..."
 
-	# Create a virtualenv
-	virtualenv $venv_path
-	source "$venv_path/bin/activate"
-	pip install -r "$project_path/requirements.txt"
+    [[ $_install_packages == 'true' ]] && install_packages
+    [[ $_install_venv == 'true' ]] && install_venv
 
-	# Downloading packages for GUI
-	# Needed to install SIP first
-	cd $venv_path
-	mkdir build && cd build
-	wget http://downloads.sourceforge.net/project/pyqt/sip/sip-4.17/sip-4.17.tar.gz
-	unzip sip-4.17
-	cd sip-4.17
-	python configure.py
-	make
-	sudo make install
-	cd ../ && rm -r -f sip-4.17
+    [[ $_config_daemon == 'true' ]] && config_daemon
 
-	# PyQt4 installation.
-	wget http://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
-	tar xvzf PyQt-x11-gpl-4.11.4.tar.gz
-	cd PyQt-x11-gpl-4.11.4
-	python ./configure.py --confirm-license --no-designer-plugin -q /usr/bin/qmake-qt4 -e QtGui -e QtCore
-	make
-	# Bug. Needed ldconfig, copy it from /usr/sbin
-	cp /sbin/ldconfig ../../bin/
-	sudo ldconfig
-	sudo make install
-	cd ../ && rm -r -f PyQt*
+    [[ $_generate_keys == 'true' ]] && create_selfsigned_keys
+    [[ $_create_logs == 'true' ]] && create_logs_dir
 
-	# Create a self-signed certicate
-	bash "$script_path/protocol-setup.sh"
+    [[ $_reboot == 'true' ]] && {
 
-	# Supervisor install
-	sudo apt --assume-yes install supervisor
+    	echo ">>> To apply changes you must reboot your system"
+    	echo ">>> Reboot now? (yes/no)"
+    	read OPTION
+    	[[ $OPTION == 'yes' ]] && sudo reboot
 
-	echo ">>> This script will generate a daemon for SATNet protocol"
-	echo ">>> Populating directories"
-	mkdir ~/.satnet/
-	mkdir ~/.satnet/logs/
-	sudo mkdir /opt/satnet
-	sudo cp -r -f ../../protocol /opt/satnet/
+    }
 
-	currentUser=$(whoami)
-
-	cd $script_path
-	sudo shc -f satnetprotocol.sh
-	sudo rm satnetprotocol.sh.x.c
-	sudo chmod 777 satnetprotocol.sh.x
-	sudo chown $currentUser satnetprotocol.sh.x
-	mv satnetprotocol.sh.x satnetprotocol
-
-	mkdir ~/bin/
-	mv satnetprotocol ~/bin/
-
-	cp satnetprotocol.desktop ~/Escritorio
-	cp satnetprotocol.desktop ~/Desktop
-
-	echo ">>> Copying daemons"
-	sudo cp satnet-protocol.sh /usr/local/bin
-	sudo chmod +x /usr/local/bin/satnet-protocol.sh
-	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
-
-	echo ">>> Updating Supervisor"
-	sudo supervisorctl reread
-	sudo supervisorctl update
-
-	currentUser=$(whoami)
-	sudo chown $currentUser ~/.satnet/logs/* 
+	exit 0
 
 	echo ">>> For apply changes you must reboot your system"
 	echo ">>> Reboot now? (yes/no)"
@@ -117,217 +286,31 @@ fi
 
 if [ $1 == '-travisCI' ];
 then
-	venv_path="$project_path/.venv"
 
-	# Install required packages
-	# sudo apt --assume-yes install build-essential
-	# sudo apt --assume-yes install python-dev
-	# sudo apt --assume-yes install python-pip
-	# sudo apt --assume-yes install virtualenv
-	# sudo apt --assume-yes install libffi-dev
-	# sudo apt --assume-yes install libssl-dev
-	# sudo apt --assume-yes install libpq-dev
+	echo ">>> [TravisCI] Installing satnetprotocol..."
+    [[ $_install_venv == 'true' ]] && install_venv
+	exit 0
 
-	# Create a virtualenv
-	# virtualenv $venv_path
-	# source "$venv_path/bin/activate"
-	pip install -r "$script_path/requirements-tests.txt"
-
-	# Create a self-signed certicate
-	# bash "$script_path/protocol-setup.sh"
 fi
 
 if [ $1 == '-circleCI' ];
 then
-	venv_path="$project_path/.venv"
 
-	# Install required packages
-	# sudo apt --assume-yes install build-essential
-	# sudo apt --assume-yes install python-dev
-	# sudo apt --assume-yes install python-pip
-	# sudo apt --assume-yes install virtualenv
-	# sudo apt --assume-yes install libffi-dev
-	# sudo apt --assume-yes install libssl-dev
-	# sudo apt --assume-yes install libpq-dev
+	echo ">>> [CircleCI] Installing satnetprotocol..."
+    [[ $_install_venv == 'true' ]] && install_venv
+    exit 0
 
-	# Create a virtualenv
-	# virtualenv $venv_path
-	# source "$venv_path/bin/activate"
-	pip install -r "$script_path/requirements-tests.txt"
-
-	# Create a self-signed certicate
-	# bash "$script_path/protocol-setup.sh"
 fi
 
 if [ $1 == '-uninstall' ];
 then
-	echo ">>> Removing program files"
-	sudo rm -r -f /opt/satnet/
 
-	echo ">>> Removing the daemon for SATNet protocol"
-	sudo rm /usr/local/bin/satnet-protocol.sh
-	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
+	echo ">>> Removing satnetprotocol..."
+	echo ">>> NOTICE: this command only removes external dependencies"
+	echo ">>> NOTICE: to fully remove this program, delete this directory"
 
-	echo ">>> Removing old logs"
-	rm ~/.satnet/logs/*
-
-	echo ">>> Removing executables"
-	rm ~/bin/satnetprotocol
-
-	echo ">>> Removing links"
-	rm ~/Desktop/satnetprotocol.desktop
-	rm ~/Escritorio/satnetprotocol.desktop
-
-	echo ">>> Removing dependencies"
-	sudo apt --assume-yes remove supervisor
-	sudo apt --assume-yes remove build-essential
-	sudo apt --assume-yes remove python-dev
-	sudo apt --assume-yes remove python-pip
-	sudo apt --assume-yes remove virtualenv
-	sudo apt --assume-yes remove libffi-dev
-	sudo apt --assume-yes remove libssl-dev
-	sudo apt --assume-yes remove libpq-dev
-	sudo apt --assume-yes remove shc
-	sudo apt --assume-yes remove unzip
-
-	echo ">>> Do you wish to remove all configuration files? (yes/no)"
-	read OPTION
-	if [ $OPTION == 'yes' ];
-	then
-		rm -r -f ~/.satnet
-	fi
-fi
-
-
-if [ $1 == '-update' ];
-then
-	echo ">>> Removing program files"
-	sudo rm -r -f /opt/satnet/
-
-	echo ">>> Removing the daemon for SATNet protocol"
-	sudo rm /usr/local/bin/satnet-protocol.sh
-	sudo rm /etc/supervisor/conf.d/satnet-protocol-conf.conf
-
-	echo ">>> Removing old logs"
-	rm ~/.satnet/logs/*
-
-	echo ">>> Removing executables"
-	rm ~/bin/satnetprotocol
-
-	echo ">>> Removing links"
-	rm ~/Desktop/satnetprotocol.desktop
-	rm ~/Escritorio/satnetprotocol.desktop
-
-	echo ">>> Removing dependencies"
-	sudo apt --assume-yes remove supervisor
-	sudo apt --assume-yes remove build-essential
-	sudo apt --assume-yes remove python-dev
-	sudo apt --assume-yes remove python-pip
-	sudo apt --assume-yes remove virtualenv
-	sudo apt --assume-yes remove libffi-dev
-	sudo apt --assume-yes remove libssl-dev
-	sudo apt --assume-yes remove libpq-dev
-	sudo apt --assume-yes remove shc
-	sudo apt --assume-yes remove unzip
-
-	echo ">>> Do you wish to remove all configuration files? (yes/no)"
-	read OPTION
-	if [ $OPTION == 'yes' ];
-	then
-		rm -r -f ~/.satnet
-	fi
-
-	venv_path="$project_path/.venv"
-
-	# Install required packages
-	sudo apt --assume-yes install build-essential
-	sudo apt --assume-yes install python-dev
-	sudo apt --assume-yes install python-pip
-	sudo apt --assume-yes install virtualenv
-	sudo apt --assume-yes install libffi-dev
-	sudo apt --assume-yes install libssl-dev
-	sudo apt --assume-yes install libpq-dev
-	sudo apt --assume-yes install shc
-	sudo apt --assume-yes --force-yes install unzip
-
-	# Create a virtualenv
-	virtualenv $venv_path
-	source "$venv_path/bin/activate"
-	pip install -r "$project_path/requirements.txt"
-
-	# Downloading packages for GUI
-	# Needed to install SIP first
-	cd $venv_path
-	mkdir build && cd build
-	pip install SIP --allow-unverified SIP --download="."
-	unzip sip*
-	echo "antes de uno"
-	pwd
-	ls
-	cd sip*
-	python configure.py
-	make
-	sudo make install
-	cd ../ && rm -r -f sip*
-
-	# PyQt4 installation.
-	wget http://downloads.sourceforge.net/project/pyqt/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
-	tar xvzf PyQt-x11-gpl-4.11.4.tar.gz
-	cd PyQt-x11-gpl-4.11.4
-	python ./configure.py --confirm-license --no-designer-plugin -q /usr/bin/qmake-qt4 -e QtGui -e QtCore
-	make
-	# Bug. Needed ldconfig, copy it from /usr/sbin
-	cp /sbin/ldconfig ../../bin/
-	sudo ldconfig
-	sudo make install
-	cd ../ && rm -r -f PyQt*
-
-	# Create a self-signed certicate
-	bash "$script_path/protocol-setup.sh"
-
-	# Supervisor install
-	sudo apt --assume-yes install supervisor
-
-	echo ">>> This script will generate a daemon for SATNet protocol"
-	echo ">>> Populating directories"
-	mkdir ~/.satnet/
-	mkdir ~/.satnet/logs/
-	sudo mkdir /opt/satnet
-	sudo cp -r -f ../../protocol /opt/satnet/
-
-	currentUser=$(whoami)
-
-	cd $script_path
-	sudo shc -f satnetprotocol.sh
-	sudo rm satnetprotocol.sh.x.c
-	sudo chmod 777 satnetprotocol.sh.x
-	sudo chown $currentUser satnetprotocol.sh.x
-	mv satnetprotocol.sh.x satnetprotocol
-
-	mkdir ~/bin/
-	mv satnetprotocol ~/bin/
-
-	cp satnetprotocol.desktop ~/Escritorio
-	cp satnetprotocol.desktop ~/Desktop
-
-	echo ">>> Copying daemons"
-	sudo cp satnet-protocol.sh /usr/local/bin
-	sudo chmod +x /usr/local/bin/satnet-protocol.sh
-	sudo cp satnet-protocol-conf.conf /etc/supervisor/conf.d/
-
-	echo ">>> Updating Supervisor"
-	sudo supervisorctl reread
-	sudo supervisorctl update
-
-	currentUser=$(whoami)
-	sudo chown $currentUser ~/.satnet/logs/* 
-
-	echo ">>> For apply changes you must reboot your system"
-	echo ">>> Reboot now? (yes/no)"
-	read OPTION
-	if [ $OPTION == 'yes' ];
-	then
-		sudo reboot
-	fi
+	[[ $_install_packages == 'true' ]] && uninstall_packages
+    [[ $_config_daemon == 'true' ]] && uninstall_daemon
+	exit 0
 
 fi

@@ -115,11 +115,13 @@ class NotifyEvent(amp.Command):
     :param iEvent:
         Code indicating the event.There are three cases:
 
-        (-1) REMOTE_DISCONNECTED: notifies when the remote client has been disconnected
-        and it is not receiving the messages.
+        (-1) REMOTE_DISCONNECTED: notifies when the remote client has
+        been disconnected and it is not receiving the messages.
         (-2) SLOT_END: notifies both clients about the slot end
-        (-3) END_REMOTE: notifies a client that the remote has finished the connection
-        (-4) REMOTE_CONNECTED: notifies a client when the remote has just connected
+        (-3) END_REMOTE: notifies a client that the remote has finished
+        the connection
+        (-4) REMOTE_CONNECTED: notifies a client when the remote has
+        just connected
     :type iEvent:
         int
     :param sDetails:
