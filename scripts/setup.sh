@@ -138,25 +138,6 @@ function create_daemon()
     sudo chmod 755 $initd_sh 
 }
 
-
-status_service() {
-    printf "%-50s" "Checking $SERVICE_NAME..."
-    if [ -f $PIDFILE ]; then
-        PID=`cat $PIDFILE`
-        if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then
-            printf "%s\n" "Process dead but pidfile exists"
-            exit 1 
-        else
-            echo "Running"
-        fi
-    else
-        printf "%s\n" "Service not running"
-        exit 3 
-    fi
-}
-
-
-
 function remove_daemon()
 {
     sudo rm /etc/init.d/satnetprotocol
@@ -252,7 +233,6 @@ _reboot='true'
 
 if [ $1 == '-install' ];
 then
-<<<<<<< HEAD
 
 	echo ">>> Installing satnet-protocol..."
 
