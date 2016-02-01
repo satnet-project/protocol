@@ -7,3 +7,6 @@ _trial*
 twistd.log
 twistd.pid
 *~
+pid_file.pid
+server_amplog.log
+server_amp_daemon.tac
