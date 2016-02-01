@@ -252,6 +252,7 @@ _reboot='true'
 
 if [ $1 == '-install' ];
 then
+<<<<<<< HEAD
 
 	echo ">>> Installing satnet-protocol..."
 
@@ -274,6 +275,13 @@ then
 
 	exit 0
 
+	echo ">>> For apply changes you must reboot your system"
+	echo ">>> Reboot now? (yes/no)"
+	read OPTION
+	if [ $OPTION == 'yes' ];
+	then
+		sudo reboot
+	fi
 fi
 
 if [ $1 == '-travisCI' ];
