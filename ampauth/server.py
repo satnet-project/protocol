@@ -322,7 +322,6 @@ class CredReceiver(AMP, TimeoutMixin):
                             sDetails=None)
         else:
             # Try to send a message to remote client
-            log.msg("Enter send message")
             try:
                 self.factory.active_protocols[self.factory.active_connections[
                     self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
