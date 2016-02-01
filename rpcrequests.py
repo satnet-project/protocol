@@ -203,9 +203,6 @@ class Satnet_StoreMessage(object):
         import base64
         base64Message = base64.b64encode(bMessage)
 
-        log.msg("slotid")
-        log.msg(slot_id) 
-
         self.call('communications.storeMessage', slot_id, upwards,
                   forwarded, timestamp, base64Message)
 
@@ -222,7 +219,9 @@ class Satnet_StoreMessage(object):
             Arguments required by the method to be invocked.
         """
 
-        return self._rpc_client_.call(call, args, None)
+        pass
+
+        # return self._rpc_client_.call(call, args, None)
 
 
 class Satnet_StorePassiveMessage(object):
