@@ -174,6 +174,8 @@ class CredReceiver(AMP, TimeoutMixin):
         slot = Satnet_GetSlot(self.iSlotId)
         self.slot = slot.slot
 
+        log.msg(self.slot)
+
         #  If slot NOT operational yet...
         if not self.slot:
             log.err('Slot ' + str(iSlotId) + ' is not yet operational')
