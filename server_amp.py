@@ -19,7 +19,7 @@ def main():
         'key/server.pem', 'key/public.pem'
     )
 
-    reactor.listenSSL(443, pf, contextFactory=sslContext)
+    reactor.listenSSL(25345, pf, contextFactory=sslContext)
     log.msg('Server running...')
     reactor.run()
 

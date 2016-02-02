@@ -223,17 +223,16 @@ class CredReceiver(AMP, TimeoutMixin):
         clientA = str(clientA)
         clientC = str(clientC)
 
-        import dateutil.parser
-        iSlotEnd = dateutil.parser.parse(iSlotEnd)
-        iSlotEnd = int(time.mktime(iSlotEnd.timetuple()))
-
         timeNow = misc.localize_datetime_utc(datetime.utcnow())
         timeNow = int(time.mktime(timeNow.timetuple()))
 
-        # For tests only
-        iSlotEnd = timeNow + 86400
+        log.msg(type(iSlotEnd))
 
-        slot_remaining_time = iSlotEnd - timeNow
+
+
+        #  slot_remaining_time = int(iSlotEnd) - timeNow
+
+        slot_remaining_time = 86400
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
         if (slot_remaining_time <= 0):
