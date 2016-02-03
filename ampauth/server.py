@@ -228,8 +228,6 @@ class CredReceiver(AMP, TimeoutMixin):
 
         log.msg(type(iSlotEnd))
 
-
-
         #  slot_remaining_time = int(iSlotEnd) - timeNow
 
         slot_remaining_time = 86400
@@ -327,7 +325,8 @@ class CredReceiver(AMP, TimeoutMixin):
                 self.factory.active_protocols[self.factory.active_connections[
                     self.sUsername]].callRemote(NotifyMsg, sMsg=sMsg)
             except:
-                raise WrongFormatNotification("Error forwarding frame to remote user.")
+                raise WrongFormatNotification("Error forwarding frame "
+                                              "to remote user.")
             # Try to store the message in the remote SatNet server
             forwarded = ''
             self.storeMessage = Satnet_StoreMessage(self.iSlotId, self.bGSuser,
