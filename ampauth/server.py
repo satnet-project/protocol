@@ -160,6 +160,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
         except BadCredentials:
             log.err('Incorrect username and/or password')
+            log.msg(self.factory.active_protocols)
             raise BadCredentials("Incorrect username and/or password")
 
     Login.responder(login)
