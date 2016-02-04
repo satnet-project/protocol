@@ -15,7 +15,6 @@ from twisted.cred.error import UnauthorizedLogin
 from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
-from twisted.internet import protocol
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -99,10 +98,10 @@ class CredReceiver(AMP, TimeoutMixin):
 
     logout = None
     sUsername = ''
-    iTimeOut = 300  # seconds
+    # iTimeOut = 300  # seconds
     session = None
 
-    avatar = None
+    # avatar = None
 
     # Metodo que comprueba cuando una conexion se ha realizado con twisted
     def connectionMade(self):
@@ -221,17 +220,12 @@ class CredReceiver(AMP, TimeoutMixin):
 
         clientA = str(clientA)
         clientC = str(clientC)
-
         timeNow = misc.localize_datetime_utc(datetime.utcnow())
         timeNow = int(time.mktime(timeNow.timetuple()))
-
         timeEnd = arrow.get(str(iSlotEnd))
         timeEnd = timeEnd.timestamp
 
         slot_remaining_time = int(timeEnd) - timeNow
-
-        log.msg(timeEnd)
-        log.msg(slot_remaining_time)
 
         log.msg('Slot remaining time: ' + str(slot_remaining_time))
 
@@ -312,12 +306,14 @@ class CredReceiver(AMP, TimeoutMixin):
 
         # ... if the SC operator is not connected, sent messages will be saved
         # as passive messages...
-        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == True:
+        elif (self.factory.active_connections[self.sUsername] is None and
+              self.bGSuser is True):
             log.msg("RPC Call to Satnet_StorePassiveMessage")
 
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
-        elif self.factory.active_connections[self.sUsername] == None and self.bGSuser == False:
+        elif (self.factory.active_connections[self.sUsername] is None and
+              self.bGSuser is False):
             self.callRemote(NotifyEvent,
                             iEvent=NotifyEvent.REMOTE_DISCONNECTED,
                             sDetails=None)
