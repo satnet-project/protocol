@@ -26,6 +26,7 @@ class BadCredentials(Exception):
     Incorrect username/password.
     """
 
+
 class UnauthorizedLogin(Exception):
 
     """

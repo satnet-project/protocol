@@ -1,6 +1,7 @@
 # coding=utf-8
 import sys
 import logging
+import ConfigParser
 
 from ampauth.server import *
 from twisted.python import log
@@ -8,9 +9,20 @@ from twisted.internet import reactor
 from twisted.internet import ssl
 
 
-def main():
+def readData():
+    dataDict = {}
 
-    logging.getLogger('server')
+    config = ConfigParser.ConfigParser()
+    config.read('.settings')
+
+    dataDict['server'] = config.get('Server', 'host')
+    dataDict['port'] = config.get('Server', 'port')
+    return dataDict
+
+
+def main(dataDict):
+
+    logging.getLogger('SatNet protocol')
     log.startLogging(sys.stdout)
 
     pf = CredAMPServerFactory()
@@ -19,8 +31,8 @@ def main():
         'key/server.pem', 'key/public.pem'
     )
 
-    reactor.listenSSL(25345, pf, contextFactory=sslContext)
-    log.msg('Server running...')
+    reactor.listenSSL(int(dataDict['port']), pf, contextFactory=sslContext)
+    log.msg('SatNet protocol running...')
     reactor.run()
 
 if __name__ == '__main__':
@@ -30,9 +42,12 @@ if __name__ == '__main__':
             from twisted.internet import defer
             defer.setDebugging((True))
 
-            main()
+            dataDict = readData()
+            main(dataDict)
 
         if sys.argv[1] == '--help':
             print "Help"
     except:
-        main()
+        dataDict = readData()
+        log.msg(dataDict)
+        main(dataDict)

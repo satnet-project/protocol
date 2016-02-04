@@ -142,7 +142,6 @@ class CredReceiver(AMP, TimeoutMixin):
             raise UnauthorizedLogin("Client already logged in.")
         else:
             self.sUsername = sUsername
-            # Clean previous registers
             self.factory.active_protocols[sUsername] = None
         #
         #  Don't mix asynchronus and syncronus code.
@@ -174,8 +173,6 @@ class CredReceiver(AMP, TimeoutMixin):
         slot = Satnet_GetSlot(self.iSlotId)
         self.slot = slot.slot
 
-        log.msg(self.slot)
-
         #  If slot NOT operational yet...
         if not self.slot:
             log.err('Slot ' + str(iSlotId) + ' is not yet operational')
@@ -183,33 +180,33 @@ class CredReceiver(AMP, TimeoutMixin):
                 'Slot ' + str(iSlotId) + ' is not yet operational')
         else:
             #  Now only works in test cases
+            if self.slot['state'] == 'TEST':
+                gs_user = self.slot['gs_username']
+                sc_user = self.slot['sc_username']
+
+                #  If this slot has not been assigned to this user...
+                if gs_user != self.sUsername and sc_user != self.sUsername:
+                    log.err('This slot has not been assigned to this user')
+                    raise SlotErrorNotification('This user is not ' +
+                                                'assigned to this slot')
+                #  if the GS user and the SC user belong to the same client...
+                elif gs_user == self.sUsername and sc_user == self.sUsername:
+                    log.msg('Both MCC and GSS belong to the same client')
+                    return {'iResult': StartRemote.CLIENTS_COINCIDE}
+                #  if the remote client is the SC user...
+                elif gs_user == self.sUsername:
+                    self.bGSuser = True
+                    return self.iCreateConnection(self.slot['ending_time'],
+                                                  iSlotId, gs_user, sc_user)
+                #  if the remote client is the GS user...
+                elif sc_user == self.sUsername:
+                    self.bGSuser = False
+                    return self.iCreateConnection(self.slot['ending_time'],
+                                                  iSlotId, sc_user, gs_user)
             if self.slot['state'] != 'TEST':
                 log.err('Slot ' + str(iSlotId) + ' has not yet been reserved')
                 raise SlotErrorNotification('Slot ' + str(iSlotId) +
                                             ' has not yet been reserved')
-
-            gs_user = self.slot['gs_username']
-            sc_user = self.slot['sc_username']
-
-            #  If this slot has not been assigned to this user...
-            if gs_user != self.sUsername and sc_user != self.sUsername:
-                log.err('This slot has not been assigned to this user')
-                raise SlotErrorNotification('This user is not ' +
-                                            'assigned to this slot')
-            #  if the GS user and the SC user belong to the same client...
-            elif gs_user == self.sUsername and sc_user == self.sUsername:
-                log.msg('Both MCC and GSS belong to the same client')
-                return {'iResult': StartRemote.CLIENTS_COINCIDE}
-            #  if the remote client is the SC user...
-            elif gs_user == self.sUsername:
-                self.bGSuser = True
-                return self.iCreateConnection(self.slot['ending_time'],
-                                              iSlotId, gs_user, sc_user)
-            #  if the remote client is the GS user...
-            elif sc_user == self.sUsername:
-                self.bGSuser = False
-                return self.iCreateConnection(self.slot['ending_time'],
-                                              iSlotId, sc_user, gs_user)
 
     StartRemote.responder(iStartRemote)
 
@@ -226,6 +223,7 @@ class CredReceiver(AMP, TimeoutMixin):
         timeNow = misc.localize_datetime_utc(datetime.utcnow())
         timeNow = int(time.mktime(timeNow.timetuple()))
 
+        log.msg(iSlotEnd)
         log.msg(type(iSlotEnd))
 
         #  slot_remaining_time = int(iSlotEnd) - timeNow
@@ -347,6 +345,3 @@ class CredAMPServerFactory(ServerFactory):
     active_protocols = {}
     active_connections = {}
     protocol = CredReceiver
-
-    def __init__(self):
-        self.filename = 'patata'
