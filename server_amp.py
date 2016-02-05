@@ -15,8 +15,10 @@ def readData():
     config = ConfigParser.ConfigParser()
     config.read('.settings')
 
-    dataDict['server'] = config.get('Server', 'host')
-    dataDict['port'] = config.get('Server', 'port')
+    dataDict['server'] = config.get('protocol', 'host')
+    dataDict['port'] = config.get('protocol', 'port')
+    dataDict['serverkey'] = config.get('protocol', 'serverkey')
+    dataDict['publickey'] = config.get('protocol', 'publickey')
     return dataDict
 
 
@@ -27,9 +29,8 @@ def main(dataDict):
 
     pf = CredAMPServerFactory()
 
-    sslContext = ssl.DefaultOpenSSLContextFactory(
-        'key/server.pem', 'key/public.pem'
-    )
+    sslContext = ssl.DefaultOpenSSLContextFactory(dataDict['serverkey'],
+                                                  dataDict['publickey'])
 
     reactor.listenSSL(int(dataDict['port']), pf, contextFactory=sslContext)
     log.msg('SatNet protocol running...')

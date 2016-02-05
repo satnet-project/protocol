@@ -7,7 +7,7 @@ import arrow
 
 from datetime import datetime
 from login import Login
-from errors import BadCredentials
+from errors import BadCredentials, SlotErrorNotification
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
@@ -23,7 +23,6 @@ from ampCommands import EndRemote
 from ampCommands import SendMsg
 from ampCommands import NotifyMsg
 from ampCommands import NotifyEvent
-from clientErrors import SlotErrorNotification
 from rpcrequests import Satnet_RPC
 from server_amp import *
 
@@ -98,7 +97,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
     logout = None
     sUsername = ''
-    # iTimeOut = 300  # seconds
+    iTimeOut = 300  # seconds
     session = None
 
     # avatar = None

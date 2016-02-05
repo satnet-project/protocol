@@ -143,6 +143,11 @@ function remove_daemon()
     sudo rm /etc/init.d/satnetprotocol
 }
 
+function remove_venv()
+{
+    sudo rm -rf "$project_path/.venv/"
+}
+
 function install_packages()
 {
 	echo ">>> Installing system packages..."
@@ -290,6 +295,7 @@ then
 	echo ">>> NOTICE: to fully remove this program, delete this directory"
 
 	[[ $_install_packages == 'true' ]] && uninstall_packages
+    [[ $_install_venv == 'true' ]] && remove_venv
     [[ $_config_daemon == 'true' ]] && uninstall_daemon
 	exit 0
 
