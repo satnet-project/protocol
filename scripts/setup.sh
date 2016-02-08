@@ -89,8 +89,7 @@ function create_daemon()
     echo 'logger "satnetprotocol: Start script executed"' | tee -a $initd_sh
     echo "SATNET_PROTOCOL_PATH=$project_path" | tee -a $initd_sh
     echo "PID_FILE=$project_path/pid_file.pid" | tee -a $initd_sh
-    echo "timestamp= `date +%Y%m%d`"
-    echo "LOGFILE=protocol.$timestamp.log"
+    echo "LOGFILE=$(date +%Y%m%d)" | tee -a $initd_sh
     echo 'export PYTHONPATH="$SATNET_PROTOCOL_PATH:$PYTHONPATH"' | tee -a $initd_sh
     echo '' | tee -a $initd_sh
     echo 'case "$1" in' | tee -a $initd_sh
@@ -98,7 +97,7 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE" --pidfile $PID_FILE' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh

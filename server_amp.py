@@ -17,6 +17,7 @@ def readData():
 
     dataDict['server'] = config.get('protocol', 'host')
     dataDict['port'] = config.get('protocol', 'port')
+    dataDict['name'] = config.get('protocol', 'name')
     dataDict['serverkey'] = config.get('protocol', 'serverkey')
     dataDict['publickey'] = config.get('protocol', 'publickey')
     return dataDict
@@ -33,7 +34,8 @@ def main(dataDict):
                                                   dataDict['publickey'])
 
     reactor.listenSSL(int(dataDict['port']), pf, contextFactory=sslContext)
-    log.msg('SatNet protocol running...')
+    log.msg('SatNet protocol running at', dataDict['name'])
+    log.msg()
     reactor.run()
 
 if __name__ == '__main__':
