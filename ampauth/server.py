@@ -274,24 +274,15 @@ class CredReceiver(AMP, TimeoutMixin):
         self.factory.active_protocols.pop(self.sUsername)
         # Try to remove the remote connection
         try:
-
-            log.msg("Estoy en try")
-
-            log.msg("1")
-
             # Notify remote user
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].callRemote(NotifyEvent,
                                             iEvent=NotifyEvent.END_REMOTE,
                                             sDetails=None)
 
-            log.msg("2")
-
             # Close remote connection
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].transport.loseConnection()
-
-            log.msg("3")
 
             # Remove remove factory
             self.factory.active_connections.pop(
@@ -299,20 +290,8 @@ class CredReceiver(AMP, TimeoutMixin):
 
             self.factory.active_connections.pop(self.sUsername)
 
-            log.msg(self.factory.active_protocols)
-            log.msg(self.factory.active_connections)
-
         except:
-            # Remove local factory
-
-            log.msg("Estoy en except")
-            log.msg(self.factory.active_protocols)
-            log.msg(self.factory.active_connections)
-
-            self.factory.active_protocols.pop(self.sUsername)
-
-            log.msg(self.factory.active_protocols)
-            log.msg(self.factory.active_connections)
+            log.msg("Connections already cleared")
 
         return {'bResult': True}
 
