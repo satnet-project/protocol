@@ -304,6 +304,8 @@ class CredReceiver(AMP, TimeoutMixin):
             # Remove local factory
 
             log.msg("Estoy en except")
+            log.msg(self.factory.active_protocols)
+            log.msg(self.factory.active_connections)
 
             self.factory.active_protocols.pop(self.sUsername)
 
