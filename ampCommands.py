@@ -1,6 +1,6 @@
 # coding=utf-8
 from twisted.protocols import amp
-from clientErrors import SlotErrorNotification
+from errors import SlotErrorNotification
 
 """
    Copyright 2014, 2015 Xabier Crespo Álvarez
