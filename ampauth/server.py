@@ -273,6 +273,9 @@ class CredReceiver(AMP, TimeoutMixin):
 
         # Try to remove the remote connection
         try:
+
+            log.msg("Estoy en try")
+
             # Notify remote user
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].callRemote(NotifyEvent,
@@ -289,6 +292,9 @@ class CredReceiver(AMP, TimeoutMixin):
 
         except:
             # Remove local factory
+
+            log.msg("Estoy en except")
+
             self.factory.active_protocols.pop(self.sUsername)
 
         return {'bResult': True}
