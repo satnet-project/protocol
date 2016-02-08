@@ -297,6 +297,8 @@ class CredReceiver(AMP, TimeoutMixin):
             self.factory.active_connections.pop(
                 self.factory.active_connections[self.sUsername])
 
+            self.factory.active_connections.pop(self.sUsername)
+
             log.msg(self.factory.active_protocols)
             log.msg(self.factory.active_connections)
 
