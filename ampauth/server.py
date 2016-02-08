@@ -276,15 +276,21 @@ class CredReceiver(AMP, TimeoutMixin):
 
             log.msg("Estoy en try")
 
+            log.msg("1")
+
             # Notify remote user
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].callRemote(NotifyEvent,
                                             iEvent=NotifyEvent.END_REMOTE,
                                             sDetails=None)
 
+            log.msg("2")
+
             # Close remote connection
             self.factory.active_protocols[self.factory.active_connections[
                 self.sUsername]].transport.loseConnection()
+
+            log.msg("3")
 
             # Remove remove factory
             self.factory.active_connections.pop(
