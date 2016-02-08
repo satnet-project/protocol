@@ -271,6 +271,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Disconnect local user
         self.transport.loseConnection()
 
+        self.factory.active_protocols.pop(self.sUsername)
         # Try to remove the remote connection
         try:
 
