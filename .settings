@@ -1,6 +1,6 @@
 [protocol]
 host: 127.0.0.1
-port: 1234
+port: 25345
 name: Universidade de Vigo
 serverkey = key/server.pem
 publickey = key/public.pem
