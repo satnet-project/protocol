@@ -6,4 +6,4 @@ dependencies:
 
 test:
   override:
-    - cd tests/ && python test_init.py
+    - cd tests/ && trial test

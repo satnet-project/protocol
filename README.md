@@ -17,6 +17,10 @@ Steps to install the generic client for the SATNet network:
 
 You will need root privileges.
 
+2. For uninstall the dependencies and the satnet daemon run:
+
+`./setup.sh -uninstall`
+
 #### Dependencies
 
 Before starting the script should be activate the corresponding virtualenv to satisfy the required dependencies.
@@ -25,8 +29,6 @@ Before starting the script should be activate the corresponding virtualenv to sa
 
 #### Normal operation
 
-SATNet protocol runs under supervisor module. Installation script will create a daemon which, in every system start, will execute SATNet protocol. This process is transparent for the user.
+Installation script will create a daemon which, in every system start, will execute SATNet protocol. This process is transparent for the user.
 
-This daemon creates a serie of logs that reports the operation. They are located at `/logs` folder, which can be found at the hidden folder `.satnet` created inside the user's home directory.
-
-For easy access to them can be used log_viewer script. To launch this script should run `satnetprotocol`
+This daemon creates a serie of logs that reports the operation. They are located at `/logs` folder, which can be found at the main folder.

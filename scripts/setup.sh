@@ -173,8 +173,22 @@ function install_venv()
 	    deactivate
 
 	} && {
-	    echo ">>> Python Virtual environment found, skipping"
+	    echo ">>> Python virtual environment found, skipping"
 	}
+}
+
+function install_venv_test()
+{
+    [[ -d $venv_dir_test ]] || {
+
+        echo ">>> Creating virtual environment for testing purposes..."
+        virtualenv --python=python2.7 $venv_dir_test
+        source "$venv_dir_test/bin/activate"
+        pip install -r "$project_path/requirements-test.txt"
+        deactivate
+    } && {
+        echo ">>> Python virtual environment found, skipping"
+    }
 }
 
 function create_logs_dir()
@@ -216,6 +230,7 @@ project_path=$( readlink -e "$script_path/.." )
 
 linux_packages="$script_path/debian.packages"
 venv_dir="$project_path/.venv"
+venv_dir_test="$project_path/.venv_test"
 
 initd_sh="$script_path/satnetprotocol"
 tac_file="$project_path/server_amp_daemon.tac"
@@ -230,6 +245,7 @@ keys_public_pem="$keys_dir/public.pem"
 keys_CN="edu.calpoly.aero.satnet"
 
 _install_venv='true'
+_install_venv_test='true'
 _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
@@ -274,7 +290,7 @@ if [ $1 == '-travisCI' ];
 then
 
 	echo ">>> [TravisCI] Installing satnetprotocol..."
-    [[ $_install_venv == 'true' ]] && install_venv
+    [[ $_install_venv_test == 'true' ]] && install_venv_test
 	exit 0
 
 fi
@@ -283,7 +299,7 @@ if [ $1 == '-circleCI' ];
 then
 
 	echo ">>> [CircleCI] Installing satnetprotocol..."
-    [[ $_install_venv == 'true' ]] && install_venv
+    [[ $_install_venv_test == 'true' ]] && install_venv_test
     exit 0
 
 fi
