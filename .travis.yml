@@ -13,10 +13,6 @@ git:
   submodules: false
 
 install:
-#  - pip install coverage
-#  - pip install coveralls
-#  - pip install nose
-#  - pip install pytz
   - cd scripts
   - bash ./setup.sh -travisCI
 

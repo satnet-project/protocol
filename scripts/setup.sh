@@ -291,7 +291,9 @@ then
 
 	echo ">>> [TravisCI] Installing satnetprotocol..."
     pip install -r "$project_path/requirements-test.txt"
-    # [[ $_install_venv_test == 'true' ]] && install_venv_test
+    pip install coverage
+    pip install coveralls
+    pip install nose
 	exit 0
 
 fi
