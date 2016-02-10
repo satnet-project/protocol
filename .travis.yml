@@ -16,6 +16,7 @@ install:
   - pip install coverage
   - pip install coveralls
   - pip install nose
+  - pip install pytz
   - cd scripts
   - bash ./setup.sh -travisCI
 
@@ -23,6 +24,7 @@ script:
   - cd ../
   - nosetests --with-coverage --cover-erase --cover-inclusive
   - cd tests
+  - trial test
 
 after_success:
   - cd ../
