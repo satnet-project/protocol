@@ -58,7 +58,6 @@ class TestProtocolReceiveFrame(TestCase):
     def tearDown(self):
         pass
 
-    def test_server_sends_anything_when_receive_frame(self):
-        
+    def test_server_sends_anything_when_receive_frame(self):     
         self.sp.dataReceived(self.testFrame)
         self.assertEquals('', self.transport.value())
