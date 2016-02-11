@@ -219,9 +219,7 @@ class Satnet_StoreMessage(object):
             Arguments required by the method to be invocked.
         """
 
-        pass
-
-        # return self._rpc_client_.call(call, args, None)
+        return self._rpc_client_.call(call, args, None)
 
 
 class Satnet_StorePassiveMessage(object):
