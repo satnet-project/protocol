@@ -1,7 +1,7 @@
 [![Circle CI](https://circleci.com/gh/satnet-project/protocol.svg?style=shield)](https://circleci.com/gh/satnet-project/protocol)
 [![Build Status](https://travis-ci.org/satnet-project/protocol.svg)](https://travis-ci.org/satnet-project/protocol)
 [![Coverage Status](https://coveralls.io/repos/satnet-project/protocol/badge.svg?branch=jrpc_if&service=github)](https://coveralls.io/github/satnet-project/protocol?branch=jrpc_if)
-[![Code Health](https://landscape.io/github/satnet-project/protocol/master/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/master)
+[![Code Health](https://landscape.io/github/satnet-project/protocol/jrpc_if/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/jrpc_if)
 
 ### Protocol communications for SATNet project.
 
