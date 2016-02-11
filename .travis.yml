@@ -20,7 +20,7 @@ script:
   - cd ../
   - nosetests --with-coverage --cover-erase --cover-inclusive
   - cd tests
-  - trial test
+  - trial test_receiveMsg
 
 after_success:
   - cd ../

@@ -6,4 +6,4 @@ dependencies:
 
 test:
   override:
-    - cd tests/ && trial test
+    - cd tests/ && trial test_receiveMsg
