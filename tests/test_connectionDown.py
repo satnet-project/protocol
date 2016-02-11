@@ -38,7 +38,12 @@ class MockFactory(Factory):
     active_connections = []
 
 
-class TestProtocolReceiveFrame(TestCase):
+class TestProtocolSendFrame(TestCase):
+
+    """
+    Testing multiple client connections
+    TDOD. Test multiple valid connections
+    """
 
     def setUp(self):
         log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
@@ -58,7 +63,6 @@ class TestProtocolReceiveFrame(TestCase):
     def tearDown(self):
         pass
 
-    def test_server_sends_anything_when_receive_frame(self):
-        
-        self.sp.dataReceived(self.testFrame)
-        self.assertEquals('', self.transport.value())
+    def test_connection_down_when_timeout_reaches(self):
+        self.sp.timeoutConnection()
+        self.assertFalse(self.transport.connected)
