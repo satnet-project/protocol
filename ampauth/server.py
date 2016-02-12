@@ -97,7 +97,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
     logout = None
     sUsername = ''
-    iTimeOut = 300  # seconds
+    iTimeOut = 259200  # seconds
     session = None
 
     # avatar = None
