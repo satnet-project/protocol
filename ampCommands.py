@@ -1,6 +1,9 @@
 # coding=utf-8
+from twisted.protocols import amp
+from errors import SlotErrorNotification
+
 """
-   Copyright 2014 Xabier Crespo Álvarez
+   Copyright 2014, 2015 Xabier Crespo Álvarez
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,13 +23,8 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-from twisted.protocols import amp
-from errors import *
-
-"""
-Commandes implemented by the N-server which will be invoked by a
-G- or M- clients.
-"""
+# Commandes implemented by the N-server which will be invoked by a
+# G- or M- clients.
 
 
 class StartRemote(amp.Command):
@@ -45,14 +43,19 @@ class StartRemote(amp.Command):
         L{int}
 
     :returns iResult:
-        Raises an error if the slot is not available yet or if it isn't assigned to 
-        the calling client. Otherwise, it may return one of the following codes:
+        Raises an error if the slot is not available yet or if it isn't
+        assigned to the calling client. Otherwise, it may return one of
+        the following codes:
 
-        (0) REMOTE_READY: the remote client is already connected to the server
-        (-1) CLIENTS_COINCIDE: the remote client is the same as the calling client
-        (-2) REMOTE_NOT_CONNECTED: indicates if the the remote client is not connected
+        (0) REMOTE_READY: the remote client is already connected to the
+        server
+        (-1) CLIENTS_COINCIDE: the remote client is the same as the calling
+        client
+        (-2) REMOTE_NOT_CONNECTED: indicates if the the remote client is
+        not connected
 
-        In case that any of the previous cases are detected, the slotId is returned.
+        In case that any of the previous cases are detected, the slotId
+        is returned.
     :rtype:
         int or L{SlotNotAvailable}
     """
@@ -66,9 +69,10 @@ class StartRemote(amp.Command):
 
 class EndRemote(amp.Command):
     arguments = []
-    requiresAnswer = False
+    response = [('bResult', amp.Boolean())]
     """
-    Invoked by a client whenever this one wants to finalize the remote operation.
+    Invoked by a client whenever this one wants to finalize the remote
+    operation.
     """
 
 
@@ -80,8 +84,8 @@ class SendMsg(amp.Command):
         SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'}
 
     """
-    Invoked when a client wants to send a message to a remote entity. To use it, the 
-    command StartRemote shall be invoked first.
+    Invoked when a client wants to send a message to a remote entity.
+    To use it, the command StartRemote shall be invoked first.
     
     :param sMsg:
         String containing the message
@@ -103,11 +107,8 @@ class SendMsg(amp.Command):
         Boolean
     """
 
-"""
-Commandes implemented by G- or M- clients which will be invoked
-by a N-server.
-"""
-
+# Commandes implemented by G- or M- clients which will be invoked
+# by a N-server.
 
 class NotifyEvent(amp.Command):
     arguments = [('iEvent', amp.Integer()),
@@ -119,16 +120,19 @@ class NotifyEvent(amp.Command):
     :param iEvent:
         Code indicating the event.There are three cases:
 
-        (-1) REMOTE_DISCONNECTED: notifies when the remote client has been disconnected
-        and it is not receiving the messages.
+        (-1) REMOTE_DISCONNECTED: notifies when the remote client has
+        been disconnected and it is not receiving the messages.
         (-2) SLOT_END: notifies both clients about the slot end
-        (-3) END_REMOTE: notifies a client that the remote has finished the connection
-        (-4) REMOTE_CONNECTED: notifies a client when the remote has just connected
+        (-3) END_REMOTE: notifies a client that the remote has finished
+        the connection
+        (-4) REMOTE_CONNECTED: notifies a client when the remote has
+        just connected
     :type iEvent:
         int
     :param sDetails:
-        Details of the event. If it is REMOTE_CONNECTED this parameter is equal to 
-        the username of the remote client. Otherwise the parameter is None
+        Details of the event. If it is REMOTE_CONNECTED this parameter is
+        equal to the username of the remote client. Otherwise the parameter
+        is None
     :type sDetails:
         L{String} or None
     """
@@ -147,7 +151,7 @@ class NotifyMsg(amp.Command):
     requiresAnswer = False
     """
     Used to send a message to a remote client.
-    
+
     :param sMsg:
         Remote client identification number
     :type sMsg:

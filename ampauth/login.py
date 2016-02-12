@@ -1,4 +1,8 @@
 # coding=utf-8
+from twisted.protocols import amp
+from twisted.cred.error import UnauthorizedLogin
+from errors import BadCredentials
+
 """
    Copyright 2014 Xabier Crespo Álvarez
 
@@ -20,11 +24,7 @@
 __author__ = 'xabicrespog@gmail.com'
 
 
-from twisted.protocols import amp
-from twisted.cred.error import UnauthorizedLogin
-
-
-class PasswordLogin(amp.Command):
+class Login(amp.Command):
 
     """
     Command to authenticate an user.  The server response is a boolean
@@ -51,4 +51,5 @@ class PasswordLogin(amp.Command):
     response = [('bAuthenticated', amp.Boolean())]
     errors = {
         UnauthorizedLogin: 'UNAUTHORIZED_LOGIN',
+        BadCredentials: 'BAD_CREDENTIALS',
         NotImplementedError: 'NOT_IMPLEMENTED_ERROR'}

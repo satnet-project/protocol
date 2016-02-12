@@ -1,0 +1,32 @@
+sudo: false
+
+language: 'python'
+
+branches:
+  only:
+    - jrpc_if
+
+python:
+  - '2.7'
+
+git:
+  submodules: false
+
+install:
+  - cd scripts
+  - bash ./setup.sh -travisCI
+
+script:
+  - cd ../
+  - nosetests --with-coverage --cover-erase --cover-inclusive
+  - cd tests
+  - trial test_receiveMsg
+  - trial test_connectionDown
+
+after_success:
+  - cd ../
+  - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
+  - coverage combine
+  - cat .coverage
+  - coveralls
+
