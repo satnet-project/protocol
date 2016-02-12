@@ -190,11 +190,13 @@ class Satnet_StoreMessage(object):
                                       HttpSessionTransport(
                                         'http://localhost:8000/jrpc/'))
 
+        """
         hMessage = message.replace(":", "")
         bMessage = bytearray.fromhex(hMessage)
+        """
 
         import base64
-        base64Message = base64.b64encode(bMessage)
+        base64Message = base64.b64encode(message)
 
         slot_id = str(slot_id)
 
