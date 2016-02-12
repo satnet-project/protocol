@@ -4,9 +4,8 @@ from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
 import requests
 import json
-from ampauth.errors import BadCredentials
 from twisted.python import log
-
+from errors import BadCredentials
 
 """
      Copyright 2015, 2016 Xabier Crespo Álvarez
@@ -108,12 +107,6 @@ class Satnet_RPC(object):
             pass
         else:
             log.msg('Keep alive connection')
-            # print "keepalive"
-            # self.call('network.keepAlive')
-
-    # def _keepAlive(self):
-    #     threading.Timer(300, self._keepAlive).start() # set daemon to false
-    #     self.call('network.keepAlive')
 
     def call(self, call, *args):
         """
@@ -202,6 +195,8 @@ class Satnet_StoreMessage(object):
 
         import base64
         base64Message = base64.b64encode(bMessage)
+
+        slot_id = str(slot_id)
 
         self.call('communications.storeMessage', slot_id, upwards,
                   forwarded, timestamp, base64Message)
