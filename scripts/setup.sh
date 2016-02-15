@@ -55,25 +55,6 @@ function create_selfsigned_keys()
     cp $keys_crt $keys_public_pem
 }
 
-function config_tac()
-{
-    echo "# coding=utf-8" | tee $tac_file
-    echo "" | tee -a $tac_file
-    echo "from ampauth.server import CredAMPServerFactory" | tee -a $tac_file
-    echo "" | tee -a $tac_file
-    echo "from twisted.application import service" | tee -a $tac_file
-    echo "from twisted.internet import ssl, reactor" | tee -a $tac_file
-    echo "" | tee -a $tac_file
-    echo "application = service.Application('satnetProtocol')" | tee -a $tac_file
-    echo "" | tee -a $tac_file
-    echo "pf = CredAMPServerFactory()" | tee -a $tac_file
-    echo "" | tee -a $tac_file
-    echo "sslContext = ssl.DefaultOpenSSLContextFactory('$project_path/key/server.pem'," | tee -a $tac_file
-    echo "                                              '$project_path/key/public.pem')" | tee -a $tac_file
-    echo "" | tee -a $tac_file
-    echo 'reactor.listenSSL(25345, pf, contextFactory=sslContext)' | tee -a $tac_file
-}
-
 function create_daemon()
 {
     echo '#! /bin/bash' | tee $initd_sh
@@ -207,7 +188,6 @@ function config_daemon()
 {
     echo ">>> Creating daemon"
     [[ $_config_daemon == 'true' ]] && create_daemon
-    [[ $_config_tac == 'true' ]] && config_tac
 
     sudo chmod 755 $initd_sh
     sudo mv $initd_sh /etc/init.d/
@@ -250,7 +230,6 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
-_config_tac='true'
 _reboot='true'
 
 if [ $1 == '-install' ];

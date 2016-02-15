@@ -52,5 +52,4 @@ if __name__ == '__main__':
             print "Help"
     except:
         dataDict = readData()
-        log.msg(dataDict)
         main(dataDict)
