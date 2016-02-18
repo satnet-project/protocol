@@ -26,10 +26,6 @@ from ampCommands import NotifyEvent
 from rpcrequests import Satnet_RPC
 from server_amp import *
 
-from rpcrequests import Satnet_GetSlot
-from rpcrequests import Satnet_StorePassiveMessage
-from rpcrequests import Satnet_StoreMessage
-
 
 """
    Copyright 2014, 2015, 2016 Xabier Crespo Álvarez, Samuel Góngora García
@@ -96,11 +92,13 @@ class CredReceiver(AMP, TimeoutMixin):
     """
 
     logout = None
-    sUsername = ''
-    iTimeOut = 259200  # seconds
     session = None
 
-    # avatar = None
+    sUsername = ''
+    iTimeOut = 259200  # seconds
+
+    # ### FIXED :: Added 'sPassword' method where, after a login, the password is stored
+    sPassword = ''
 
     # Metodo que comprueba cuando una conexion se ha realizado con twisted
     def connectionMade(self):
@@ -141,11 +139,14 @@ class CredReceiver(AMP, TimeoutMixin):
             raise UnauthorizedLogin("Client already logged in.")
         else:
             self.sUsername = sUsername
+	    self.sPassword = sPassword
             self.factory.active_protocols[sUsername] = None
+
         #
         #  Don't mix asynchronus and syncronus code.
         #  Try-except sentences aren't allowed.
         #
+
         try:
             self.rpc = Satnet_RPC(sUsername, sPassword)
             self.factory.active_protocols[sUsername] = self
@@ -170,7 +171,7 @@ class CredReceiver(AMP, TimeoutMixin):
 
         self.iSlotId = iSlotId
 
-        slot = Satnet_GetSlot(self.iSlotId)
+        slot = self.rpc.getSlot(self.iSlotId)
         self.slot = slot.slot
 
         #  If slot NOT operational yet...
@@ -235,8 +236,9 @@ class CredReceiver(AMP, TimeoutMixin):
                                         " has expired.")
 
         #  Create an instante for finish the slot at correct time.
-        self.session = reactor.callLater(slot_remaining_time,
-                                         self.vSlotEnd, iSlotId)
+        self.session = reactor.callLater(
+	    slot_remaining_time, self.vSlotEnd, iSlotId
+	)
 
         if clientC not in self.factory.active_protocols:
             log.msg("Remote user " + clientC + " not connected yet.")
@@ -271,7 +273,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Disconnect local user
         self.transport.loseConnection()
 
-        self.factory.active_protocols.pop(self.sUsername)
+        # FIXME self.factory.active_protocols.pop(self.sUsername)
         # Try to remove the remote connection
         try:
             # Notify remote user
@@ -309,7 +311,9 @@ class CredReceiver(AMP, TimeoutMixin):
         # as passive messages...
         elif (self.factory.active_connections[self.sUsername] is None and
               self.bGSuser is True):
-            log.msg("RPC Call to Satnet_StorePassiveMessage")
+
+            log.msg("No SC operator connected, stored as a passive message")
+	    self.rpc.storeUnconnectedMessage(sMsg)
 
         # ... if the GS operator is not connected, the remote SC client will be
         # notified to wait for the GS to connect...
@@ -328,11 +332,12 @@ class CredReceiver(AMP, TimeoutMixin):
                                               "to remote user.")
             # Try to store the message in the remote SatNet server
             forwarded = ''
-            self.storeMessage = Satnet_StoreMessage(self.iSlotId, self.bGSuser,
-                                                    forwarded, iTimestamp,
-                                                    sMsg)
+	    self.rpc.storeMessage(
+		self.iSlotId, self.bGSuser, forwarded, iTimestamp, sMsg
+	    )
 
         return {'bResult': True}
+
     SendMsg.responder(vSendMsg)
 
 
@@ -346,3 +351,4 @@ class CredAMPServerFactory(ServerFactory):
     active_protocols = {}
     active_connections = {}
     protocol = CredReceiver
+
