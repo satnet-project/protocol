@@ -38,7 +38,7 @@ class MockFactory(Factory):
     active_connections = []
 
 
-class TestProtocolSendFrame(TestCase):
+class TestProtocolConnectionDown(TestCase):
 
     """
     Testing multiple client connections
@@ -63,6 +63,6 @@ class TestProtocolSendFrame(TestCase):
     def tearDown(self):
         pass
 
-    def test_connection_down_when_timeout_reaches(self):
+    def test_connectionDownWhenTimeoutReaches(self):
         self.sp.timeoutConnection()
         self.assertFalse(self.transport.connected)
