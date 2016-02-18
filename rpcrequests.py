@@ -111,9 +111,9 @@ class Satnet_RPC(object):
             HttpSessionTransport(str(CONNECTION_INFO['transport'])))
 
         if not self.call('system.login', user, pwd):
-            # raise BadCredentials()
+            raise BadCredentials()
             # For tests only!
-            pass
+            # pass
         else:
             log.msg('Keep alive connection')
 
