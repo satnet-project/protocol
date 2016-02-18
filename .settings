@@ -4,3 +4,4 @@ port: 25345
 name: Universidade de Vigo
 serverkey = key/server.pem
 publickey = key/public.pem
+transport = http://localhost:8000/jrpc/

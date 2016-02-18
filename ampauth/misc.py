@@ -123,3 +123,22 @@ def get_utc_timestamp(utc_datetime=None):
     return int(diff.total_seconds() * 10**6)
 
 
+def get_configuration_local_file(settingsFile):
+    """
+    Returns a dictionary which contains the connection's data.
+    """
+
+    CONNECTION_INFO = {}
+
+    import ConfigParser
+    config = ConfigParser.ConfigParser()
+    config.read(settingsFile)
+
+    CONNECTION_INFO['host'] = config.get('protocol', 'host')
+    CONNECTION_INFO['port'] = config.get('protocol', 'port')
+    CONNECTION_INFO['name'] = config.get('protocol', 'name')
+    CONNECTION_INFO['serverkey'] = config.get('protocol', 'serverkey')
+    CONNECTION_INFO['publickey'] = config.get('protocol', 'publickey')
+    CONNECTION_INFO['transport'] = config.get('protocol', 'transport')
+
+    return CONNECTION_INFO
