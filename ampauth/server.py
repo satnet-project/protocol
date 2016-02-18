@@ -97,12 +97,10 @@ class CredReceiver(AMP, TimeoutMixin):
 
     logout = None
     sUsername = ''
-    iTimeOut = 259200  # seconds
+    iTimeOut = 60  # seconds
     session = None
-
     # avatar = None
 
-    # Metodo que comprueba cuando una conexion se ha realizado con twisted
     def connectionMade(self):
         self.setTimeout(self.iTimeOut)
         super(CredReceiver, self).connectionMade()
