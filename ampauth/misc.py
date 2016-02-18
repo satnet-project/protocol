@@ -2,6 +2,8 @@
 import pytz
 import datetime
 
+from twisted.python import log
+
 """
    Copyright 2015 Samuel Góngora García
 
@@ -123,7 +125,7 @@ def get_utc_timestamp(utc_datetime=None):
     return int(diff.total_seconds() * 10**6)
 
 
-def get_configuration_local_file(settingsFile):
+def get_configuration_local_file(settingsFile=None):
     """
     Returns a dictionary which contains the connection's data.
     """

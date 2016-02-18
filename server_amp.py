@@ -1,26 +1,12 @@
 # coding=utf-8
 import sys
 import logging
-import ConfigParser
 
 from ampauth.server import *
+from ampauth import misc
 from twisted.python import log
 from twisted.internet import reactor
 from twisted.internet import ssl
-
-
-def readData():
-    dataDict = {}
-
-    config = ConfigParser.ConfigParser()
-    config.read('.settings')
-
-    dataDict['server'] = config.get('protocol', 'host')
-    dataDict['port'] = config.get('protocol', 'port')
-    dataDict['name'] = config.get('protocol', 'name')
-    dataDict['serverkey'] = config.get('protocol', 'serverkey')
-    dataDict['publickey'] = config.get('protocol', 'publickey')
-    return dataDict
 
 
 def main(dataDict):
@@ -28,13 +14,17 @@ def main(dataDict):
     logging.getLogger('SatNet protocol')
     log.startLogging(sys.stdout)
 
+    CONNECTION_INFO = misc.get_configuration_local_file(
+        settingsFile='.settings')
+
     pf = CredAMPServerFactory()
 
-    sslContext = ssl.DefaultOpenSSLContextFactory(dataDict['serverkey'],
-                                                  dataDict['publickey'])
+    sslContext = ssl.DefaultOpenSSLContextFactory(CONNECTION_INFO['serverkey'],
+                                                  CONNECTION_INFO['publickey'])
 
-    reactor.listenSSL(int(dataDict['port']), pf, contextFactory=sslContext)
-    log.msg('SatNet protocol running at', dataDict['name'])
+    reactor.listenSSL(int(CONNECTION_INFO['port']), pf,
+                      contextFactory=sslContext)
+    log.msg('SatNet protocol running at', CONNECTION_INFO['name'])
     log.msg()
     reactor.run()
 

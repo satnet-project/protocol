@@ -1,31 +1,20 @@
 # coding=utf-8
 from ampauth.server import CredAMPServerFactory
+from ampauth import misc
 
 from twisted.application import service
 from twisted.internet import ssl, reactor
 
-from ConfigParser import ConfigParser
-
 from os import path
-
-dataDict = {}
-
-config = ConfigParser()
 
 workingDir = path.dirname(path.realpath(__file__))
 
-config.read(str(workingDir) + '/.settings')
-
-dataDict['server'] = config.get('protocol', 'host')
-dataDict['port'] = config.get('protocol', 'port')
-dataDict['name'] = config.get('protocol', 'name')
-dataDict['serverkey'] = config.get('protocol', 'serverkey')
-dataDict['publickey'] = config.get('protocol', 'publickey')
+CONNECTION_INFO = misc.get_configuration_local_file(str(workingDir) + '/.settings')
 
 application = service.Application('satnetProtocol')
 pf = CredAMPServerFactory()
 
-sslContext = ssl.DefaultOpenSSLContextFactory(str(workingDir) + '/' + dataDict['serverkey'], str(workingDir) + '/' + dataDict['publickey'])
+sslContext = ssl.DefaultOpenSSLContextFactory(str(workingDir) + '/' + CONNECTION_INFO['serverkey'], str(workingDir) + '/' + CONNECTION_INFO['publickey'])
 
-reactor.listenSSL(int(dataDict['port']), pf, contextFactory=sslContext)
+reactor.listenSSL(int(CONNECTION_INFO['port']), pf, contextFactory=sslContext)
 

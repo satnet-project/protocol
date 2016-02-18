@@ -7,6 +7,8 @@ import json
 from twisted.python import log
 from errors import BadCredentials
 
+from ampauth import misc
+
 """
      Copyright 2015, 2016 Xabier Crespo Álvarez
 
@@ -97,9 +99,14 @@ class Satnet_RPC(object):
 
     """
     def __init__(self, user, pwd):
+        from os import path
+        workingDir = path.dirname(path.realpath(__file__))
+
+        CONNECTION_INFO = misc.get_configuration_local_file(
+            settingsFile=str(workingDir) + '/.settings')
         self._rpc_client = RPCClient(
             JSONRPCProtocolFix(),
-            HttpSessionTransport('http://localhost:8000/jrpc/'))
+            HttpSessionTransport(str(CONNECTION_INFO['transport'])))
 
         if not self.call('system.login', user, pwd):
             # raise BadCredentials()
@@ -126,9 +133,14 @@ class Satnet_RPC(object):
 class Satnet_GetSlot(object):
 
     def __init__(self, slot_id):
+        from os import path
+        workingDir = path.dirname(path.realpath(__file__))
+
+        CONNECTION_INFO = misc.get_configuration_local_file(
+            settingsFile=str(workingDir) + '/.settings')
         self._rpc_client = RPCClient(JSONRPCProtocolFix(),
                                      HttpSessionTransport(
-                                        'http://localhost:8000/jrpc/')
+                                        str(CONNECTION_INFO['transport']))
                                      )
 
         self.slot = self.call('scheduling.slot.get', slot_id)
@@ -186,15 +198,14 @@ class Satnet_StoreMessage(object):
     """
 
     def __init__(self, slot_id, upwards, forwarded, timestamp, message):
+        from os import path
+        workingDir = path.dirname(path.realpath(__file__))
+
+        CONNECTION_INFO = misc.get_configuration_local_file(
+            settingsFile=str(workingDir) + '/.settings')
         self._rpc_client_ = RPCClient(JSONRPCProtocolFix(),
                                       HttpSessionTransport(
-                                        'http://localhost:8000/jrpc/'))
-
-        """
-        hMessage = message.replace(":", "")
-        bMessage = bytearray.fromhex(hMessage)
-        """
-
+                                        str(CONNECTION_INFO['transport'])))
         import base64
         base64Message = base64.b64encode(message)
 
@@ -253,9 +264,14 @@ class Satnet_StorePassiveMessage(object):
     """
 
     def __init__(self, groundstation_id, timestamp, doppler_shift, message):
+        from os import path
+        workingDir = path.dirname(path.realpath(__file__))
+
+        CONNECTION_INFO = misc.get_configuration_local_file(
+            settingsFile=str(workingDir) + '/.settings')
         self._rpc_client = RPCClient(JSONRPCProtocolFix(),
                                      HttpSessionTransport(
-                                        'http://localhost:8000/jrpc/'))
+                                        str(CONNECTION_INFO['transport'])))
 
         self.call('communications.storePassiveMessage', slot_id,
                   upwards, forwarded, timestamp, message)
