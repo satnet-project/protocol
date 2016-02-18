@@ -35,7 +35,7 @@ function create_selfsigned_keys()
 
     # 1: Generate a Private Key
     echo '>>> Generating a private key'
-    openssl genrsa -des3 -passout pass:satnet -out $keys_private 1024
+    openssl genrsa -des3 -passout pass:satnet -out $keys_private 2048
     # 2: Generate a CSR (Certificate Signing Request)
     echo '>>> Generating a CSR'
     openssl req -new -key $keys_private -passin pass:satnet\
@@ -222,6 +222,7 @@ keys_csr="$keys_dir/test.csr"
 keys_crt="$keys_dir/test.crt"
 keys_server_pem="$keys_dir/server.pem"
 keys_public_pem="$keys_dir/public.pem"
+
 keys_CN="edu.calpoly.aero.satnet"
 
 _install_venv='true'

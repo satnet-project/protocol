@@ -49,7 +49,9 @@ class HttpSessionTransport(HttpPostClientTransport):
             raise TypeError('str expected')
 
         r = self.s.post(self.endpoint, data=message,
-                        headers={'content-type': 'application/json'})
+                        headers={'content-type': 'application/json'},
+                        verify=False)
+        log.msg('>>> r = ' + str(r))
 
         if expect_reply:
             return r.content

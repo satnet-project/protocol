@@ -2,7 +2,6 @@
 import pytz
 import datetime
 
-from twisted.python import log
 
 """
    Copyright 2015 Samuel Góngora García
