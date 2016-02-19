@@ -122,6 +122,8 @@ class CredReceiver(AMP, TimeoutMixin):
 
         log.err(reason.getErrorMessage())
 
+        self.factory.active_protocols.pop(self.sUsername)
+
         log.msg('Active clients: ' +
                 str(len(self.factory.active_protocols)))
         log.msg('Active connections: ' +
