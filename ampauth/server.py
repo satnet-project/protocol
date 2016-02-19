@@ -126,6 +126,11 @@ class CredReceiver(AMP, TimeoutMixin):
             raise BadCredentials("Incorrect username and/or password")
 
     def decode_user(self, slot_id, slot):
+        """Decodes the information of the client
+        :param slot_id: Identifier of the slot
+        :param slot:
+        :return:
+        """
 
         if not slot:
             err_msg = 'Slot NOT operational, id = ' + str(slot_id)
@@ -146,8 +151,10 @@ class CredReceiver(AMP, TimeoutMixin):
         return gs_user, sc_user, client_a, client_b
 
     def check_slot_ownership(self, gs_user, sc_user):
-
-        #  If this slot has not been assigned to this user...
+        """Checks if this slot has not been assigned to this user
+        :param gs_user: Username of the groundstation user
+        :param sc_user: Username of the spacecraft user
+        """
         if gs_user != self.username and sc_user != self.username:
             err_msg = 'This slot has not been assigned to this user'
             log.err(err_msg)
@@ -158,15 +165,36 @@ class CredReceiver(AMP, TimeoutMixin):
         log.msg("(" + self.username + ") --------- Start Remote ---------")
 
         slot = self.rpc.get_slot(iSlotId)
-        gs_user, sc_user, client_a, client_b = self.decode_user(slot, iSlotId)
+        gs_user, sc_user, client_a, client_c = self.decode_user(iSlotId, slot)
         log.msg('>>> @iStartRemote.slot = ' + str(slot))
 
         if slot['state'] != 'TEST':
             self.check_slot_ownership(gs_user, sc_user)
 
         return self.create_connection(
-            slot['ending_time'], iSlotId, client_a, client_b
+            slot['ending_time'], iSlotId, client_a, client_c
         )
+
+    @staticmethod
+    def check_expiration(slot_id, slot_end):
+        """Check slot's expiration
+        :param slot_id: Identifier of the slot
+        :param slot_end: Datetime end of the slot
+        """
+        time_now = misc.localize_datetime_utc(datetime.utcnow())
+        time_now = int(time.mktime(time_now.timetuple()))
+        time_end = arrow.get(str(slot_end))
+        time_end = time_end.timestamp
+
+        slot_remaining_time = int(time_end) - time_now
+        log.msg('Slot remaining time: ' + str(slot_remaining_time))
+
+        if slot_remaining_time <= 0:
+            err_msg = "Slot EXPIRED, id = " + str(slot_id)
+            log.err(err_msg)
+            raise SlotErrorNotification(err_msg)
+
+        return slot_remaining_time
 
     # noinspection PyUnresolvedReferences
     def create_connection(self, slot_end, slot_id, client_a, client_c):
@@ -178,27 +206,16 @@ class CredReceiver(AMP, TimeoutMixin):
         :param client_a: Client A
         :param client_c: Client C
         """
-
         client_a = str(client_a)
         client_c = str(client_c)
-        time_now = misc.localize_datetime_utc(datetime.utcnow())
-        time_now = int(time.mktime(time_now.timetuple()))
-        time_end = arrow.get(str(slot_end))
-        time_end = time_end.timestamp
 
-        slot_remaining_time = int(time_end) - time_now
-
-        log.msg('Slot remaining time: ' + str(slot_remaining_time))
-
-        if slot_remaining_time <= 0:
-            err_msg = "Slot EXPIRED, id = " + str(slot_id)
-            log.err(err_msg)
-            raise SlotErrorNotification(err_msg)
-
-        #  Create an instante for finish the slot at correct time.
-        self.session = reactor.callLater(
-            slot_remaining_time, self.slot_end, slot_id
-        )
+        if slot_id != -1:
+            slot_remaining_time = CredReceiver.check_expiration(
+                slot_id, slot_end
+            )
+            self.session = reactor.callLater(
+                slot_remaining_time, self.slot_end, slot_id
+            )
 
         if client_c not in self.factory.active_protocols:
             log.msg("Remote user " + client_c + " not connected yet.")

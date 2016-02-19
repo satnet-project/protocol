@@ -3,8 +3,7 @@ _trial_temp
 key
 logs
 .idea/
-.venv*
-_trial*
+.venv/
 *.log
 twistd.pid
 *~
