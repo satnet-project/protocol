@@ -125,26 +125,27 @@ class CredReceiver(AMP, TimeoutMixin):
             log.msg(self.factory.active_protocols)
             raise BadCredentials("Incorrect username and/or password")
 
-    # Check user name
-    def iStartRemote(self, iSlotId):
-        log.msg("(" + self.username + ") --------- Start Remote ---------")
-
-        slot = self.rpc.get_slot(iSlotId)
+    def decode_user(self, slot_id, slot):
 
         if not slot:
-            log.err('Slot ' + str(iSlotId) + ' is not yet operational')
+            err_msg = 'Slot NOT operational, id = ' + str(slot_id)
+            log.err('Slot ' + str(slot_id) + ' is not yet operational')
             raise SlotErrorNotification(
-                'Not operational slot, id = ' + str(iSlotId)
+                'Not operational slot, id = ' + str(slot_id)
             )
 
-        log.msg('>>> @iStartRemote.slot = ' + str(slot))
         gs_user = slot['gs_username']
         sc_user = slot['sc_username']
 
-        if slot['state'] == 'TEST':
-            return self.create_connection(
-                slot['ending_time'], iSlotId, gs_user, sc_user
-            )
+        client_a = sc_user
+        client_b = gs_user
+        if gs_user == self.username:
+            client_a = gs_user
+            client_b = sc_user
+
+        return gs_user, sc_user, client_a, client_b
+
+    def check_slot_ownership(self, gs_user, sc_user):
 
         #  If this slot has not been assigned to this user...
         if gs_user != self.username and sc_user != self.username:
@@ -152,24 +153,20 @@ class CredReceiver(AMP, TimeoutMixin):
             log.err(err_msg)
             raise SlotErrorNotification(err_msg)
 
-        #  if the GS user and the SC user belong to the same client...
-        elif gs_user == self.username and sc_user == self.username:
-            log.msg('Both MCC and GSS belong to the same client')
-            return {'iResult': StartRemote.CLIENTS_COINCIDE}
+    # Check user name
+    def iStartRemote(self, iSlotId):
+        log.msg("(" + self.username + ") --------- Start Remote ---------")
 
-        #  if the remote client is the SC user...
-        elif gs_user == self.username:
-            self.is_user_gs = True
-            return self.create_connection(
-                slot['ending_time'], iSlotId, gs_user, sc_user
-            )
+        slot = self.rpc.get_slot(iSlotId)
+        gs_user, sc_user, client_a, client_b = self.decode_user(slot, iSlotId)
+        log.msg('>>> @iStartRemote.slot = ' + str(slot))
 
-        #  if the remote client is the GS user...
-        elif sc_user == self.username:
-            self.is_user_gs = False
-            return self.create_connection(
-                slot['ending_time'], iSlotId, sc_user, gs_user
-            )
+        if slot['state'] != 'TEST':
+            self.check_slot_ownership(gs_user, sc_user)
+
+        return self.create_connection(
+            slot['ending_time'], iSlotId, client_a, client_b
+        )
 
     # noinspection PyUnresolvedReferences
     def create_connection(self, slot_end, slot_id, client_a, client_c):
