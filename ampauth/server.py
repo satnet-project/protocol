@@ -219,8 +219,10 @@ class CredReceiver(AMP, TimeoutMixin):
         clientC = str(clientC)
         timeNow = misc.localize_datetime_utc(datetime.utcnow())
         timeNow = int(time.mktime(timeNow.timetuple()))
+        log.msg(iSlotEnd)
         timeEnd = arrow.get(str(iSlotEnd))
         timeEnd = timeEnd.timestamp
+        log.msg(timeEnd)
 
         slot_remaining_time = int(timeEnd) - timeNow
 
