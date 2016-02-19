@@ -78,7 +78,7 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/daemon.py" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
@@ -213,7 +213,7 @@ venv_dir="$project_path/.venv"
 venv_dir_test="$project_path/.venv_test"
 
 initd_sh="$script_path/satnetprotocol"
-tac_file="$project_path/server_amp_daemon.tac"
+tac_file="$project_path/daemon.py"
 logs_dir="$project_path/logs"
 
 keys_dir="$project_path/key"
@@ -230,7 +230,7 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
-_reboot='true'
+_reboot='false'
 
 if [ $1 == '-install' ];
 then
@@ -299,4 +299,3 @@ then
 	exit 0
 
 fi
->>>>>>> jrpc_if

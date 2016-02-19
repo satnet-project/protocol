@@ -7,9 +7,12 @@ import json
 from tinyrpc.protocols.jsonrpc import JSONRPCProtocol
 from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
-from twisted.python import log
+from twisted.python import log as tw_log
 
-from errors import BadCredentials
+# from errors import BadCredentials
+
+# from xmlrpclib import ServerProxy
+# from rpc4django.utils import CookieTransport
 
 """
      Copyright 2015, 2016 Xabier Crespo Álvarez
@@ -31,6 +34,9 @@ from errors import BadCredentials
 """
 __author__ = 'xabicrespog@gmail.com'
 
+ENDPOINT_PRODUCTION = 'https://localhost/jrpc/'
+ENDPOINT_TESTING = 'http://localhost:8000/jrpc/'
+
 
 class HttpSessionTransport(HttpPostClientTransport):
     """
@@ -38,28 +44,27 @@ class HttpSessionTransport(HttpPostClientTransport):
     of login protected RPC methods
     """
 
-    def __init__(self, user, pwd, endpoint='https://localhost/jrpc/'):
-	"""
-	:param endpoint:
-            URL to send "POST" data to.
-    	:type endpoint:
-    	    L{String}
-	"""
+    def __init__(self, user, pwd, endpoint=ENDPOINT_TESTING):
+        """INIT
+        :param endpoint: URL to send "POST" data to.
+        :type endpoint: L{String}
+        """
         super(HttpSessionTransport, self).__init__(endpoint)
         self.s = requests.Session()
-	self.s.auth = (user, pwd)
+        self.s.auth = (user, pwd)
 
     def send_message(self, message, expect_reply=True):
+
         if not isinstance(message, str):
             raise TypeError('str expected')
 
         r = self.s.post(
-	    self.endpoint, data=message,
-	    headers={'content-type': 'application/json'},
-	    verify=False
-	)
+            self.endpoint, data=message,
+            headers={'content-type': 'application/json'},
+            verify=False
+        )
 
-	log.msg('>>> r = ' + str(r))
+        tw_log.msg('>>> r = ' + str(r))
 
         if expect_reply:
             return r.content
@@ -76,96 +81,107 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
         super(JSONRPCProtocolFix, self).__init__(*args)
 
     def parse_reply(self, data):
+
         try:
             req = json.loads(data)
-            if req['error'] is None:
+            if not req['error']:
                 req.pop('error')
-            if req['result'] is None:
+            if not req['result']:
                 req.pop('result')
-            return super(JSONRPCProtocolFix,
-                         self).parse_reply(json.dumps(req))
+            return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
+
         except Exception as e:
-            print "Error loading JSON response"
-            print e
+            print "Error loading JSON response, ex = " + str(e)
 
 
-class Satnet_RPC(object):
+class SatnetRPC(object):
 
     def __init__(self, user, pwd):
-	"""
-	Start RPC connection and keep session open.
+        """Start RPC connection and keep session open
+        Example:
+        rpc = Satnet_RPC('crespum', 'solutions')
+        print rpc.call('configuration.sc.list')
 
-	Example:
-	rpc = Satnet_RPC('crespum', 'solutions')
-	print rpc.call('configuration.sc.list')
-
-	:param user:
- 	   SatNet username.
- 	:type user:
-	   L{String}
-
-	:param pwd:
-            SatNet password for this user.
-	:type pwd:
-            L{String}
-	"""
+        :param user: SatNet username.
+        :type user: L{String}
+        :param pwd: SatNet password for this user.
+        :type pwd: L{String}
+        """
         self._rpc_client = RPCClient(
             JSONRPCProtocolFix(), HttpSessionTransport(user, pwd)
-	)
-        #if not self.login(user, pwd):
-        #    raise BadCredentials()
-        #else:
-        #    log.msg('System login confirmed!')
+        )
+        # if not self.login(user, pwd):
+        #     raise BadCredentials()
+
+        # self.proxy = ServerProxy(
+        #     ENDPOINT_TESTING, transport=CookieTransport()
+        # )
+        # if not self.proxy.system.login(user, pwd):
+        #     raise BadCredentials()
+
+        tw_log.msg('System login confirmed!')
 
     def call(self, call, *args):
-	"""
-        Make an RPC call to the SatNet server.
+        """Make an RPC call to the SatNet server
 
-        :param call:
-            Name of the methods
-        :type call:
-            L{String}
-
-        :param args:
-            Arguments required by the method to be invocked.
-	"""
+        :param call: Name of the methods
+        :type call: L{String}
+        :param args: Arguments required by the method to be invocked.
+        """
         return self._rpc_client.call(call, args, None)
 
     def login(self, user, pwd):
-	"""system.login
-	"""
-	return self.call('system.login', user, pwd)
+        """system.login
+        :param user: String with the username of the currently logged in user
+        :param pwd: String with the password for the currently logged in user
+        """
+        tw_log.msg(
+            '@@@@ system.login, user = ' + str(user) + ', pwd = ' + str(pwd)
+        )
+        return self.call('system.login', user, pwd)
 
-    def getSlot(self, slot_id):
-	"""scheduling.slot.get
-	"""
-	return self.call('scheduling.slot.get', slot_id)
+    def get_slot(self, slot_id):
+        """scheduling.slot.get
+        :param slot_id: Identifier of the slot
+        """
+        return self.call('scheduling.slot.get', slot_id)
 
-    def storeMessage(self, slot_id, upwards, forwarded, timestamp, message):
-	"""communications.storeMessage
-	"""
-        base64Message = base64.b64encode(message)
+    def store_message(self, slot_id, upwards, forwarded, timestamp, message):
+        """communications.storeMessage
+        :param slot_id: Identifier of the slot
+        :param upwards: Flag that indicates the direction of the message
+        :param forwarded: Flat that indicates whether this message has already
+                            been forwarded or not
+        :param timestamp: Unix timestamp for the reception of the package
+        :param message: String with the message received from the client
+        """
+        base_64_message = base64.b64encode(message)
         slot_id = str(slot_id)
 
         self.call(
-	    'communications.storeMessage',
-	    slot_id, upwards, forwarded, timestamp, base64Message
-	)
+            'communications.storeMessage',
+            slot_id, upwards, forwarded, timestamp, base_64_message
+        )
 
-    def storeUnconnectedMessage(self, message):
-	"""Stores messages for unconnected spacecraft operators
-	TODO Find out proper values for the parameters
-	"""
-	self.storePassiveMessage(0, 0, 0.0, base64.b64encode(message))
+    def store_message_unconnected(self, message):
+        """Stores messages for unconnected spacecraft operators
+        TODO Find out proper values for the parameters
+        :param message: String with the message received from the client
+        """
+        self.store_message_passive(0, 0, 0.0, base64.b64encode(message))
 
-    def storePassiveMessage(self, groundstation_id, timestamp, doppler_shift, message):
-	"""communications.gs.storePassiveMessage
-	"""
-        base64Message = base64.b64encode(message)
-        slot_id = str(slot_id)
+    def store_message_passive(
+        self, groundstation_id, timestamp, doppler_shift, message
+    ):
+        """communications.gs.storePassiveMessage
+        :param groundstation_id: Identifier of the groundstation
+        :param timestamp: Unix timestamp for the reception of the package
+        :param doppler_shift: Estimation of the Doppler shift
+        :param message: String with the message received from the client
+        """
+        base_64_message = base64.b64encode(message)
 
         self.call(
-	    'communications.gs.storePassiveMessage',
-	    groundstation_id, timestamp, doppler_shift, base64Message
-	)
-
+            'communications.gs.storePassiveMessage',
+            groundstation_id, timestamp, doppler_shift, base_64_message
+        )

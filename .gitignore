@@ -2,9 +2,10 @@
 _trial_temp
 key
 logs
+.idea/
 .venv*
 _trial*
-twistd.log
+*.log
 twistd.pid
 *~
 pid_file.pid
