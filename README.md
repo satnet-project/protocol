@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/satnet-project/protocol/badge.svg?branch=jrpc_if&service=github)](https://coveralls.io/github/satnet-project/protocol?branch=jrpc_if)
 [![Code Health](https://landscape.io/github/satnet-project/protocol/jrpc_if/landscape.svg?style=flat)](https://landscape.io/github/satnet-project/protocol/jrpc_if)
 
-### Protocol communications for SATNet project.
+### Protocol communications for the SATNet project
 
 This repository contains the communications real time protocol based on Twisted for the SatNet network.
 
@@ -17,7 +17,7 @@ Steps to install the generic client for the SATNet network:
 
 You will need root privileges.
 
-2. For uninstall the dependencies and the satnet daemon run:
+2. To uninstall the dependencies and the satnet daemon run:
 
 `./setup.sh -uninstall`
 
