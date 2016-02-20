@@ -110,6 +110,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Don't mix asynchronus and syncronus code.
         # Try-except sentences aren't allowed.
         try:
+	    print '>>> @login: sUsername = ' + str(sUsername) + ', ' + str(sPassword)
             self.rpc = SatnetRPC(sUsername, sPassword)
             self.factory.active_protocols[sUsername] = self
             log.msg('Connection made')
@@ -344,3 +345,4 @@ class CredAMPServerFactory(ServerFactory):
     active_protocols = {}
     active_connections = {}
     protocol = CredReceiver
+

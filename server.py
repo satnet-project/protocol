@@ -67,6 +67,7 @@ def main(cwd=None):
     tw_log.msg('SatNet protocol starting...')
 
     configuration = read_configuration(cwd=cwd)
+    tw_log.msg('>>> cwd = ' + str(cwd))
     tw_log.msg('>>> configuration = ' + str(configuration))
 
     reactor.listenSSL(
@@ -95,3 +96,4 @@ if __name__ == '__main__':
         defer.setDebugging(True)
 
     main()
+

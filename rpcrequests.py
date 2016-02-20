@@ -44,7 +44,7 @@ class HttpSessionTransport(HttpPostClientTransport):
     of login protected RPC methods
     """
 
-    def __init__(self, user, pwd, endpoint=ENDPOINT_TESTING):
+    def __init__(self, user, pwd, endpoint=ENDPOINT_PRODUCTION):
         """INIT
         :param endpoint: URL to send "POST" data to.
         :type endpoint: L{String}
@@ -54,7 +54,8 @@ class HttpSessionTransport(HttpPostClientTransport):
         self.s.auth = (user, pwd)
 
     def send_message(self, message, expect_reply=True):
-
+	"""request sends message
+	"""
         if not isinstance(message, str):
             raise TypeError('str expected')
 
@@ -72,8 +73,8 @@ class HttpSessionTransport(HttpPostClientTransport):
 
 class JSONRPCProtocolFix(JSONRPCProtocol):
     """
-    Workaround to solve a bug in rpc4django. This problem is
-    detailed in https://github.com/davidfischer/rpc4django/issues/32.
+    Workaround to solve a bug in RPC4Django. This problem is detailed in:
+	https://github.com/davidfischer/rpc4django/issues/32.
     As soon as pull request #39 is accepted the parent class must be
     used instead.
     """
@@ -185,3 +186,4 @@ class SatnetRPC(object):
             'communications.gs.storePassiveMessage',
             groundstation_id, timestamp, doppler_shift, base_64_message
         )
+

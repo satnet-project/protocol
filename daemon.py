@@ -26,3 +26,4 @@ __author__ = 'xabicrespog@gmail.com'
 
 application = service.Application('sn-protocol')
 server.main(cwd=os_path.dirname(os_path.realpath(__file__)))
+
