@@ -78,7 +78,7 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/daemon.py" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/daemon.tac" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh

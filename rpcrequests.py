@@ -9,7 +9,7 @@ from tinyrpc.transports.http import HttpPostClientTransport
 from tinyrpc.client import RPCClient
 from twisted.python import log as tw_log
 
-# from errors import BadCredentials
+from errors import BadCredentials
 
 # from xmlrpclib import ServerProxy
 # from rpc4django.utils import CookieTransport
@@ -37,6 +37,9 @@ __author__ = 'xabicrespog@gmail.com'
 ENDPOINT_PRODUCTION = 'https://localhost/jrpc/'
 ENDPOINT_TESTING = 'http://localhost:8000/jrpc/'
 
+RPC_TEST_USER_GS = 'test-user-gs'
+RPC_TEST_USER_SC = 'test-user-sc'
+
 
 class HttpSessionTransport(HttpPostClientTransport):
     """
@@ -54,8 +57,11 @@ class HttpSessionTransport(HttpPostClientTransport):
         self.s.auth = (user, pwd)
 
     def send_message(self, message, expect_reply=True):
-	"""request sends message
-	"""
+        """request sends message
+        :param message: Message to be sent
+        :param expect_reply: Flag that indicates whether the response should
+                                be returned or not
+        """
         if not isinstance(message, str):
             raise TypeError('str expected')
 
@@ -74,21 +80,30 @@ class HttpSessionTransport(HttpPostClientTransport):
 class JSONRPCProtocolFix(JSONRPCProtocol):
     """
     Workaround to solve a bug in RPC4Django. This problem is detailed in:
-	https://github.com/davidfischer/rpc4django/issues/32.
-    As soon as pull request #39 is accepted the parent class must be
-    used instead.
+    https://github.com/davidfischer/rpc4django/issues/32.
+    As soon as pull request #39 is accepted the parent class must be used
+    instead.
     """
     def __init__(self, *args):
+        """Overriden
+        """
         super(JSONRPCProtocolFix, self).__init__(*args)
 
     def parse_reply(self, data):
+        """Overriden
+        :param data: Serialized JSON data
+        """
 
         try:
+
             req = json.loads(data)
-            if not req['error']:
-                req.pop('error')
-            if not req['result']:
-                req.pop('result')
+
+            if 'error' in req and not req['error']and req['error'] is None:
+                del req['error']
+
+            if 'result' in req and not req['result'] and req['result'] is None:
+                del req['result']
+
             return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
 
         except Exception as e:
@@ -96,6 +111,8 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
 
 
 class SatnetRPC(object):
+
+    testing = False
 
     def __init__(self, user, pwd):
         """Start RPC connection and keep session open
@@ -111,16 +128,26 @@ class SatnetRPC(object):
         self._rpc_client = RPCClient(
             JSONRPCProtocolFix(), HttpSessionTransport(user, pwd)
         )
-        # if not self.login(user, pwd):
-        #     raise BadCredentials()
+        self.detect_test(user)
 
-        # self.proxy = ServerProxy(
-        #     ENDPOINT_TESTING, transport=CookieTransport()
-        # )
-        # if not self.proxy.system.login(user, pwd):
-        #     raise BadCredentials()
+        if self.testing:
+            return
+
+        if not self.login(user, pwd):
+            raise BadCredentials()
 
         tw_log.msg('System login confirmed!')
+
+    def detect_test(self, username):
+        """Detects the test mode
+        This function sets the object into testing mode if the name of the
+        users coincides with any of the TEST_USER names enabled for that
+        purpose.
+        :param username: The current username
+        """
+        if username == RPC_TEST_USER_GS or username == RPC_TEST_USER_SC:
+            self.testing = True
+            tw_log.msg('>>> Testing user detected, running in TESTING MODE')
 
     def call(self, call, *args):
         """Make an RPC call to the SatNet server
@@ -146,6 +173,12 @@ class SatnetRPC(object):
         :param slot_id: Identifier of the slot
         """
         return self.call('scheduling.slot.get', slot_id)
+
+    def get_next_slot(self, user_email):
+        """scheduling.slot.next
+        :param user_email: Identifier of the slot
+        """
+        return self.call('scheduling.slot.next', user_email)
 
     def store_message(self, slot_id, upwards, forwarded, timestamp, message):
         """communications.storeMessage
@@ -186,4 +219,3 @@ class SatnetRPC(object):
             'communications.gs.storePassiveMessage',
             groundstation_id, timestamp, doppler_shift, base_64_message
         )
-

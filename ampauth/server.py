@@ -6,11 +6,10 @@ import arrow
 
 from datetime import datetime
 from login import Login
-from errors import BadCredentials, SlotErrorNotification
+from errors import SlotErrorNotification
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
-from twisted.cred.error import UnauthorizedLogin
 from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
@@ -20,7 +19,8 @@ from ampCommands import EndRemote
 from ampCommands import SendMsg
 from ampCommands import NotifyMsg
 from ampCommands import NotifyEvent
-from rpcrequests import SatnetRPC
+
+import rpcrequests
 
 
 """
@@ -58,10 +58,9 @@ class CredReceiver(AMP, TimeoutMixin):
 
     logout = None
     session = None
+    timeout = 600  # seconds
 
     username = ''
-    timeout = 600  # seconds
-    # ### FIXED :: Added 'password' field to store the password after login
     password = ''
 
     # Metodo que comprueba cuando una conexion se ha realizado con twisted
@@ -85,11 +84,12 @@ class CredReceiver(AMP, TimeoutMixin):
             self.session.cancel()
 
         log.err(reason.getErrorMessage())
-
-        log.msg('Active clients: ' +
-                str(len(self.factory.active_protocols)))
-        log.msg('Active connections: ' +
-                str(len(self.factory.active_connections)/2))
+        log.msg(
+            'Clients: ' + str(len(self.factory.active_protocols))
+        )
+        log.msg(
+            'Tunnels: ' + str(len(self.factory.active_connections))
+        )
 
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
@@ -99,46 +99,36 @@ class CredReceiver(AMP, TimeoutMixin):
     def login(self, sUsername, sPassword):
 
         if sUsername in self.factory.active_protocols:
-            log.err("Client already logged in.")
-            raise UnauthorizedLogin("Client already logged in.")
+            log.msg('Client already logged in, renewing...')
         else:
             self.username = sUsername
             self.password = sPassword
             self.factory.active_protocols[sUsername] = None
 
-        # TODO Find out what the comment below means
-        # Don't mix asynchronus and syncronus code.
-        # Try-except sentences aren't allowed.
-        try:
-	    print '>>> @login: sUsername = ' + str(sUsername) + ', ' + str(sPassword)
-            self.rpc = SatnetRPC(sUsername, sPassword)
-            self.factory.active_protocols[sUsername] = self
-            log.msg('Connection made')
-            log.msg('Active clients: ' +
-                    str(len(self.factory.active_protocols)))
-            log.msg('Active connections: ' +
-                    str(len(self.factory.active_connections)))
+        print '>>> @login: username = ' + str(
+            sUsername
+        ) + ', pwd = ' + str(sPassword)
 
-            return {'bAuthenticated': True}
+        self.rpc = rpcrequests.SatnetRPC(sUsername, sPassword)
+        self.factory.active_protocols[sUsername] = self
 
-        except BadCredentials:
-            log.err('Incorrect username and/or password')
-            log.msg(self.factory.active_protocols)
-            raise BadCredentials("Incorrect username and/or password")
+        log.msg('Connection made!, clients = ' + str(
+            len(self.factory.active_protocols))
+        )
 
-    def decode_user(self, slot_id, slot):
+        return {'bAuthenticated': True}
+
+    Login.responder(login)
+
+    def decode_user(self, slot):
         """Decodes the information of the client
-        :param slot_id: Identifier of the slot
         :param slot:
         :return:
         """
-
         if not slot:
-            err_msg = 'Slot NOT operational, id = ' + str(slot_id)
-            log.err('Slot ' + str(slot_id) + ' is not yet operational')
-            raise SlotErrorNotification(
-                'Not operational slot, id = ' + str(slot_id)
-            )
+            err_msg = 'No operational slots for the user'
+            log.err(err_msg)
+            raise SlotErrorNotification(err_msg)
 
         gs_user = slot['gs_username']
         sc_user = slot['sc_username']
@@ -156,28 +146,52 @@ class CredReceiver(AMP, TimeoutMixin):
         :param gs_user: Username of the groundstation user
         :param sc_user: Username of the spacecraft user
         """
+
+        print '>>> gs_user = ' + str(gs_user)
+        print '>>> sc_user = ' + str(sc_user)
+        print '>>> self.username = ' + str(self.username)
+
         if gs_user != self.username and sc_user != self.username:
             err_msg = 'This slot has not been assigned to this user'
             log.err(err_msg)
             raise SlotErrorNotification(err_msg)
 
-    # Check user name
+    def start_remote_user(self):
+        """Start Remote
+        This function implements the checks to be executed after a START REMOTE
+        command coming from a user.
+        """
+        if self.rpc.testing:
+            slot = {
+                'id': -1,
+                'gs_username': rpcrequests.RPC_TEST_USER_GS,
+                'sc_username': rpcrequests.RPC_TEST_USER_SC,
+                'ending_time': None
+            }
+        else:
+            slot = self.rpc.get_next_slot(self.username)
+
+        gs_user, sc_user, client_a, client_c = self.decode_user(slot)
+        self.check_slot_ownership(gs_user, sc_user)
+
+        return slot, gs_user, sc_user, client_a, client_c
+
     def iStartRemote(self, iSlotId):
-        log.msg("(" + self.username + ") --------- Start Remote ---------")
-
-        slot = self.rpc.get_slot(iSlotId)
-        gs_user, sc_user, client_a, client_c = self.decode_user(iSlotId, slot)
-        log.msg('>>> @iStartRemote.slot = ' + str(slot))
-
-        if slot['state'] != 'TEST':
-            self.check_slot_ownership(gs_user, sc_user)
-
+        """RPC Handler
+        This function processes the remote request through the StartRemote AMP
+        command.
+        FIXME iSlotId is no longer necessary...
+        :param iSlotId:
+        """
+        log.msg('(' + self.username + ') --------- Start Remote ---------')
+        slot, gs_user, sc_user, client_a, client_c = self.start_remote_user()
         return self.create_connection(
-            slot['ending_time'], iSlotId, client_a, client_c
+            slot['ending_time'], slot['id'], client_a, client_c
         )
 
-    @staticmethod
-    def check_expiration(slot_id, slot_end):
+    StartRemote.responder(iStartRemote)
+
+    def check_expiration(self, slot_id, slot_end):
         """Check slot's expiration
         :param slot_id: Identifier of the slot
         :param slot_end: Datetime end of the slot
@@ -211,11 +225,10 @@ class CredReceiver(AMP, TimeoutMixin):
         client_c = str(client_c)
 
         if slot_id != -1:
-            slot_remaining_time = CredReceiver.check_expiration(
-                slot_id, slot_end
-            )
             self.session = reactor.callLater(
-                slot_remaining_time, self.slot_end, slot_id
+                self.check_expiration(slot_id, slot_end),
+                self.slot_end,
+                slot_id
             )
 
         if client_c not in self.factory.active_protocols:
@@ -250,7 +263,6 @@ class CredReceiver(AMP, TimeoutMixin):
         self.session = None
 
     def vEndRemote(self):
-
         log.msg("(" + self.username + ") --------- End Remote ---------")
         # Disconnect local user
         self.transport.loseConnection()
@@ -284,8 +296,9 @@ class CredReceiver(AMP, TimeoutMixin):
 
         return {'bResult': True}
 
-    def vSendMsg(self, sMsg, iTimestamp):
+    EndRemote.responder(vEndRemote)
 
+    def vSendMsg(self, sMsg, iTimestamp):
         log.msg("SEND (" + self.username + ") = " + str(sMsg))
         # If the client haven't started a connection via StartRemote command...
 
@@ -326,16 +339,15 @@ class CredReceiver(AMP, TimeoutMixin):
             # Try to store the message in the remote SatNet server
             forwarded = ''
 
-        self.rpc.store_message(
-            self.slot_id, self.is_user_gs, False, iTimestamp, sMsg
-        )
+        if not self.rpc.testing:
+            self.rpc.store_message(
+                self.slot_id, self.is_user_gs, False, iTimestamp, sMsg
+            )
+            log.msg('>>> TESTING mode, not saving message in DB...')
 
         return {'bResult': True}
 
-    Login.responder(login)
-    StartRemote.responder(iStartRemote)
     SendMsg.responder(vSendMsg)
-    EndRemote.responder(vEndRemote)
 
 
 class CredAMPServerFactory(ServerFactory):
@@ -345,4 +357,3 @@ class CredAMPServerFactory(ServerFactory):
     active_protocols = {}
     active_connections = {}
     protocol = CredReceiver
-
