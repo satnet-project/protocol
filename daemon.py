@@ -8,6 +8,7 @@ import ConfigParser
 from os import path as os_path
 from ampauth import server as amp_server
 import sys
+import pytz
 
 """
    Copyright 2015, 2015 Xabier Crespo Álvarez
@@ -54,7 +55,7 @@ def read_configuration():
     }
 
 application = service.Application('satnetProtocol')
-tw_log.startLogging(sys.stdout)
+# tw_log.startLogging(sys.stdout)
 tw_log.msg('SatNet protocol starting...')
 
 cwd = os_path.dirname(os_path.realpath(__file__))
@@ -79,4 +80,4 @@ reactor.listenSSL(
 tw_log.msg('>>> SSL AMP Server configured, starting reactor...')
 
 # noinspection PyUnresolvedReferences
-reactor.run()
+# reactor.run()
