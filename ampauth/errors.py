@@ -21,23 +21,17 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 class BadCredentials(Exception):
-
-    """
-    Incorrect username/password.
+    """Incorrect username/password.
     """
 
 
 class UnauthorizedLogin(Exception):
-
-    """
-    Unauthorized login
+    """Unauthorized login
     """
 
 
 class SlotErrorNotification(Exception):
-
-    """
-    One of the following situations may raise this error:
+    """One of the following situations may raise this error:
         1. Slot not operational yet
         2. Multiple slots with the same ID
         3. Slot not reserved yet
@@ -46,10 +40,12 @@ class SlotErrorNotification(Exception):
 
 
 class RemoteClientNotification(Exception):
-
-    """
-    One of the following situations may raise this error:
+    """One of the following situations may raise this error:
         1. Remote user not connected yet
         2. Remote user and invoking user coincide
             (i.e. MCC and GSS are the same)
+    """
+
+class ValueError(Exception):
+    """Unauthorized login
     """

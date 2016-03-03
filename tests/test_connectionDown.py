@@ -3,6 +3,10 @@ import os
 import sys
 
 # Dependencies for the tests
+from mock import patch, Mock, MagicMock
+from exceptions import KeyError
+import exceptions
+
 from twisted.python import log
 from twisted.trial.unittest import TestCase
 
@@ -31,14 +35,7 @@ from server import CredReceiver, CredAMPServerFactory
 __author__ = 's.gongoragarcia@gmail.com'
 
 
-class MockFactory(Factory):
-
-    clients = []
-    active_protocols = []
-    active_connections = []
-
-
-class TestProtocolConnectionDown(TestCase):
+class TestServerProtocolConnectionDown(TestCase):
 
     """
     Testing multiple client connections
@@ -46,23 +43,126 @@ class TestProtocolConnectionDown(TestCase):
     """
 
     def setUp(self):
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
-
         self.sp = CredReceiver()
-        self.sp.factory = MockFactory()
+        self.sp.factory = CredAMPServerFactory()
+        self.transport = StringTransportWithDisconnection()
+        self.sp.makeConnection(self.transport)
+
+        self.transport.protocol = self.sp
+
+    def tearDown(self):
+        self.sp.factory.active_protocols = {}
+        self.sp.factory.active_connections = {}
+
+    def test_localProtocolRemovesWhenTimeoutReachesWithRemoteUserConnected(self):
+        sc_user = 'test-user-sc'
+        gs_user = 'test-user-gs'
+        username_test = 'test-user-sc'
+
+        mockSC = Mock()
+        mockSC.callRemote = MagicMock(return_value=True)
+        mockGS = Mock()
+        mockGS.callRemote = MagicMock(return_value=True)
+
+        self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.factory.active_protocols[str(gs_user)] = mockGS
+        self.sp.factory.active_connections[str(sc_user)] = str(gs_user)
+        self.sp.factory.active_connections[str(gs_user)] = str(sc_user)
+        self.sp.username = username_test
+
+        self.sp.timeoutConnection()
+
+        return self.assertFalse(self.transport.connected), \
+               self.assertIs(len(self.sp.factory.active_protocols), 1), \
+               self.assertIs(len(self.sp.factory.active_connections), 0)
+
+    def test_localProtocolRemovesWhenTimeoutReachesWithoutRemoteUserDisconnected(self):
+        # Must fill active_protocols with mock objects
+        sc_user = 'test-user-sc'
+        username_test = 'test-user-sc'
+
+        mockSC = Mock()
+        mockSC.callRemote = MagicMock(return_value=True)
+        mockGS = Mock()
+        mockGS.callRemote = MagicMock(return_value=True)
+
+        # self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.username = username_test
+        self.sp.timeoutConnection()
+
+        return self.assertFalse(self.transport.connected), \
+               self.assertIs(len(self.sp.factory.active_protocols), 1), \
+               self.assertIs(len(self.sp.factory.active_connections), 0)
+
+
+
+class TestManageActiveConnections(TestCase):
+
+    def setUp(self):
+        self.sp = CredReceiver()
+        self.sp.factory = CredAMPServerFactory()
         self.sp.factory.sUsername = 'test_name'
         self.transport = StringTransportWithDisconnection()
         self.sp.makeConnection(self.transport)
 
         self.transport.protocol = self.sp
 
-        self.testFrame = ("00:82:a0:00:00:53:45:52:50:2d:42:30:91:1d:1b:03:" +
-                          "8d:0b:5c:03:02:28:01:9c:01:ab:02:4c:02:98:01:da:" +
-                          "02:40:00:00:00:10:0a:46:58:10:00:c4:9d:cb:a2:21:39")
-
     def tearDown(self):
-        pass
+        self.sp.factory.active_protocols = {}
+        self.sp.factory.active_connections = {}
 
-    def test_connectionDownWhenTimeoutReaches(self):
-        self.sp.timeoutConnection()
-        self.assertFalse(self.transport.connected)
+    def test_localProtocolRemoveWhenSuddenlyDisconnects(self):
+        """
+        Remove local protocol and the active connections which are involving it.
+        callRemote methods are mocked for testing purposes.
+
+        :return: Assertion statement
+        """
+        sc_user = 'test-user-sc'
+        gs_user = 'test-user-gs'
+        username_test = 'test-user-sc'
+
+        mockSC = Mock()
+        mockSC.callRemote = MagicMock(return_value=True)
+        mockGS = Mock()
+        mockGS.callRemote = MagicMock(return_value=True)
+
+        self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.factory.active_protocols[str(gs_user)] = mockGS
+        self.sp.factory.active_connections[str(sc_user)] = str(gs_user)
+        self.sp.factory.active_connections[str(gs_user)] = str(sc_user)
+        self.sp.username = username_test
+
+        res = self.sp.vEndRemote()
+
+        return self.assertTrue(res['bResult']), \
+               self.assertIs(len(self.sp.factory.active_protocols), 1), \
+               self.assertIs(len(self.sp.factory.active_connections), 0)
+
+    def test_localProtocolRemoveWhenRemoteUserIsDisconnected(self):
+        """
+        Remove local protocol when remote user has already detached the connection.
+
+        :return: Assertion statement
+        """
+
+        # Must fill active_protocols with mock objects
+        sc_user = 'test-user-sc'
+        username_test = 'test-user-sc'
+
+        mockSC = Mock()
+        mockSC.callRemote = MagicMock(return_value=True)
+        mockGS = Mock()
+        mockGS.callRemote = MagicMock(return_value=True)
+
+        # self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.factory.active_protocols[str(sc_user)] = mockSC
+        self.sp.username = username_test
+
+        res = self.sp.vEndRemote()
+
+        return self.assertTrue(res['bResult']), \
+               self.assertIs(len(self.sp.factory.active_protocols), 0), \
+               self.assertIs(len(self.sp.factory.active_connections), 0)
+

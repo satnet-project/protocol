@@ -35,7 +35,7 @@ function create_selfsigned_keys()
 
     # 1: Generate a Private Key
     echo '>>> Generating a private key'
-    openssl genrsa -des3 -passout pass:satnet -out $keys_private 2048
+    openssl genrsa -des3 -passout pass:satnet -out $keys_private 1024
     # 2: Generate a CSR (Certificate Signing Request)
     echo '>>> Generating a CSR'
     openssl req -new -key $keys_private -passin pass:satnet\
@@ -78,7 +78,7 @@ function create_daemon()
     echo '    logger "satnetprotocol: Starting"' | tee -a $initd_sh
     echo '    echo "Starting SatNet protocol..."' | tee -a $initd_sh
     echo '    source "$SATNET_PROTOCOL_PATH/.venv/bin/activate"' | tee -a $initd_sh
-    echo '    twistd -y "$SATNET_PROTOCOL_PATH/server_amp_daemon.tac" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
+    echo '    twistd -y "$SATNET_PROTOCOL_PATH/daemon.py" -l "$SATNET_PROTOCOL_PATH/logs/$LOGFILE.log" --pidfile $PID_FILE' | tee -a $initd_sh
     echo '    ;;' | tee -a $initd_sh
     echo '  stop)' | tee -a $initd_sh
     echo '    logger "satnetprotocol: Stopping"' | tee -a $initd_sh
@@ -213,7 +213,7 @@ venv_dir="$project_path/.venv"
 venv_dir_test="$project_path/.venv_test"
 
 initd_sh="$script_path/satnetprotocol"
-tac_file="$project_path/server_amp_daemon.tac"
+tac_file="$project_path/daemon.py"
 logs_dir="$project_path/logs"
 
 keys_dir="$project_path/key"
@@ -222,7 +222,6 @@ keys_csr="$keys_dir/test.csr"
 keys_crt="$keys_dir/test.crt"
 keys_server_pem="$keys_dir/server.pem"
 keys_public_pem="$keys_dir/public.pem"
-
 keys_CN="edu.calpoly.aero.satnet"
 
 _install_venv='true'
@@ -231,7 +230,7 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
-_reboot='true'
+_reboot='false'
 
 if [ $1 == '-install' ];
 then
@@ -300,4 +299,3 @@ then
 	exit 0
 
 fi
->>>>>>> jrpc_if

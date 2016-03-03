@@ -28,10 +28,11 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 class StartRemote(amp.Command):
-    arguments = [('iSlotId', amp.Integer())]
+    # arguments = [('iSlotId', amp.Integer())]
     response = [('iResult', amp.Integer())]
     errors = {
-        SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'}
+        SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'
+    }
     """
     Invoked when a client wants to connect to an N-server. This shall be called
     right after invoking login method.
@@ -81,7 +82,8 @@ class SendMsg(amp.Command):
                  ('iTimestamp', amp.Integer())]
     response = [('bResult', amp.Boolean())]
     errors = {
-        SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'}
+        SlotErrorNotification: 'SLOT_ERROR_NOTIFICATION'
+    }
 
     """
     Invoked when a client wants to send a message to a remote entity.
@@ -110,9 +112,12 @@ class SendMsg(amp.Command):
 # Commandes implemented by G- or M- clients which will be invoked
 # by a N-server.
 
+
 class NotifyEvent(amp.Command):
-    arguments = [('iEvent', amp.Integer()),
-                 ('sDetails', amp.String(optional=True))]
+    arguments = [
+        ('iEvent', amp.Integer()),
+        ('sDetails', amp.String(optional=True))
+    ]
     requiresAnswer = False
     """
     Used to inform a client about an event in the network. 
@@ -147,6 +152,7 @@ class NotifyEvent(amp.Command):
 
 
 class NotifyMsg(amp.Command):
+
     arguments = [('sMsg', amp.String())]
     requiresAnswer = False
     """

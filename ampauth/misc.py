@@ -2,7 +2,6 @@
 import pytz
 import datetime
 
-
 """
    Copyright 2015 Samuel Góngora García
 
@@ -33,7 +32,7 @@ def localize_datetime_utc(date_time):
 def get_now_utc(no_microseconds=True):
     """
     This method returns now's datetime object UTC localized.
-    :param no_microseconds=True: sets whether microseconds should be cleared.
+    :param no_microseconds: sets whether microseconds should be cleared.
     :return: the just created datetime object with today's date.
     """
     if no_microseconds:
@@ -47,7 +46,7 @@ def get_now_utc(no_microseconds=True):
 def get_now_hour_utc(no_microseconds=True):
     """
     This method returns now's hour in the UTC timezone.
-    :param no_microseconds=True: sets whether microseconds should be cleared.
+    :param no_microseconds: sets whether microseconds should be cleared.
     :return: The time object within the UTC timezone.
     """
     if no_microseconds:
@@ -90,15 +89,6 @@ def localize_date_utc(date):
     )
 
 
-def localize_datetime_utc(date_time):
-    """
-    Localizes in the UTC timezone a given Datetime object.
-    :param date_time: The object to be localized.
-    :return: Localized Datetime object in the UTC timezone.
-    """
-    return pytz.utc.localize(date_time)
-
-
 def localize_time_utc(non_utc_time):
     """
     Localizes in the UTC timezone the given time object.
@@ -122,24 +112,3 @@ def get_utc_timestamp(utc_datetime=None):
         utc_datetime = get_now_utc()
     diff = utc_datetime - TIMESTAMP_0
     return int(diff.total_seconds() * 10**6)
-
-
-def get_configuration_local_file(settingsFile=None):
-    """
-    Returns a dictionary which contains the connection's data.
-    """
-
-    CONNECTION_INFO = {}
-
-    import ConfigParser
-    config = ConfigParser.ConfigParser()
-    config.read(settingsFile)
-
-    CONNECTION_INFO['host'] = config.get('protocol', 'host')
-    CONNECTION_INFO['port'] = config.get('protocol', 'port')
-    CONNECTION_INFO['name'] = config.get('protocol', 'name')
-    CONNECTION_INFO['serverkey'] = config.get('protocol', 'serverkey')
-    CONNECTION_INFO['publickey'] = config.get('protocol', 'publickey')
-    CONNECTION_INFO['transport'] = config.get('protocol', 'transport')
-
-    return CONNECTION_INFO

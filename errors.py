@@ -1,4 +1,5 @@
 # coding=utf-8
+
 """
    Copyright 2015, 2015 Xabier Crespo Álvarez
 
@@ -21,22 +22,17 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 class BadCredentials(Exception):
-
-    """
-    Incorrect username/password.
+    """Incorrect username/password.
     """
 
 
 class UnauthorizedLogin(Exception):
-
-    """
-    Unauthorized login
+    """Unauthorized login
     """
 
 
 class SlotErrorNotification(Exception):
-
-    """
+    """Error while notifying the slot
     One of the following situations may raise this error:
         1. Slot not operational yet
         2. Multiple slots with the same ID
@@ -46,10 +42,13 @@ class SlotErrorNotification(Exception):
 
 
 class RemoteClientNotification(Exception):
-
-    """
+    """Error while connecting with the client
     One of the following situations may raise this error:
         1. Remote user not connected yet
         2. Remote user and invoking user coincide
             (i.e. MCC and GSS are the same)
+    """
+
+class ValueError(Exception):
+    """Unauthorized login
     """
