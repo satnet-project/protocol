@@ -1,7 +1,7 @@
 # coding=utf-8
 import os
 import sys
-º
+
 from twisted.trial.unittest import TestCase
 
 from twisted.test.proto_helpers import StringTransportWithDisconnection
