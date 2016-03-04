@@ -8,3 +8,6 @@ twistd.log
 twistd.pid
 *~
 pid_file.pid
+
+# PyCharm directories
+.idea/
