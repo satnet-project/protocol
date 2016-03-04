@@ -176,7 +176,7 @@ class SatnetRPC(object):
         tw_log.msg(
             '@@@@ system.login, user = ' + str(user) + ', pwd = ' + str(pwd)
         )
-        return self.call('system.login', user, pwd)
+        return self.call('system.login', str(user), str(pwd))
 
     def get_slot(self, slot_id):
         """scheduling.slot.get
