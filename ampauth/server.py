@@ -283,8 +283,10 @@ class CredReceiver(AMP, TimeoutMixin):
         # Disconnect local user
         self.transport.loseConnection()
 
-        self.factory.active_protocols.pop(self.username)
-        # FIXME Try to reove the remote connection but the former is not there
+        try:
+            self.factory.active_protocols.pop(self.username)
+        except Exception as ex:
+            log.msg("Local protocol already removed.")
 
         try:
             # Notify remote user

@@ -6,7 +6,7 @@ dependencies:
 
 test:
   override:
-    - trial tests/test_receiveMsg
-    - trial tests/test_connectionDown
-    - trial tests/test_loginProcess
-    - trial tests/test_sendMsg
+    - cd tests && trial test_receiveMsg
+    - cd tests && trial test_connectionDown
+    - cd tests && trial test_loginProcess
+    - cd tests && trial test_sendMsg

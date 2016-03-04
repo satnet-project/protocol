@@ -54,8 +54,8 @@ class TestProtocolLogin(TestCase):
         return self.assertTrue(res['bAuthenticated'])
 
     def test_unsuccessfulLoginWithTestUser(self):
-        # SatnetRPC = Mock()
-        return self.assertRaises(BadCredentials, self.sp.login, 'wrong-user', 'wrong-pass')
+        res = self.sp.login('wrong-user', 'wrong-pass')
+        return self.assertFalse(res['bAuthenticated'])
 
     @patch.object(CredReceiver, 'start_remote_user', return_value=[{'ending_time': 1234, 'id': '-1'},
                                                                    'gs', 'sc', 'client_a', 'client_c'])
