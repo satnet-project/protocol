@@ -17,15 +17,18 @@ install:
   - bash ./setup.sh -travisCI
 
 script:
+  - pwd
   - cd ../
-  - nosetests --with-coverage --cover-erase --cover-inclusive
+  - pwd
   - cd tests
   - trial test_receiveMsg
   - trial test_connectionDown
+  - trial test_loginProcess
+  - trial test_sendMsg
+  - coverage run test_*.py
 
 after_success:
   - cd ../
-  - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
   - coverage combine
-  - coveralls
-
+  - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
+  - coveralls --rcfile='/home/travis/build/satnet-project/generic-client/.coveragerc'

@@ -3,6 +3,8 @@
 import time
 import misc
 import arrow
+import sys
+import os
 
 from datetime import datetime
 from login import Login
@@ -14,6 +16,8 @@ from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                             "..")))
 from ampCommands import StartRemote
 from ampCommands import EndRemote
 from ampCommands import SendMsg
