@@ -5,6 +5,7 @@ language: 'python'
 branches:
   only:
     - master
+    - development
 
 python:
   - '2.7'
@@ -17,10 +18,7 @@ install:
   - bash ./setup.sh -travisCI
 
 script:
-  - pwd
-  - cd ../
-  - pwd
-  - cd tests
+  - cd ../tests
   - trial test_receiveMsg
   - trial test_connectionDown
   - trial test_loginProcess
@@ -31,4 +29,4 @@ after_success:
   - cd ../
   - coverage combine
   - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
-  - coveralls --rcfile='/home/travis/build/satnet-project/generic-client/.coveragerc'
+  - coveralls --rcfile='/home/travis/build/satnet-project/protocol/.coveragerc'
