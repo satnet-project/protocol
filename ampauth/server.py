@@ -90,8 +90,7 @@ class CredReceiver(AMP, TimeoutMixin):
         # Remove client from active users
         if self.session is not None:
             self.session.cancel()
-
-        self.factory.active_protocols.pop(self.username)
+            self.factory.active_protocols.pop(self.username)
 
         log.err(reason.getErrorMessage())
         log.msg(
