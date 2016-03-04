@@ -23,6 +23,7 @@ script:
   - trial test_connectionDown
   - trial test_loginProcess
   - trial test_sendMsg
+  - trial test_connectionEstablished
   - coverage run test_*.py
 
 after_success:

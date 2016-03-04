@@ -52,11 +52,11 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 class CredReceiver(AMP, TimeoutMixin):
-
     """
     Integration between AMP and L{twisted.cred}. This class is only intended
     to be used for credentials purposes. The specific SATNET protocol will be
     implemented in L{SATNETServer} (see server.py).
+    @factory.clients
     """
 
     rpc = None
@@ -66,7 +66,6 @@ class CredReceiver(AMP, TimeoutMixin):
     logout = None
     timeout = 600  # seconds
     session = None
-  
 
     username = ''
     password = ''

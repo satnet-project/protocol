@@ -12,3 +12,4 @@ test:
     - cd tests && trial test_connectionDown
     - cd tests && trial test_loginProcess
     - cd tests && trial test_sendMsg
+    - cd tests && trial test_connectionEstablished
