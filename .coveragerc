@@ -1,5 +1,3 @@
 [report]
-include = /home/travis/build/satnet-project/protocol/errors.py, /home/travis/build/satnet-project/protocol/daemon.py
-
 omit = /home/travis/virtualenv/*
 
