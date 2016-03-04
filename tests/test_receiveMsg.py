@@ -3,7 +3,8 @@ import os
 import sys
 
 # Dependencies for the tests
-from twisted.python import log
+from mock import patch
+
 from twisted.trial.unittest import TestCase
 
 from twisted.test.proto_helpers import StringTransportWithDisconnection
@@ -54,4 +55,9 @@ class TestLogin(TestCase):
 
     def test_serverSendsAnythingWhenReceiveFrame(self):
         self.sp.dataReceived(self.testFrame)
-        self.assertEquals('', self.transport.value())
+        return self.assertEquals('', self.transport.value())
+
+    @patch.object(CredReceiver, 'resetTimeout')
+    def test_timeoutResetWhenReceivesMessage(self, resetTimeout):
+        self.sp.dataReceived(self.testFrame)
+        return self.assertEqual(resetTimeout.call_count, 1)
