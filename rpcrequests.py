@@ -103,17 +103,6 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
                 req.pop('result')
             return super(JSONRPCProtocolFix,
                          self).parse_reply(json.dumps(req))
-        except Exception as e:
-            print "Error loading JSON response"
-            print e
-
-            if 'error' in req and not req['error']and req['error'] is None:
-                del req['error']
-
-            if 'result' in req and not req['result'] and req['result'] is None:
-                del req['result']
-
-            return super(JSONRPCProtocolFix, self).parse_reply(json.dumps(req))
 
         except Exception as e:
             print "Error loading JSON response, ex = " + str(e)
