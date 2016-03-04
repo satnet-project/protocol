@@ -22,7 +22,6 @@ rpc4django==0.3.0
 service-identity==16.0.0
 six==1.10.0
 tinyrpc==0.5
-twisted==15.2.1
 wsgiref==0.1.2
 zope.interface==4.1.3
 
