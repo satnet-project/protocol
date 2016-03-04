@@ -11,7 +11,6 @@ from twisted.python import log
 from twisted.trial.unittest import TestCase
 
 from twisted.test.proto_helpers import StringTransportWithDisconnection
-from twisted.internet.protocol import Factory
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                 "../ampauth")))
@@ -77,7 +76,6 @@ class TestServerProtocolConnectionDown(TestCase):
                self.assertIs(len(self.sp.factory.active_connections), 0)
 
     def test_localProtocolRemovesWhenTimeoutReachesWithoutRemoteUserDisconnected(self):
-        # Must fill active_protocols with mock objects
         sc_user = 'test-user-sc'
         username_test = 'test-user-sc'
 
@@ -95,6 +93,20 @@ class TestServerProtocolConnectionDown(TestCase):
                self.assertIs(len(self.sp.factory.active_protocols), 1), \
                self.assertIs(len(self.sp.factory.active_connections), 0)
 
+
+class TestSlotsNotification(TestCase):
+
+    def setUp(self):
+        self.sp = CredReceiver()
+        self.sp.factory = CredAMPServerFactory()
+
+    def tearDown(self):
+        pass
+
+    @patch.object(CredReceiver, 'callRemote')
+    def test_slotEndingCallRemoteCalled(self, callRemote):
+        self.sp.slot_end(-1)
+        return self.assertEqual(int(callRemote.call_count), 1)
 
 
 class TestManageActiveConnections(TestCase):

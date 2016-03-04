@@ -1,14 +1,13 @@
 # coding=utf-8
 import os
 import sys
+import time
+
+from datetime import datetime
 
 # Dependencies for the tests
 from mock import patch, Mock, MagicMock
-from twisted.python import log
 from twisted.trial.unittest import TestCase
-
-from twisted.test.proto_helpers import StringTransportWithDisconnection
-from twisted.internet.protocol import Factory
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                 "../ampauth")))
@@ -18,6 +17,7 @@ from errors import BadCredentials, SlotErrorNotification
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                 "../")))
 import rpcrequests
+import misc
 
 
 
@@ -49,12 +49,11 @@ class TestProtocolLogin(TestCase):
         self.sp.factory.active_connections = {}
 
     def test_successfulLoginWithTestUser(self):
-        # SatnetRPC = Mock()
         print ""
         res = self.sp.login('test-user-sc', 'test-password')
         return self.assertTrue(res['bAuthenticated'])
 
-    def _test_unsuccessfulLoginWithTestUser(self):
+    def test_unsuccessfulLoginWithTestUser(self):
         print ""
         self.sp.rpc = MagicMock(return_value=False)
         res = self.sp.login('wrong-user', 'wrong-pass')
@@ -150,3 +149,16 @@ class TestProtocolLoginAuxiliarMethods(TestCase):
         return self.assertRaises(SlotErrorNotification, self.sp.check_slot_ownership,
                                  sc_user, gs_user)
 
+    def test_checkExpirationSlotOnTime(self):
+        time_now = misc.localize_datetime_utc(datetime.utcnow())
+        time_now = int(time.mktime(time_now.timetuple()))
+        time_now = time_now + 60
+
+        return self.assertEqual(self.sp.check_expiration(-1, time_now), 60)
+
+    def test_checkExpirationSlotExpired(self):
+        time_now = misc.localize_datetime_utc(datetime.utcnow())
+        time_now = int(time.mktime(time_now.timetuple()))
+        time_now = time_now - 60
+
+        return self.assertRaises(SlotErrorNotification, self.sp.check_expiration, -1, time_now)
