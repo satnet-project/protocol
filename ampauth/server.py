@@ -17,8 +17,7 @@ from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from ampCommands import StartRemote
 from ampCommands import EndRemote
 from ampCommands import SendMsg
@@ -26,6 +25,8 @@ from ampCommands import NotifyMsg
 from ampCommands import NotifyEvent
 
 import rpcrequests
+
+from errors import BadCredentials
 
 
 """
@@ -63,7 +64,7 @@ class CredReceiver(AMP, TimeoutMixin):
     is_user_gs = None
 
     logout = None
-    timeout = 60  # seconds
+    timeout = 600  # seconds
     session = None
   
 
@@ -89,6 +90,8 @@ class CredReceiver(AMP, TimeoutMixin):
         # Remove client from active users
         if self.session is not None:
             self.session.cancel()
+
+        self.factory.active_protocols.pop(self.username)
 
         log.err(reason.getErrorMessage())
         log.msg(
@@ -116,14 +119,18 @@ class CredReceiver(AMP, TimeoutMixin):
             sUsername
         ) + ', pwd = ' + str(sPassword)
 
-        self.rpc = rpcrequests.SatnetRPC(sUsername, sPassword)
-        self.factory.active_protocols[sUsername] = self
+        try:
+            self.rpc = rpcrequests.SatnetRPC(sUsername, sPassword)
+            self.factory.active_protocols[sUsername] = self
 
-        log.msg('Connection made!, clients = ' + str(
-            len(self.factory.active_protocols))
-        )
+            log.msg('Connection made!, clients = ' + str(
+                len(self.factory.active_protocols))
+            )
 
-        return {'bAuthenticated': True}
+            return {'bAuthenticated': True}
+        except BadCredentials:
+            return {'bAuthenticated': False}
+
 
     Login.responder(login)
 

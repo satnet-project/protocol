@@ -118,10 +118,6 @@ class JSONRPCProtocolFix(JSONRPCProtocol):
         except Exception as e:
             print "Error loading JSON response, ex = " + str(e)
 
-    :param pwd:
-        SatNet password for this user.
-    :type pwd:
-        L{String}
 
 class SatnetRPC(object):
 
