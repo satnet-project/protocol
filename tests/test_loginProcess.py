@@ -3,7 +3,7 @@ import os
 import sys
 
 # Dependencies for the tests
-from mock import patch, Mock
+from mock import patch, Mock, MagicMock
 from twisted.python import log
 from twisted.trial.unittest import TestCase
 
@@ -50,10 +50,13 @@ class TestProtocolLogin(TestCase):
 
     def test_successfulLoginWithTestUser(self):
         # SatnetRPC = Mock()
+        print ""
         res = self.sp.login('test-user-sc', 'test-password')
         return self.assertTrue(res['bAuthenticated'])
 
     def test_unsuccessfulLoginWithTestUser(self):
+        print ""
+        self.sp.rpc = MagicMock(return_value=False)
         res = self.sp.login('wrong-user', 'wrong-pass')
         return self.assertFalse(res['bAuthenticated'])
 
@@ -82,6 +85,7 @@ class TestProtocolLoginAuxiliarMethods(TestCase):
         self.sp.rpc = Mock()
         self.sp.rpc.testing = Mock
 
+        print ""
         response = self.sp.start_remote_user()
         value = ['test-user-gs', 'test-user-sc', 'test-user-sc', 'test-user-gs']
 
@@ -129,6 +133,7 @@ class TestProtocolLoginAuxiliarMethods(TestCase):
         sc_user = 'sc_user_test'
         gs_user = 'gs_user_test'
 
+        print ""
         return self.assertIsNone(self.sp.check_slot_ownership(sc_user, gs_user))
 
     def test_checkSlotOwnershipWrong(self):
@@ -141,6 +146,7 @@ class TestProtocolLoginAuxiliarMethods(TestCase):
         sc_user = 'sc_user_test_wrong'
         gs_user = 'gs_user_test_wrong'
 
+        print ""
         return self.assertRaises(SlotErrorNotification, self.sp.check_slot_ownership,
                                  sc_user, gs_user)
 
