@@ -166,7 +166,6 @@ function install_venv_test()
         virtualenv --python=python2.7 $venv_dir_test
         source "$venv_dir_test/bin/activate"
         pip install -r "$project_path/requirements-test.txt"
-        deactivate
     } && {
         echo ">>> Python virtual environment found, skipping"
     }
