@@ -9,6 +9,8 @@ from twisted.trial.unittest import TestCase
 from twisted.test.proto_helpers import StringTransportWithDisconnection
 from twisted.internet.protocol import Factory
 
+from twisted.python import log
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
                                 "../ampauth")))
 from server import CredReceiver, CredAMPServerFactory
@@ -31,20 +33,11 @@ from server import CredReceiver, CredAMPServerFactory
 __author__ = 's.gongoragarcia@gmail.com'
 
 
-class MockFactory(Factory):
-
-    clients = []
-    active_protocols = []
-    active_connections = []
-
-
-class TestProtocolReceiveFrame(TestCase):
+class TestLogin(TestCase):
 
     def setUp(self):
-        log.msg(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Running tests")
-
         self.sp = CredReceiver()
-        self.sp.factory = MockFactory()
+        self.sp.factory = CredAMPServerFactory()
         self.sp.factory.sUsername = 'test_name'
         self.transport = StringTransportWithDisconnection()
         self.sp.makeConnection(self.transport)
@@ -56,7 +49,8 @@ class TestProtocolReceiveFrame(TestCase):
                           "02:40:00:00:00:10:0a:46:58:10:00:c4:9d:cb:a2:21:39")
 
     def tearDown(self):
-        pass
+        self.sp.factory.active_protocols = {}
+        self.sp.factory.active_connections = {}
 
     def test_serverSendsAnythingWhenReceiveFrame(self):
         self.sp.dataReceived(self.testFrame)

@@ -25,25 +25,17 @@ __author__ = 'xabicrespog@gmail.com'
 
 
 class Login(amp.Command):
-
     """
     Command to authenticate an user.  The server response is a boolean
     granting or not the access to the client.
 
-    :param sUsername:
-        Client username for the SATNET network
-    :type sUsername:
-        String
-    :param sPassword:
-        Plain-text client password for the SATNET network
-    :type sPassword:
-        String
-
-    :returns bAuthenticated:
-        True if the user has been granted access and L{UnauthorizedLogin}
-        otherwise.
-    :rtype:
-        boolean or L{UnauthorizedLogin}
+    :param sUsername: Client username for the SATNET network
+    :type sUsername: String
+    :param sPassword: Plain-text client password for the SATNET network
+    :type sPassword: String
+    :returns bAuthenticated: True if the user has been granted access and
+                                L{UnauthorizedLogin} otherwise
+    :rtype: boolean or L{UnauthorizedLogin}
     """
 
     arguments = [('sUsername', amp.String()),
@@ -52,4 +44,5 @@ class Login(amp.Command):
     errors = {
         UnauthorizedLogin: 'UNAUTHORIZED_LOGIN',
         BadCredentials: 'BAD_CREDENTIALS',
-        NotImplementedError: 'NOT_IMPLEMENTED_ERROR'}
+        NotImplementedError: 'NOT_IMPLEMENTED_ERROR'
+    }
