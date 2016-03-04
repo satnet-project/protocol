@@ -1,3 +1,5 @@
 [report]
+
+include = '/home/travis/build/satnet-project/protocol/ampCommands.py', '/home/travis/build/satnet-project/protocol/ampauth/errors.py'
 omit = /home/travis/virtualenv/*
 
