@@ -160,7 +160,7 @@ function install_venv()
 
 function install_venv_test()
 {
-    [[ -e $venv_dir_test ]] || {
+    [[ -d $venv_dir_test ]] || {
 
         echo ">>> Creating virtual environment for testing purposes..."
         virtualenv --python=python2.7 $venv_dir_test
