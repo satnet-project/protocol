@@ -145,7 +145,7 @@ function uninstall_packages()
 
 function install_venv()
 {
-	[[ -d $venv_dir ]] || {
+	[[ -e "$venv_dir/bin/activate" ]] || {
 
     	echo ">>> Creating virtual environment..."
     	virtualenv --python=python2.7 $venv_dir
@@ -160,7 +160,7 @@ function install_venv()
 
 function install_venv_test()
 {
-    [[ -d $venv_dir_test ]] || {
+    [[ -e $venv_dir_test ]] || {
 
         echo ">>> Creating virtual environment for testing purposes..."
         virtualenv --python=python2.7 $venv_dir_test
@@ -201,7 +201,6 @@ function uninstall_daemon()
 {
     echo ">>> Removing daemon"
     remove_daemon
-
 }
 
 script_path="$( cd "$( dirname "$0" )" && pwd )"
@@ -229,7 +228,6 @@ _install_packages='true'
 _generate_keys='true'
 _create_logs='true'
 _config_daemon='true'
-_reboot='false'
 
 if [ $1 == '-install' ];
 then
@@ -244,24 +242,8 @@ then
     [[ $_generate_keys == 'true' ]] && create_selfsigned_keys
     [[ $_create_logs == 'true' ]] && create_logs_dir
 
-    [[ $_reboot == 'true' ]] && {
-
-    	echo ">>> To apply changes you must reboot your system"
-    	echo ">>> Reboot now? (yes/no)"
-    	read OPTION
-    	[[ $OPTION == 'yes' ]] && sudo reboot
-
-    }
-
-	exit 0
-
-	echo ">>> For apply changes you must reboot your system"
-	echo ">>> Reboot now? (yes/no)"
-	read OPTION
-	if [ $OPTION == 'yes' ];
-	then
-		sudo reboot
-	fi
+    sudo /etc/init.d/satnetprotocol restart
+    echo ">>> SatNet daemon running!"
 fi
 
 if [ $1 == '-travisCI' ];
@@ -273,7 +255,6 @@ then
     pip install coveralls
     pip install nose
 	exit 0
-
 fi
 
 if [ $1 == '-circleCI' ];
@@ -282,7 +263,6 @@ then
 	echo ">>> [CircleCI] Installing satnetprotocol..."
     [[ $_install_venv_test == 'true' ]] && install_venv_test
     exit 0
-
 fi
 
 if [ $1 == '-uninstall' ];
@@ -296,5 +276,4 @@ then
     [[ $_install_venv == 'true' ]] && remove_venv
     [[ $_config_daemon == 'true' ]] && uninstall_daemon
 	exit 0
-
 fi

@@ -64,7 +64,7 @@ class TestProtocolLogin(TestCase):
                                                                    'gs', 'sc', 'client_a', 'client_c'])
     @patch.object(CredReceiver, 'check_expiration', return_value=1000)
     def _test_startRemoteSucessful(self, start_remote_user, check_expiration):
-        res = self.sp.iStartRemote()
+        res = self.sp.i_start_remote()
 
         return self.assertEqual(str(res['iResult']), '-2')
 

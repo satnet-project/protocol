@@ -12,7 +12,6 @@ from errors import SlotErrorNotification, ValueError
 
 from twisted.internet import reactor
 from twisted.internet.protocol import ServerFactory
-from twisted.cred.error import UnauthorizedLogin
 from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
@@ -70,30 +69,42 @@ class CredReceiver(AMP, TimeoutMixin):
     username = ''
     password = ''
 
-    # Metodo que comprueba cuando una conexion se ha realizado con twisted
+    # FIX.ME Complete description
     def connectionMade(self):
         self.setTimeout(self.timeout)
         super(CredReceiver, self).connectionMade()
         self.factory.clients.append(self)
 
+    # FIX-ME Complete description
     def dataReceived(self, data):
         log.msg(self.username + ' session timeout reset')
         self.resetTimeout()
         super(CredReceiver, self).dataReceived(data)
 
+    # FIX-ME Complete description
     def timeoutConnection(self):
+        """ Timeout connection
+        An override method for manage the timeouts.
+        :return: Anything.
+        """
         log.err('Session timeout expired')
         self.vEndRemote()
 
+    # FIX-ME Complete description
     def connectionLost(self, reason):
-        # Remove client from active users
+        """Connection lost method
+        An override method for manage the client disconnection.
+        :param reason:
+        :return: Anything.
+        """
         if self.session is not None:
             self.session.cancel()
 
+        # Remove client from active users.
         try:
             self.factory.active_protocols.pop(self.username)
         except Exception as ex:
-            log.msg(ex)
+            log.err(ex)
 
         log.err(reason.getErrorMessage())
         log.msg(
@@ -108,7 +119,14 @@ class CredReceiver(AMP, TimeoutMixin):
 
         super(CredReceiver, self).connectionLost(reason)
 
+    # FIX-ME Complete description.
     def login(self, sUsername, sPassword):
+        """
+        :param sUsername: username
+        :param sPassword: password
+        :return: A boolean called 'bAuthenticated' which
+        represents the sucesful login.
+        """
 
         if sUsername in self.factory.active_protocols:
             log.msg('Client already logged in, renewing...')
@@ -136,10 +154,13 @@ class CredReceiver(AMP, TimeoutMixin):
 
     Login.responder(login)
 
+    # FIX-ME Complete description.
     def decode_user(self, slot):
-        """Decodes the information of the client
-        :param slot:
-        :return:
+        """Decode user
+        Decodes the information of the client
+        :param slot: A tuple containing
+        :return: A tuple containing the users.
+        :raises: A SlotErrorNotification if there is no slot.
         """
         if not slot:
             err_msg = 'No operational slots for the user'
@@ -158,9 +179,12 @@ class CredReceiver(AMP, TimeoutMixin):
         return gs_user, sc_user, client_a, client_b
 
     def check_slot_ownership(self, gs_user, sc_user):
-        """Checks if this slot has not been assigned to this user
+        """Check slot ownership
+        Checks if this slot has not been assigned to this user
         :param gs_user: Username of the groundstation user
         :param sc_user: Username of the spacecraft user
+        :raises: A SlotErrorNotification when none user belongs to the
+        slot.
         """
 
         print '>>> gs_user = ' + str(gs_user)
@@ -174,8 +198,10 @@ class CredReceiver(AMP, TimeoutMixin):
 
     def start_remote_user(self):
         """Start Remote
-        This function implements the checks to be executed after a START REMOTE
-        command coming from a user.
+        This function implements the checks to be executed after a
+        START REMOTE command coming from a user.
+        :return: a tuple containing the slot and the client_a and
+        client_c current assignation.
         """
         if self.rpc.testing:
             slot = {
@@ -192,11 +218,11 @@ class CredReceiver(AMP, TimeoutMixin):
 
         return slot, gs_user, sc_user, client_a, client_c
 
-    def iStartRemote(self):
+    def i_start_remote(self):
         """RPC Handler
         This function processes the remote request through the StartRemote AMP
         command.
-        FIXME iSlotId is no longer necessary...
+        :return A call to the create_connection method.
         """
         log.msg('(' + self.username + ') --------- Start Remote ---------')
         slot, gs_user, sc_user, client_a, client_c = self.start_remote_user()
@@ -204,7 +230,7 @@ class CredReceiver(AMP, TimeoutMixin):
             slot['ending_time'], slot['id'], client_a, client_c
         )
 
-    StartRemote.responder(iStartRemote)
+    StartRemote.responder(i_start_remote)
 
     def check_expiration(self, slot_id, slot_end):
         """Check slot's expiration
@@ -235,6 +261,7 @@ class CredReceiver(AMP, TimeoutMixin):
         :param slot_id: identifier of the slot
         :param client_a: Client A
         :param client_c: Client C
+        :return
         """
         client_a = str(client_a)
         client_c = str(client_c)
