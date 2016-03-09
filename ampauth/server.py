@@ -14,11 +14,7 @@ from twisted.protocols.amp import AMP
 from twisted.protocols.policies import TimeoutMixin
 from twisted.python import log
 
-from ampCommands import StartRemote
-from ampCommands import EndRemote
-from ampCommands import SendMsg
-from ampCommands import NotifyMsg
-from ampCommands import NotifyEvent
+import ampCommands as amp_commands
 
 import rpcrequests
 
@@ -44,6 +40,9 @@ import rpcrequests
 """
 __author__ = 'xabicrespog@gmail.com'
 
+# TODO Rename 'active_connections' to 'tunnels'
+# TODO Rename 'active_protocols' to 'clients'
+
 
 class CredReceiver(AMP, TimeoutMixin):
     """
@@ -54,7 +53,6 @@ class CredReceiver(AMP, TimeoutMixin):
 
     rpc = None
     slot_id = -1
-    is_user_gs = None
 
     logout = None
     session = None
@@ -63,36 +61,37 @@ class CredReceiver(AMP, TimeoutMixin):
     username = ''
     password = ''
 
-    # Metodo que comprueba cuando una conexion se ha realizado con twisted
+    def log_server_state(self):
+        """Logs the state of the server
+        """
+        log.msg('ps: ' + str(len(self.factory.active_protocols)))
+        for k, v in self.factory.active_protocols.iteritems():
+            log.msg('>>> px[' + str(k) + '] = ' + str(v))
+        log.msg('cs: ' + str(len(self.factory.active_connections)))
+        for k, v in self.factory.active_connections.iteritems():
+            log.msg('>>> cx[' + str(k) + '] = ' + str(v))
+
     def connectionMade(self):
         self.setTimeout(self.timeout)
         super(CredReceiver, self).connectionMade()
         self.factory.clients.append(self)
-
-    def dataReceived(self, data):
-        log.msg(self.username + ' session timeout reset')
-        self.resetTimeout()
-        super(CredReceiver, self).dataReceived(data)
 
     def timeoutConnection(self):
         log.err('Session timeout expired')
         self.transport.loseConnection()
 
     def connectionLost(self, reason):
+
         # Remove client from active users
         if self.session is not None:
             self.session.cancel()
 
         log.err(reason.getErrorMessage())
-        log.msg(
-            'Clients: ' + str(len(self.factory.active_protocols))
-        )
-        log.msg(
-            'Tunnels: ' + str(len(self.factory.active_connections))
-        )
 
         self.setTimeout(None)  # Cancel the pending timeout
         self.transport.loseConnection()
+
+        self.log_server_state()
 
         super(CredReceiver, self).connectionLost(reason)
 
@@ -101,9 +100,10 @@ class CredReceiver(AMP, TimeoutMixin):
         if sUsername in self.factory.active_protocols:
             log.msg('Client already logged in, renewing...')
         else:
-            self.username = sUsername
-            self.password = sPassword
             self.factory.active_protocols[sUsername] = None
+
+        self.username = sUsername
+        self.password = sPassword
 
         print '>>> @login: username = ' + str(
             sUsername
@@ -176,20 +176,23 @@ class CredReceiver(AMP, TimeoutMixin):
 
         return slot, gs_user, sc_user, client_a, client_c
 
-    def iStartRemote(self, iSlotId):
+    def iStartRemote(self):
         """RPC Handler
         This function processes the remote request through the StartRemote AMP
         command.
         FIXME iSlotId is no longer necessary...
-        :param iSlotId:
         """
-        log.msg('(' + self.username + ') --------- Start Remote ---------')
+        log.msg('>>> START (' + self.username + ')')
+
         slot, gs_user, sc_user, client_a, client_c = self.start_remote_user()
-        return self.create_connection(
+        result = self.create_connection(
             slot['ending_time'], slot['id'], client_a, client_c
         )
+        self.log_server_state()
 
-    StartRemote.responder(iStartRemote)
+        return result
+
+    amp_commands.StartRemote.responder(iStartRemote)
 
     def check_expiration(self, slot_id, slot_end):
         """Check slot's expiration
@@ -234,120 +237,110 @@ class CredReceiver(AMP, TimeoutMixin):
         if client_c not in self.factory.active_protocols:
             log.msg("Remote user " + client_c + " not connected yet.")
             self.factory.active_connections[client_a] = None
-            return {'iResult': StartRemote.REMOTE_NOT_CONNECTED}
+            return {'iResult': amp_commands.StartRemote.REMOTE_NOT_CONNECTED}
 
-        log.msg("Remote user " + client_c + ".")
+        log.msg("Remote user " + client_c)
+
         self.factory.active_connections[client_c] = client_a
         self.factory.active_connections[client_a] = client_c
         self.factory.active_protocols[client_c].callRemote(
-            NotifyEvent,
-            iEvent=NotifyEvent.REMOTE_CONNECTED,
+            amp_commands.NotifyEvent,
+            iEvent=amp_commands.NotifyEvent.REMOTE_CONNECTED,
             sDetails=str(client_a)
         )
         self.callRemote(
-            NotifyEvent,
-            iEvent=NotifyEvent.REMOTE_CONNECTED,
+            amp_commands.NotifyEvent,
+            iEvent=amp_commands.NotifyEvent.REMOTE_CONNECTED,
             sDetails=str(client_c)
         )
-        return {'iResult': StartRemote.REMOTE_READY}
+        return {'iResult': amp_commands.StartRemote.REMOTE_READY}
 
     def slot_end(self, slot_id):
         log.msg(
             "(" + self.username + ") Slot " + str(slot_id) + ' has finished'
         )
         self.callRemote(
-            NotifyEvent, iEvent=NotifyEvent.SLOT_END, sDetails=None
+            amp_commands.NotifyEvent,
+            iEvent=amp_commands.NotifyEvent.SLOT_END,
+            sDetails=None
         )
 
         #  Session is an instance of
         self.session = None
 
     def vEndRemote(self):
-        log.msg("(" + self.username + ") --------- End Remote ---------")
+        """RPC Method Callback
+        RPC method invoked remotely by a client when it wants to finish the
+        current connection.
+        :return: 'true' if nor problem was found
+        """
+
+        log.msg(">>> END REMOTE (" + self.username + ")")
+        self.log_server_state()
+
         # Disconnect local user
         self.transport.loseConnection()
+        self.factory.active_protocols.pop(self.username)
 
-        # FIXME self.factory.active_protocols.pop(self.sUsername)
-        # FIXME Try to remove the remote connection but the former is not there
+        if self.username in self.factory.active_connections:
+            remote_u = self.factory.active_connections[self.username]
 
-        try:
-            # Notify remote user
-            self.factory.active_protocols[self.factory.active_connections[
-                self.username
-            ]].callRemote(
-                NotifyEvent,
-                iEvent=NotifyEvent.END_REMOTE,
-                sDetails=None
-            )
+            if remote_u:
+                log.msg('>>> Notifying connection end to = ' + str(remote_u))
+                if self.factory.active_protocols.has_key(remote_u):
+                    self.factory.active_protocols[remote_u].callRemote(
+                        amp_commands.NotifyEvent,
+                        iEvent=amp_commands.NotifyEvent.END_REMOTE,
+                        sDetails=None
+                    )
+                else:
+                    log.msg('>>> Client not available, skipping...')
 
-            # Close remote connection
-            self.factory.active_protocols[self.factory.active_connections[
-                self.username
-            ]].transport.loseConnection()
-
-            # Remove remove factory
-            self.factory.active_connections.pop(
-                self.factory.active_connections[self.username]
-            )
-            self.factory.active_connections.pop(self.username)
-
-        except Exception as ex:
-            log.msg("Connections already cleared, ex = " + str(ex))
+        self.factory.active_connections.pop(self.username)
+        self.log_server_state()
 
         return {'bResult': True}
 
-    EndRemote.responder(vEndRemote)
+    amp_commands.EndRemote.responder(vEndRemote)
 
     def vSendMsg(self, sMsg, iTimestamp):
-        log.msg("SEND (" + self.username + ") = " + str(sMsg))
-        # If the client haven't started a connection via StartRemote command...
+        """RPC Method Callback
+        RPC method invoked remotely by a client in order to forward a message
+        to another client.
+
+        :param sMsg: Message to be forwarded
+        :param iTimestamp: Timestamp for the message generation
+        :return: 'true' if the message could've been forwarded
+        """
+
+        log.msg(">>> SEND (" + self.username + "), msg = " + str(sMsg))
 
         if self.username not in self.factory.active_connections:
-            err_msg = 'Connection not available.'
+            err_msg = 'Connection not available'
             log.msg(err_msg)
             raise SlotErrorNotification(err_msg)
 
-        # ... if the SC operator is not connected, sent messages will be saved
-        # as passive messages...
-        elif (
-            self.factory.active_connections[self.username] is None and
-            self.is_user_gs is True
-        ):
-            log.msg("No SC operator connected, stored as a passive message")
-            self.rpc.store_message_unconnected(sMsg)
+        remote_u = self.factory.active_connections[self.username]
+        if remote_u:
 
-        # ... if the GS operator is not connected, the remote SC client will be
-        # notified to wait for the GS to connect...
-        elif (
-            self.factory.active_connections[self.username] is None and
-            self.is_user_gs is False
-        ):
-            self.callRemote(
-                NotifyEvent,
-                iEvent=NotifyEvent.REMOTE_DISCONNECTED,
-                sDetails=None
+            log.msg('>>> Forwarding message to remote = ' + str(remote_u))
+
+            self.factory.active_protocols[remote_u].callRemote(
+                amp_commands.NotifyMsg, sMsg=sMsg
             )
 
         else:
-            # Try to send a message to remote client
-            try:
-                self.factory.active_protocols[self.factory.active_connections[
-                    self.username
-                ]].callRemote(NotifyMsg, sMsg=sMsg)
-            except:
-                raise ValueError("Error forwarding frame to remote user.")
-            # Try to store the message in the remote SatNet server
-            forwarded = ''
+            log.msg('>>> No remote user found!')
 
+        # TODO Verify slot for GS or SC origin of the message and slot_id
         if not self.rpc.testing:
-            self.rpc.store_message(
-                self.slot_id, self.is_user_gs, False, iTimestamp, sMsg
-            )
+            self.rpc.store_message(self.slot_id, True, False, iTimestamp, sMsg)
+        else:
             log.msg('>>> TESTING mode, not saving message in DB...')
 
         return {'bResult': True}
 
-    SendMsg.responder(vSendMsg)
+    amp_commands.SendMsg.responder(vSendMsg)
 
 
 class CredAMPServerFactory(ServerFactory):
