@@ -69,19 +69,30 @@ class CredReceiver(AMP, TimeoutMixin):
     username = ''
     password = ''
 
-    # FIX.ME Complete description
+    def log_server_state(self):
+        """Logs the state of the server
+        """
+        log.msg('ps: ' + str(len(self.factory.active_protocols)))
+        for k, v in self.factory.active_protocols.iteritems():
+            log.msg('>>> px[' + str(k) + '] = ' + str(v))
+        log.msg('cs: ' + str(len(self.factory.active_connections)))
+        for k, v in self.factory.active_connections.iteritems():
+            log.msg('>>> cx[' + str(k) + '] = ' + str(v))
+
     def connectionMade(self):
         self.setTimeout(self.timeout)
         super(CredReceiver, self).connectionMade()
         self.factory.clients.append(self)
 
     # FIX-ME Complete description
+    # TODO Check method
     def dataReceived(self, data):
         log.msg(self.username + ' session timeout reset')
         self.resetTimeout()
         super(CredReceiver, self).dataReceived(data)
 
     # FIX-ME Complete description
+    # TODO Check method
     def timeoutConnection(self):
         """ Timeout connection
         An override method for manage the timeouts.
@@ -224,11 +235,15 @@ class CredReceiver(AMP, TimeoutMixin):
         command.
         :return A call to the create_connection method.
         """
-        log.msg('(' + self.username + ') --------- Start Remote ---------')
+        log.msg('>>> START (' + self.username + ')')
+
         slot, gs_user, sc_user, client_a, client_c = self.start_remote_user()
-        return self.create_connection(
+        result = self.create_connection(
             slot['ending_time'], slot['id'], client_a, client_c
         )
+        self.log_server_state()
+
+        return result
 
     StartRemote.responder(i_start_remote)
 
