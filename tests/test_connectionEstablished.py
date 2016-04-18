@@ -43,13 +43,15 @@ class TestServerProtocolConnectionEstablished(TestCase):
     def tearDown(self):
         self.transport.loseConnection()
 
-    def test_connectionProtocolEstablished(self):
+    def test_connection_protocol_established(self):
         """
         Checks if transport is working an clients list has the last client.
         :return:
         """
         self.sp.makeConnection(self.transport)
         self.transport.protocol = self.sp
+        self.sp.username = "test_username"
+        self.sp.factory.active_protocols[self.sp.username] = self.sp
 
-        return self.assertTrue(self.transport.connected),\
+        return self.assertTrue(self.transport.connected), \
                self.assertEqual(len(self.sp.factory.clients), 1)
