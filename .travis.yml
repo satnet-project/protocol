@@ -24,9 +24,13 @@ script:
   - trial test_loginProcess
   - trial test_sendMsg
   - trial test_connectionEstablished
-  - coverage run test_*.py
+  - coverage run -p test_receiveMsg.py
+  - coverage run -p test_connectionDown.py
+  - coverage run -p test_loginProcess.py
+  - coverage run -p test_sendMsg.py
+  - coverage run -p test_connectionEstablished.py
 
 after_success:
   - coverage combine
-  - coverage report --omit '/home/travis/virtualenv/python2.7.9/lib/python2.7/site-packages/*'
+  - coverage report --omit '/home/travis/virtualenv/*'
   - coveralls --rcfile='/home/travis/build/satnet-project/protocol/.coveragerc'
