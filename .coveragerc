@@ -1,4 +1,3 @@
 [report]
-include = /home/travis/build/satnet-project/protocol/ampauth/*
 omit = /home/travis/virtualenv/*
 
